@@ -1,0 +1,24 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-100">
+  <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
+    <h2 class="text-2xl font-semibold mb-4 text-center">Iniciar Sesión</h2>
+
+    <form (ngSubmit)="onSubmit()" [formGroup]="formularioLogin">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700">Usuario</label>
+        <input type="text" formControlName="usuario"
+               class="mt-1 p-2 w-full border rounded-md" placeholder="Tu usuario" />
+      </div>
+
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700">Contraseña</label>
+        <input type="password" formControlName="password"
+               class="mt-1 p-2 w-full border rounded-md" placeholder="********" />
+      </div>
+
+      <button type="submit"
+              class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+        Ingresar
+      </button>
+    </form>
+  </div>
+</div>
