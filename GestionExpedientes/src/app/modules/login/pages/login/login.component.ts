@@ -5,13 +5,13 @@ import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
-  standalone:true,
+  standalone: true,
   imports: [ReactiveFormsModule, CommonModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
 export class LoginComponent {
- formularioLogin: FormGroup;
+  formularioLogin: FormGroup;
 
   constructor(private fb: FormBuilder, private router: Router) {
     this.formularioLogin = this.fb.group({
@@ -25,7 +25,7 @@ export class LoginComponent {
       const { usuario, password } = this.formularioLogin.value;
       console.log('Enviando login:', usuario, password);
       // Aquí luego conectamos con AuthService
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/registro-expediente']);
     }
   }
 }
