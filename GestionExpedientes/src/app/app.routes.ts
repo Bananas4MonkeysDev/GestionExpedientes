@@ -1,9 +1,21 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './modules/login/pages/login/login.component';
+import { RestablecerClaveComponent } from './modules/login/pages/restablecer-clave/restablecer-clave.component';
+import { MainLayoutComponent } from './modules/layout/pages/main-layout/main-layout.component';
+import { HomeComponent } from './modules/login/pages/home/home.component';
 import { ExpedientesRegisterComponent } from './modules/expedientes/pages/expedientes-register/expedientes-register.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
-  { path: 'registro-expediente', component: ExpedientesRegisterComponent },
-  { path: '', redirectTo: 'login', pathMatch: 'full' }
+  { path: 'restablecer-clave', component: RestablecerClaveComponent },
+  {
+    path: '',
+    component: MainLayoutComponent,
+    children: [
+      { path: 'home', component: HomeComponent },
+      { path: 'registro-expediente', component: ExpedientesRegisterComponent },
+      { path: '', redirectTo: 'home', pathMatch: 'full' }
+    ]
+  },
+  { path: '**', redirectTo: 'login' }
 ];

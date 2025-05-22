@@ -1,24 +1,99 @@
-<div class="min-h-screen flex items-center justify-center bg-gray-100">
-  <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
-    <h2 class="text-2xl font-semibold mb-4 text-center">Iniciar Sesión</h2>
+<div
+  class="min-h-screen w-full bg-gradient-to-tr from-[#f1f5f9] via-[#e2e8f0] to-[#f8fafc] flex flex-col items-center justify-center px-4 relative">
 
-    <form (ngSubmit)="onSubmit()" [formGroup]="formularioLogin">
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700">Usuario</label>
-        <input type="text" formControlName="usuario"
-               class="mt-1 p-2 w-full border rounded-md" placeholder="Tu usuario" />
+  <img src="assets/TRS.png" alt="Logo Cliente" class="w-20 absolute top-6 left-6 z-10" />
+  <img src="assets/construnetdoc.png" alt="Construnet Logo"
+    class="w-50 absolute top-24 left-1/2 transform -translate-x-1/2 z-10" />
+  <!-- Contenedor del formulario -->
+  <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6 animate-fade-in z-10">
+
+    <div class="text-center">
+      <h2 class="text-3xl font-bold text-[#004C77]">Bienvenido</h2>
+      <p class="text-sm text-gray-500 mt-1">Inicia sesión para continuar</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" [formGroup]="formularioLogin" class="space-y-4">
+      <!-- Campo Usuario con ícono -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <!-- Ícono usuario -->
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M5.121 17.804A9.001 9.001 0 0112 15a9.001 9.001 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </span>
+          <input type="text" formControlName="usuario"
+            class="w-full px-10 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F36C21]"
+            placeholder="Tu usuario" />
+        </div>
+        <div *ngIf="formularioLogin.get('usuario')?.invalid && formularioLogin.get('usuario')?.touched"
+          class="text-xs text-red-500 mt-1">
+          Ingrese su usuario
+        </div>
       </div>
 
-      <div class="mb-6">
-        <label class="block text-sm font-medium text-gray-700">Contraseña</label>
-        <input type="password" formControlName="password"
-               class="mt-1 p-2 w-full border rounded-md" placeholder="********" />
+      <!-- Campo Contraseña con ícono y ojito -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <!-- Ícono candado -->
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 11c1.104 0 2-.896 2-2V7a2 2 0 10-4 0v2c0 1.104.896 2 2 2z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 11h14v10H5z" />
+            </svg>
+          </span>
+
+          <input [type]="verPassword ? 'text' : 'password'" formControlName="password"
+            class="w-full px-10 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F36C21]"
+            placeholder="********" />
+
+          <!-- Botón ojito -->
+          <button type="button" (click)="verPassword = !verPassword"
+            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-[#F36C21] cursor-pointer">
+            <svg *ngIf="!verPassword" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            <svg *ngIf="verPassword" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 012.216-3.426m2.408-2.257A9.99 9.99 0 0112 5c4.477 0 8.268 2.943 9.542 7a9.972 9.972 0 01-1.125 2.25M15 12a3 3 0 01-4.243 2.828M9.88 9.88A3 3 0 0115 12m0 0l5 5M9.88 9.88l-5-5" />
+            </svg>
+          </button>
+        </div>
+
+        <div *ngIf="formularioLogin.get('password')?.invalid && formularioLogin.get('password')?.touched"
+          class="text-xs text-red-500 mt-1">
+          Ingrese su contraseña
+        </div>
       </div>
 
-      <button type="submit"
-              class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-        Ingresar
+      <div *ngIf="errorLogin" class="mt-2 text-sm text-red-600 font-medium">
+        Usuario o contraseña incorrectos
+      </div>
+      <button type="submit" [disabled]="formularioLogin.invalid || cargando" class="w-full py-3 text-white font-semibold rounded-lg transition-all
+                 disabled:bg-gray-300 disabled:cursor-not-allowed
+                 bg-[#004C77] hover:opacity-90">
+        {{ cargando ? 'Validando...' : 'Ingresar' }}
       </button>
     </form>
+
+
+    <div class="text-center">
+      <a routerLink="/restablecer-clave" class="text-sm text-[#004C77] hover:underline transition-all">
+        ¿Olvidaste tu contraseña?
+      </a>
+    </div>
   </div>
+
+  <img src="assets/construnet-logo.png" alt="Construnet Logo" class="w-20 absolute bottom-6 right-6 z-10" />
 </div>
+<footer class="absolute bottom-2 text-xs text-gray-400 w-full text-center">
+  © 2025 ConstrunetDoc. Todos los derechos reservados. Versión 1.0.0
+</footer>

@@ -1,0 +1,27 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+  <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8 space-y-6">
+    <div class="text-center mb-4">
+      <h2 class="text-2xl mb-4 font-bold text-[#004C77]">Restablecer contraseña</h2>
+      <p class="text-sm text-gray-500">
+        Ingresa tu correo y te enviaremos un enlace para restablecer tu clave.
+      </p>
+    </div>
+
+    <form>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
+        <input type="email" placeholder="tucorreo@ejemplo.com"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F36C21]" />
+      </div>
+
+      <button type="submit"
+        class="w-full mt-4 py-3 bg-[#004C77] text-white font-semibold rounded-lg hover:bg-[#003A5C] transition">
+        Enviar instrucciones
+      </button>
+    </form>
+
+    <div class="text-center">
+      <a routerLink="/login" class="text-sm text-[#004C77] hover:underline">Volver a iniciar sesión</a>
+    </div>
+  </div>
+</div>

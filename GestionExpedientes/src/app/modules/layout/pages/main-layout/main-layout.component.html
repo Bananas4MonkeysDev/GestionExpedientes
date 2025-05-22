@@ -1,0 +1,7 @@
+<!-- main-layout.component.html -->
+<div class="flex h-screen">
+  <app-sidebar [isOpen]="true"></app-sidebar>
+  <main class="flex-1 bg-gray-50 p-6 overflow-y-auto ml-64">
+    <router-outlet></router-outlet>
+  </main>
+</div>

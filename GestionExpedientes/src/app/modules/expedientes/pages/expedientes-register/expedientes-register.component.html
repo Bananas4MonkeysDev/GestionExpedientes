@@ -1,72 +1,202 @@
-<div class="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-  <div class="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-10 space-y-8">
+<!-- CONTENEDOR GLOBAL -->
+<div class="min-h-screen bg-gray-100 p-8 space-y-6">
 
-    <h2 class="text-3xl font-bold text-center text-gray-800">Registrar Expediente</h2>
+  <!-- Breadcrumb -->
+  <div class="text-sm text-gray-600 mb-2">
+    <span class="text-[#004C77] font-semibold">Inicio</span> &gt;
+    <span class="text-[#004C77] font-semibold">Expedientes</span> &gt;
+    <span class="text-[#F36C21] font-semibold">Adicionar expediente</span>
+  </div>
 
-    <form (ngSubmit)="onSubmit()" [formGroup]="formulario" class="space-y-6">
+  <!-- Título -->
+  <h1 class="text-2xl font-bold text-[#004C77] mb-4">Adicionar Expediente</h1>
 
-      <!-- Documento PDF -->
+  <!-- Barra de pasos -->
+  <div class="flex items-center gap-2 mb-6">
+    <div *ngFor="let paso of [1, 2, 3]" class="flex-1 h-2 rounded-full"
+      [ngClass]="{ 'bg-[#004C77]': pasoActual >= paso, 'bg-gray-300': pasoActual < paso }">
+    </div>
+  </div>
+
+  <!-- PASO 1 -->
+  <div *ngIf="pasoActual === 1" class="bg-white rounded-xl shadow p-8 space-y-6">
+    <h2 class="text-xl font-semibold text-[#004C77]">Seleccionar tipo de expediente</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <button (click)="seleccionarTipo('interno')"
+        class="cursor-pointer w-full py-2 bg-[#004C77] text-white font-semibold rounded hover:opacity-90 transition">Expediente
+        Interno</button>
+      <button (click)="seleccionarTipo('externo')"
+        class="cursor-pointer w-full py-2 bg-[#F36C21] text-white font-semibold rounded hover:opacity-90 transition">Expediente
+        Externo</button>
+    </div>
+  </div>
+
+  <!-- PASO 2 -->
+  <div *ngIf="pasoActual === 2" class="bg-white rounded-xl shadow p-8 space-y-6">
+    <h2 class="text-xl font-semibold text-[#004C77]">Registrar información del expediente</h2>
+
+    <form [formGroup]="formularioPaso1" (ngSubmit)="siguientePaso()"
+      class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Documento PDF</label>
-        <div class="relative">
-          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828L18 9.828M7 7h10a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z" />
-            </svg>
-          </span>
-          <input type="file" accept=".pdf" (change)="onFileSelected($event)"
-            class="pl-10 pr-4 py-3 border border-gray-300 rounded-lg w-full text-sm bg-gray-50 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500" />
+        <label class="text-sm font-medium text-gray-700">Usuario emisor</label>
+        <input type="text" formControlName="usuarioDestino" class="w-full px-3 py-2 border rounded" />
+      </div>
+
+      <div>
+        <label class="text-sm font-medium text-gray-700">Usuario destinatario (CC)</label>
+        <input type="text" formControlName="usuarioDestinoCc" class="w-full px-3 py-2 border rounded" />
+      </div>
+
+      <div>
+        <label class="text-sm font-medium text-gray-700">Asunto</label>
+        <input type="text" formControlName="asunto" class="w-full px-3 py-2 border rounded" />
+      </div>
+
+      <div>
+        <label class="text-sm font-medium text-gray-700">Referencia</label>
+        <input type="text" formControlName="referencia" class="w-full px-3 py-2 border rounded" />
+      </div>
+
+      <div>
+        <label class="text-sm font-medium text-gray-700">Fecha</label>
+        <input type="date" formControlName="fecha" class="w-full px-3 py-2 border rounded" />
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Proyecto</label>
+        <select formControlName="proyecto" class="w-full px-3 py-2 border rounded">
+          <option *ngFor="let proyecto of proyectos" [value]="proyecto">{{ proyecto }}</option>
+        </select>
+      </div>
+
+      <!-- Reservado -->
+      <div class="md:col-span-2">
+        <label class="text-sm font-medium text-gray-700 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F36C21]" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 11c0 1.104-.896 2-2 2s-2-.896-2-2 .896-2 2-2 2 .896 2 2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4h16v16H4z" />
+          </svg>
+          Reservado
+        </label>
+        <div class="flex gap-6 mt-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" formControlName="reservado" value="si" class="accent-[#004C77]" />
+            <span class="text-sm">Sí</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" formControlName="reservado" value="no" class="accent-[#004C77]" />
+            <span class="text-sm">No</span>
+          </label>
         </div>
       </div>
-
-      <!-- Flujo de firma -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Flujo de firma</label>
-        <div class="relative">
-          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M5.121 17.804A8 8 0 1116.97 5.196 8 8 0 015.121 17.804z" />
-            </svg>
-          </span>
-          <select formControlName="flujo"
-            class="pl-10 pr-4 py-3 border border-gray-300 rounded-lg w-full text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="" disabled selected>Seleccionar flujo</option>
-            <option *ngFor="let flujo of flujos" [value]="flujo">{{ flujo }}</option>
-          </select>
-        </div>
+      <div class="md:col-span-2">
+        <label class="text-sm font-medium text-gray-700">Observaciones</label>
+        <textarea formControlName="comentario" rows="3" class="w-full px-3 py-2 border rounded resize-none"></textarea>
       </div>
 
-      <!-- Áreas destino -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Áreas destino</label>
-        <div class="relative">
-          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-            </svg>
-          </span>
-          <select formControlName="areas" multiple size="5"
-            class="pl-10 pr-4 py-3 border border-gray-300 rounded-lg w-full text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500">
-            <option *ngFor="let area of areasDisponibles" [value]="area">{{ area }}</option>
-          </select>
-        </div>
-        <p class="text-sm text-gray-500 mt-1">Puedes seleccionar una o más áreas.</p>
+      <div class="md:col-span-2 flex justify-between items-center mt-4">
+        <button type="button" (click)="regresarPaso()"
+          class="text-[#004C77] font-medium hover:underline cursor-pointer">← Regresar</button>
+        <button type="submit" [disabled]="formularioPaso1.invalid"
+          class="bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 disabled:bg-gray-300 cursor-pointer">Siguiente</button>
       </div>
-
-      <!-- Botón -->
-      <div>
-        <button type="submit"
-          class="w-full py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition">
-          Registrar Expediente
-        </button>
-      </div>
-
     </form>
   </div>
+
+  <!-- PASO 3 -->
+  <div *ngIf="pasoActual === 3" class="bg-white rounded-xl shadow p-8 space-y-6">
+    <h2 class="text-xl font-semibold text-[#004C77]">Carga de documentos del expediente</h2>
+
+    <!-- Campos superiores -->
+    <form [formGroup]="formularioDocumento" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div>
+        <label class="text-sm font-medium text-gray-700">Nombre</label>
+        <input type="text" formControlName="nombre" class="w-full px-3 py-2 border rounded" />
+      </div>
+    </form>
+
+    <!-- Drag & Drop -->
+    <div class="border-2 border-dashed rounded-lg p-10 text-center transition-all duration-300" [ngClass]="{
+    'border-[#004C77] bg-blue-50': arrastrando,
+    'border-gray-300 bg-gray-50': !arrastrando
+  }" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onFileDrop($event)"
+      [ngClass]="{ 'border-blue-500 bg-blue-50': arrastrando }">
+      <label for="uploadInput" class="cursor-pointer flex flex-col items-center space-y-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#004C77]" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M16 12l-4-4m0 0l-4 4m4-4v12" />
+        </svg>
+        <span class="text-sm text-gray-600">Arrastra tus archivos aquí o haz clic para seleccionar</span>
+        <span class="text-xs text-gray-400">Archivos permitidos: PDF</span>
+      </label>
+      <input id="uploadInput" type="file" accept=".pdf" multiple class="hidden"
+        (change)="onMultipleFilesSelected($event)" />
+    </div>
+
+
+    <!-- Documentos añadidos -->
+    <div class="space-y-2">
+      <h4 class="text-sm font-semibold text-gray-700">Documentos añadidos</h4>
+      <div *ngFor="let doc of documentos; let i = index"
+        class="flex justify-between items-center bg-white border border-gray-200 shadow-sm rounded px-4 py-3">
+        <div class="flex items-center gap-4 w-full">
+          <!-- Ícono del documento -->
+          <svg class="w-5 h-5 text-[#004C77] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M7 7h10M7 11h10M7 15h10M5 5v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2z" />
+          </svg>
+
+          <!-- Nombre del archivo con ancho fijo -->
+          <span class="text-sm text-gray-700 w-[250px] truncate block">
+            {{ doc.nombre }}
+          </span>
+
+          <!-- Barra de progreso alineada -->
+          <div class="flex-1 flex items-center gap-2">
+            <div class="w-full max-w-[200px] h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div class="h-full bg-[#004C77] transition-all duration-300" [style.width.%]="doc.progreso"></div>
+            </div>
+
+            <!-- Ícono check -->
+            <svg *ngIf="doc.cargado" class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        </div>
+        <div class="flex gap-4 text-sm">
+          <button (click)="verDocumento(i)" class="text-[#004C77] hover:underline cursor-pointer">Ver</button>
+          <button (click)="eliminarDocumento(i)" class="text-red-600 hover:underline cursor-pointer">Eliminar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="flex justify-between items-center mt-6">
+      <button type="button" (click)="regresarPaso()" class="text-[#004C77] font-medium hover:underline cursor-pointer">←
+        Regresar</button>
+
+      <div class="flex items-center gap-4">
+        <button type="button" (click)="omitirCargaDocumentos()"
+          class="text-sm text-[#F36C21] hover:underline cursor-pointer">Omitir carga de documentos</button>
+
+        <button (click)="onSubmit()" [disabled]="documentos.length === 0"
+          class="bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer">
+          Registrar expediente
+        </button>
+      </div>
+    </div>
+
+    <!-- Mensaje de éxito -->
+    <div *ngIf="exito" class="text-center mt-4">
+      <div class="inline-block bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded shadow">
+        📄 Expediente registrado exitosamente
+      </div>
+    </div>
+  </div>
+
 </div>
