@@ -75,6 +75,16 @@
               </svg>
               Adicionar expediente
             </a>
+            <a (click)="irA('monitoreo-expediente')"
+              class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M1.5 12s4-7.5 10.5-7.5S22.5 12 22.5 12s-4 7.5-10.5 7.5S1.5 12 1.5 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+
+              Monitoreo expedientes
+            </a>
           </div>
         </div>
         <div *ngIf="coincideFiltro('maestras')" class="space-y-2">

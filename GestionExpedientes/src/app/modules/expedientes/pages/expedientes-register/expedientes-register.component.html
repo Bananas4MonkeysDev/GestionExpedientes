@@ -1,5 +1,5 @@
 <!-- CONTENEDOR GLOBAL -->
-<div class="min-h-screen bg-gray-100 p-8 space-y-6">
+<div class="min-h-screen bg-gray-100 p-8 space-y-4">
 
   <!-- Breadcrumb -->
   <div class="text-sm text-gray-600 mb-2">
@@ -215,6 +215,9 @@
             </span>
 
             <div class="flex-1 flex items-center gap-2">
+              <span class="text-xs text-gray-500 min-w-[55px] text-right">
+                {{ formatearPeso(doc.archivo.size) }}
+              </span>
               <div class="w-full max-w-[150px] h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div class="h-full bg-[#004C77] transition-all duration-300" [style.width.%]="doc.progreso"></div>
               </div>

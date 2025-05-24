@@ -1,3 +1,52 @@
 table {
-  border-collapse: collapse;
+    border-collapse: collapse;
+}
+
+/* Opcional: para que las filas se vean un poco más elegantes al pasar el cursor */
+tr.mat-row:hover td {
+    background-color: #f1f5f9;
+}
+
+/* Ajuste sutil en paginador si lo deseas más centrado o más chico */
+mat-paginator {
+    font-size: 13px;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-thead>tr>th {
+    background-color: #F8FAFC;
+    color: #004C77;
+    font-weight: 600;
+}
+
+:host ::ng-deep .p-button-sm {
+    font-size: 0.75rem;
+}
+
+#altura {
+    max-height: 94vh;
+    min-height: 94vh;
+}
+
+/* Efecto hover para toda la fila */
+tr.mat-row:hover td {
+    background-color: #f1f5f9;
+}
+
+/* Efecto hover para botones */
+button:hover {
+    filter: brightness(0.9);
+    transition: filter 0.2s ease;
+}
+
+.btn-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 180px;
 }

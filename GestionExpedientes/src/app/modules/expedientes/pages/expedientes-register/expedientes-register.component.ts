@@ -167,6 +167,14 @@ export class ExpedientesRegisterComponent implements OnInit {
   obtenerUsuariosPorTipo(usuarios: Usuario[], tipo: 'Persona' | 'Grupo' | 'Entidad'): Usuario[] {
     return usuarios.filter(u => u.tipo === tipo);
   }
+  formatearPeso(bytes: number): string {
+    if (bytes >= 1024 * 1024) {
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    } else if (bytes >= 1024) {
+      return (bytes / 1024).toFixed(0) + ' KB';
+    }
+    return bytes + ' B';
+  }
 
   abrirDialogoAgregarUsuario(nombre: string, destino: 'to' | 'cc') {
     const dialogRef = this.dialog.open(DocumentoAgregarComponent, {
