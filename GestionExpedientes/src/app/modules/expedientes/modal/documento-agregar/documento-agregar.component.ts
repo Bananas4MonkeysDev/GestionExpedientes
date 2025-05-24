@@ -1,55 +1,74 @@
-import { CommonModule } from '@angular/common';
 import { Component, Inject } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { CommonModule } from '@angular/common';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+type ModoDialogo = 'usuario' | 'referencia';
 
+interface DatosUsuario {
+  modo: 'usuario';
+  nombre: string;
+  destino: 'to' | 'cc';
+}
+
+interface DatosReferencia {
+  modo: 'referencia';
+  serie: string;
+}
+
+type DatosDialogo = DatosUsuario | DatosReferencia;
 @Component({
   selector: 'app-documento-agregar',
-  standalone: true,
   templateUrl: './documento-agregar.component.html',
-  styleUrl: './documento-agregar.component.css',
-  imports: [ReactiveFormsModule, CommonModule]
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatDialogModule, MatIcon
+  ]
 })
+
 export class DocumentoAgregarComponent {
-  formulario: FormGroup;
-  flujos = ['Flujo A', 'Flujo B', 'Flujo C'];
-  areas = ['Contabilidad', 'Logística', 'Gerencia', 'Calidad', 'TI'];
+  form: FormGroup;
+  modo: ModoDialogo;
 
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<DocumentoAgregarComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any
+    @Inject(MAT_DIALOG_DATA) public data: DatosDialogo
   ) {
-    this.formulario = this.fb.group({
-      nombre: ['', Validators.required],
-      archivo: [null, Validators.required],
-      flujo: ['', Validators.required],
-      areas: [[], Validators.required],
-      confidencial: [false]
-    });
-  }
-  ngOnInit(): void {
-    if (this.data) {
-      this.formulario.patchValue(this.data);
-    }
+    this.modo = data.modo;
+    this.form = this.fb.group(
+      data.modo === 'usuario'
+        ? {
+          nombre: [data.nombre || '', Validators.required],
+          tipo: ['Persona', Validators.required],
+          correo: ['', [Validators.required, Validators.email]]
+        }
+        : {
+          serie: [data.serie || '', Validators.required],
+          tipo: ['Carta', Validators.required]
+        }
+    );
+
   }
 
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.formulario.patchValue({ archivo: file });
-    }
+  cancelar() {
+    this.dialogRef.close();
   }
 
   guardar() {
-    if (this.formulario.valid) {
-      this.dialogRef.close(this.formulario.value);
-    } else {
-      this.formulario.markAllAsTouched();
+    if (this.form.valid) {
+      this.dialogRef.close(this.form.value);
     }
-  }
-
-  cerrar() {
-    this.dialogRef.close();
   }
 }

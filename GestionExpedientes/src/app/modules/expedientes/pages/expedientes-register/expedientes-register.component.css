@@ -1,0 +1,33 @@
+::ng-deep .mat-select-search-inner-row {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+::ng-deep .mat-select-search-input {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  font-size: 0.875rem;
+  padding: 0.5rem;
+}
+
+::ng-deep .mat-tooltip {
+  text-align: center;
+  white-space: normal;
+  /* permite saltos de línea */
+  max-width: 200px;
+  /* ajustable según lo necesites */
+  font-size: 13px;
+  padding: 8px 12px;
+  line-height: 1.4;
+}
+
+.label-obligatorio::after {
+  content: ' *';
+  color: #dc2626;
+  /* rojo */
+}

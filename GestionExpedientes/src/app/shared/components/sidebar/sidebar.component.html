@@ -94,6 +94,14 @@
           </button>
 
           <div *ngIf="submenuMaestras" class="ml-6 space-y-1">
+            <a (click)="irA('usuarios-expedientes')"
+              class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M17 20h5v-2a4 4 0 00-3-3.87M9 20h6m-6 0a4 4 0 00-3-3.87m3 3.87v-1a4 4 0 013-3.87m0 0a4 4 0 013 3.87v1M12 12a4 4 0 110-8 4 4 0 010 8z" />
+              </svg>
+              Usuarios expedientes
+            </a>
             <a (click)="irA('usuarios-emisores')"
               class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
               <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -103,14 +111,16 @@
               Usuarios emisores
             </a>
 
-            <a (click)="irA('usuarios-empresa')" class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+            <a (click)="irA('usuarios-empresa')"
+              class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
               <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M4 10h16v11H4zM9 3h6v7H9z" />
               </svg>
               Usuarios empresa
             </a>
 
-            <a (click)="irA('grupos-areas')" class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+            <a (click)="irA('grupos-areas')"
+              class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
               <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round"
                   d="M17 20h5v-2a4 4 0 00-3-3.87M9 20h6m-6 0a4 4 0 00-3-3.87m3 3.87v-1a4 4 0 013-3.87m0 0a4 4 0 013 3.87v1M4 7h16M4 10h16M4 13h16" />

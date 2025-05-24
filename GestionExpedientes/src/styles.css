@@ -10,6 +10,7 @@ body {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -20,5 +21,16 @@ body {
   animation: fade-in 0.6s ease-out;
 }
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+html,
+body {
+  height: 100%;
+}
+
+::ng-deep ngx-mat-select-search {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.875rem !important;
+}
