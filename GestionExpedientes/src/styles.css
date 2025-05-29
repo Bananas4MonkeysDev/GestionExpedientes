@@ -26,11 +26,9 @@ body {
   height: 100%;
 }
 
-::ng-deep ngx-mat-select-search {
-  display: block !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-  padding: 0.25rem 0.5rem !important;
-  font-size: 0.875rem !important;
+::ng-deep .custom-dialog-container .mat-dialog-container {
+  height: 90vh !important;
+  max-height: none !important;
+  display: flex;
+  flex-direction: column;
 }

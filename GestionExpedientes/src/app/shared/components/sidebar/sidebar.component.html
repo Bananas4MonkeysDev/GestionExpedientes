@@ -7,8 +7,9 @@
         <div class="flex items-center space-x-3">
           <img src="assets/DER.JPG" class="w-12 h-12 rounded-full border-2 border-white" alt="Perfil">
           <div>
-            <p class="font-semibold text-sm">Juan Pérez</p>
-            <p class="text-xs text-white/80">Administrador</p>
+            <p class="font-semibold text-sm">{{ nombreUsuario }}</p>
+            <p class="text-xs text-white/80">{{ tipoUsuario }}</p>
+
           </div>
         </div>
 
@@ -87,63 +88,62 @@
             </a>
           </div>
         </div>
-        <div *ngIf="coincideFiltro('maestras')" class="space-y-2">
-          <button (click)="toggleSubmenuMaestras()"
-            class="flex items-center justify-between w-full px-3 py-2 text-sm rounded hover:bg-[#F36C21] transition cursor-pointer">
-            <span class="flex items-center">
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M3 7h18M6 7V5a2 2 0 012-2h8a2 2 0 012 2v2M6 7h12v12H6z" />
+        <div *ngIf="tipoUsuario === 'ADMIN'">
+          <div *ngIf="coincideFiltro('maestras')" class="space-y-2">
+            <button (click)="toggleSubmenuMaestras()"
+              class="flex items-center justify-between w-full px-3 py-2 text-sm rounded hover:bg-[#F36C21] transition cursor-pointer">
+              <span class="flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M3 7h18M6 7V5a2 2 0 012-2h8a2 2 0 012 2v2M6 7h12v12H6z" />
+                </svg>
+                Maestras
+              </span>
+              <svg class="w-4 h-4 transform transition-transform" [ngClass]="{ 'rotate-90': submenuMaestras }"
+                fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
               </svg>
-              Maestras
-            </span>
-            <svg class="w-4 h-4 transform transition-transform" [ngClass]="{ 'rotate-90': submenuMaestras }" fill="none"
-              stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+            </button>
 
-          <div *ngIf="submenuMaestras" class="ml-6 space-y-1">
-            <a (click)="irA('usuarios-expedientes')"
-              class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M17 20h5v-2a4 4 0 00-3-3.87M9 20h6m-6 0a4 4 0 00-3-3.87m3 3.87v-1a4 4 0 013-3.87m0 0a4 4 0 013 3.87v1M12 12a4 4 0 110-8 4 4 0 010 8z" />
-              </svg>
-              Usuarios expedientes
-            </a>
-            <a (click)="irA('usuarios-emisores')"
-              class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M17 20h5v-2a4 4 0 00-3-3.87M9 20h6m-6 0a4 4 0 00-3-3.87m3 3.87v-1a4 4 0 013-3.87m0 0a4 4 0 013 3.87v1M12 12a4 4 0 110-8 4 4 0 010 8z" />
-              </svg>
-              Usuarios emisores
-            </a>
+            <div *ngIf="submenuMaestras" class="ml-6 space-y-1">
+              <a (click)="irA('usuarios-expedientes')"
+                class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M17 20h5v-2a4 4 0 00-3-3.87M9 20h6m-6 0a4 4 0 00-3-3.87m3 3.87v-1a4 4 0 013-3.87m0 0a4 4 0 013 3.87v1M12 12a4 4 0 110-8 4 4 0 010 8z" />
+                </svg>
+                Usuarios expedientes
+              </a>
+              <a (click)="irA('usuarios-emisores')"
+                class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M17 20h5v-2a4 4 0 00-3-3.87M9 20h6m-6 0a4 4 0 00-3-3.87m3 3.87v-1a4 4 0 013-3.87m0 0a4 4 0 013 3.87v1M12 12a4 4 0 110-8 4 4 0 010 8z" />
+                </svg>
+                Usuarios emisores
+              </a>
 
-            <a (click)="irA('usuarios-empresa')"
-              class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M4 10h16v11H4zM9 3h6v7H9z" />
-              </svg>
-              Usuarios empresa
-            </a>
+              <a (click)="irA('usuarios-empresa')"
+                class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M4 10h16v11H4zM9 3h6v7H9z" />
+                </svg>
+                Usuarios empresa
+              </a>
 
-            <a (click)="irA('grupos-areas')"
-              class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M17 20h5v-2a4 4 0 00-3-3.87M9 20h6m-6 0a4 4 0 00-3-3.87m3 3.87v-1a4 4 0 013-3.87m0 0a4 4 0 013 3.87v1M4 7h16M4 10h16M4 13h16" />
-              </svg>
-              Grupos & Áreas
-            </a>
+              <a (click)="irA('grupos-areas')"
+                class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M17 20h5v-2a4 4 0 00-3-3.87M9 20h6m-6 0a4 4 0 00-3-3.87m3 3.87v-1a4 4 0 013-3.87m0 0a4 4 0 013 3.87v1M4 7h16M4 10h16M4 13h16" />
+                </svg>
+                Grupos & Áreas
+              </a>
+            </div>
           </div>
         </div>
-
       </div>
-
     </div>
-
     <!-- Separador y Derechos reservados -->
     <div class="pt-4">
       <hr class="border-white/30 mb-2">

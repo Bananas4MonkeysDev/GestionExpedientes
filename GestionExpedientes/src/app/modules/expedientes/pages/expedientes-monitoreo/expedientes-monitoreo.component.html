@@ -1,4 +1,5 @@
-<div class="px-8 pt-8 flex flex-col space-y-4">
+<div class="px-8 pt-8 flex flex-col space-y-6">
+
     <!-- Breadcrumb -->
     <div class="text-sm text-gray-600 mb-2">
         <span class="text-[#004C77] font-semibold">Inicio</span> &gt;
@@ -13,41 +14,41 @@
     <hr class="border-t-2 border-[#004C77] rounded-full" />
 
     <!-- Buscador -->
-    <div class="flex justify-between items-center mt-4">
+    <div class="flex justify-between items-center">
         <input [(ngModel)]="filtro" type="text" placeholder="Buscar expediente..."
-            class="transition-all w-1/3 px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring focus:ring-[#004C77] focus:border-[#004C77] text-sm shadow-sm placeholder-gray-400" />
+            class="w-1/3 px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring focus:ring-[#004C77] focus:border-[#004C77] text-sm shadow-sm placeholder-gray-400" />
     </div>
 
-    <!-- Carrusel con flechas -->
+    <!-- Carrusel -->
     <div class="relative mt-4 flex items-center">
-        <!-- Flecha izquierda -->
         <button (click)="scrollCarrusel('left')"
-            class="cursor-pointer absolute left-0 z-10 bg-white rounded-full shadow p-2 hover:bg-gray-100">
+            class="absolute left-0 z-10 bg-white rounded-full shadow p-2 hover:bg-gray-100">
             <mat-icon>chevron_left</mat-icon>
         </button>
 
-        <!-- Carrusel scrollable -->
         <div #carrusel
             class="overflow-x-auto whitespace-nowrap space-x-4 mx-10 pb-2 flex scroll-smooth custom-scrollbar">
             <div *ngFor="let exp of expedientesFiltrados()" (click)="seleccionarExpediente(exp)"
-                class="inline-block bg-white rounded-lg shadow px-4 py-3 cursor-pointer hover:shadow-lg transition min-w-[200px] max-w-xs"
+                class="relative inline-block bg-white rounded-lg shadow px-4 py-3 cursor-pointer hover:shadow-lg transition min-w-[200px] max-w-xs"
                 [class.border-2]="exp === expedienteSeleccionado"
                 [class.border-[#004C77]]="exp === expedienteSeleccionado">
                 <h3 class="text-[#004C77] font-semibold text-sm truncate">{{ exp.numero }}</h3>
                 <p class="text-xs text-gray-500">Área: {{ exp.areaActual }}</p>
                 <p class="text-xs text-gray-500">Estado: {{ exp.estado }}</p>
+                <div *ngIf="exp.nuevo"
+                    class="absolute top-1 right-1 bg-green-600 text-white text-xs px-2 py-0.5 rounded">Nuevo</div>
             </div>
         </div>
 
-        <!-- Flecha derecha -->
         <button (click)="scrollCarrusel('right')"
-            class="cursor-pointer absolute right-0 z-10 bg-white rounded-full shadow p-2 hover:bg-gray-100">
+            class="absolute right-0 z-10 bg-white rounded-full shadow p-2 hover:bg-gray-100">
             <mat-icon>chevron_right</mat-icon>
         </button>
     </div>
 
     <!-- Detalle del expediente -->
     <div *ngIf="expedienteSeleccionado; else mensajeInicial" class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+
         <!-- Progreso -->
         <div class="bg-white p-6 rounded-lg shadow col-span-2">
             <h3 class="text-lg font-semibold text-[#004C77] mb-4">Progreso del Expediente</h3>
@@ -63,29 +64,49 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Documentos asociados -->
+            <div *ngIf="expedienteSeleccionado.documentos?.length" class="mt-8">
+                <h4 class="text-md font-semibold text-[#004C77] mb-2">Documentos asociados</h4>
+                <div class="space-y-2">
+                    <div *ngFor="let doc of expedienteSeleccionado.documentos"
+                        class="flex items-center justify-between bg-gray-50 px-4 py-2 rounded border border-gray-200 shadow-sm">
+                        <div class="text-sm text-gray-700">{{ doc.nombre }}</div>
+                        <a [href]="doc.url" target="_blank"
+                            class="text-[#004C77] text-sm underline hover:text-[#F36C21] cursor-pointer">
+                            Ver documento
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Decisión -->
+            <div class="flex justify-end mt-6 gap-4">
+                <button (click)="cancelarExpediente()"
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">
+                    Rechazar expediente
+                </button>
+                <button (click)="responderExpediente()"
+                    class="px-4 py-2 bg-[#004C77] text-white rounded hover:bg-[#003355] transition">
+                    Responder expediente
+                </button>
+            </div>
         </div>
 
         <!-- Resumen -->
         <div class="bg-white p-6 rounded-lg shadow">
             <h3 class="text-lg font-semibold text-[#004C77] mb-4">Resumen del expediente</h3>
-            <p><span class="font-semibold text-gray-600">Número:</span> {{ expedienteSeleccionado.numero }}</p>
-            <p><span class="font-semibold text-gray-600">Tipo:</span> {{ expedienteSeleccionado.tipo }}</p>
-            <p><span class="font-semibold text-gray-600">Fecha de registro:</span> {{ expedienteSeleccionado.fecha }}
-            </p>
-            <p><span class="font-semibold text-gray-600">Área actual:</span> {{ expedienteSeleccionado.areaActual }}</p>
-            <p><span class="font-semibold text-gray-600">Responsable:</span> {{ expedienteSeleccionado.responsable }}
-            </p>
-            <p><span class="font-semibold text-gray-600">Estado:</span>
-                <span [ngClass]="{
-          'text-green-600': expedienteSeleccionado.estado === 'FINALIZADO',
-          'text-orange-500': expedienteSeleccionado.estado === 'EN PROCESO',
-          'text-red-500': expedienteSeleccionado.estado === 'OBSERVADO'
-        }">{{ expedienteSeleccionado.estado }}</span>
-            </p>
+            <p><strong>Número:</strong> {{ expedienteSeleccionado.numero }}</p>
+            <p><strong>Tipo:</strong> {{ expedienteSeleccionado.tipo }}</p>
+            <p><strong>Fecha:</strong> {{ expedienteSeleccionado.fecha }}</p>
+            <p><strong>Área:</strong> {{ expedienteSeleccionado.areaActual }}</p>
+            <p><strong>Responsable:</strong> {{ expedienteSeleccionado.responsable }}</p>
+            <p><strong>Estado:</strong> {{ expedienteSeleccionado.estado }}</p>
         </div>
     </div>
 
     <ng-template #mensajeInicial>
         <div class="text-center mt-10 text-gray-500 italic">Seleccione un expediente para obtener detalles</div>
     </ng-template>
+
 </div>

@@ -1,0 +1,54 @@
+<div class="w-full max-w-4xl p-6 bg-white rounded-xl shadow space-y-6">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-[#004C77]">Agregar / Editar Cargo</h2>
+        <button (click)="cerrar()" class="text-gray-400 hover:text-red-600 transition-colors" title="Cerrar"
+            type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 cursor-pointer" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 items-start">
+        <!-- Drag & Drop -->
+        <div class="border-2 border-dashed rounded-lg p-6 text-center transition-all"
+            [ngClass]="{ 'border-[#004C77] bg-blue-50': arrastrandoCargo, 'border-gray-300 bg-gray-50': !arrastrandoCargo }"
+            (dragover)="arrastrandoCargo = true" (dragleave)="arrastrandoCargo = false"
+            (drop)="onFileDropCargo($event)">
+            <label for="cargoInput" class="cursor-pointer flex flex-col items-center space-y-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#004C77]" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M16 12l-4-4m0 0l-4 4m4-4v12" />
+                </svg>
+                <span class="text-sm text-gray-600">Cargar documento de cargo (opcional)</span>
+                <span class="text-xs text-gray-400">PDF únicamente</span>
+            </label>
+            <input id="cargoInput" type="file" accept=".pdf" class="hidden" (change)="onCargoSelected($event)" />
+            <p class="text-sm mt-2 text-green-600" *ngIf="cargo?.name">{{ cargo?.name }}</p>
+        </div>
+
+        <!-- Formulario -->
+        <div class="flex flex-col justify-between">
+            <div class="flex items-center gap-4">
+                <div class="flex-1">
+                    <label class="text-sm font-medium text-gray-700">Fecha del cargo <span
+                            class="text-red-600">*</span></label>
+                    <input type="date" [(ngModel)]="fechaCargo" required class="border rounded px-3 py-2 w-full" />
+                </div>
+                <div class="flex-1">
+                    <label class="text-sm font-medium text-gray-700">Hora <span class="text-red-600">*</span></label>
+                    <input type="time" [(ngModel)]="horaCargo" class="border rounded px-3 py-2 w-full" />
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-center">
+                <button (click)="enviarCargo()"
+                    class="cursor-pointer w-full max-w-[300px] bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 transition">
+                    Enviar cargo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

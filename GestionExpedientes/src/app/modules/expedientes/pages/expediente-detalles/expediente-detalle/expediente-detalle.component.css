@@ -1,0 +1,79 @@
+.mat-icon {
+    font-size: 20px;
+    transition: transform 0.2s ease;
+}
+
+.mat-icon:hover {
+    transform: scale(1.1);
+    color: #F36C21;
+}
+
+/* Para suavizar el desplazamiento del slider si se desea */
+.scroll-smooth::-webkit-scrollbar {
+    height: 0px;
+}
+
+.scroll-smooth::-webkit-scrollbar-thumb {
+    background: #004C77;
+    border-radius: 9999px;
+}
+
+.slider-container {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 1rem 2.5rem;
+}
+
+.slider-container::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.slider-card {
+    min-width: 180px;
+    max-width: 180px;
+    flex-shrink: 0;
+    background-color: #f9fafb;
+    border: 1px solid #ccc;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.slider-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2rem;
+    height: 2rem;
+    background-color: #004C77;
+    color: white;
+    border-radius: 50%;
+    font-size: 1.25rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    cursor: pointer;
+}
+
+.slider-arrow.left {
+    left: 0;
+}
+
+.slider-arrow.right {
+    right: 0;
+}
+
+.slider-arrow:hover {
+  background-color: #F36C21;
+  color: white;
+  border-color: #F36C21;
+}

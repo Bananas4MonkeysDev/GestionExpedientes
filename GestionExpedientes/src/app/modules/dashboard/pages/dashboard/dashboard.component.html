@@ -1,1 +1,134 @@
-<p>dashboard works!</p>
+<div class="min-h-screen bg-gray-100 p-6 space-y-2">
+
+  <!-- Breadcrumb -->
+  <div class="text-sm text-gray-600">
+    <span class="text-[#004C77] font-semibold">Inicio</span> &gt;
+    <span class="text-[#F36C21] font-semibold">Dashboard</span>
+  </div>
+
+  <!-- Título -->
+  <h1 class="text-2xl font-bold text-[#004C77]">Dashboard</h1>
+  <hr class="border-t-2 border-[#004C77] rounded-full mb-4" />
+
+  <!-- KPI -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-white rounded-xl shadow p-4 text-center">
+      <h3 class="text-sm text-gray-600">Total de Expedientes</h3>
+      <p class="text-2xl font-bold text-[#004C77]">{{ totalExpedientes }}</p>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <mat-tab-group class="!text-[#004C77]">
+    <!-- EXPEDIENTES -->
+    <mat-tab label="Expedientes">
+      <div class="mt-6">
+        <table mat-table [dataSource]="dataSourceExpedientes" class="w-full text-sm">
+          <ng-container matColumnDef="codigo">
+            <th mat-header-cell *matHeaderCellDef>Código</th>
+            <td mat-cell *matCellDef="let exp">{{ exp.codigo }}</td>
+          </ng-container>
+          <ng-container matColumnDef="asunto">
+            <th mat-header-cell *matHeaderCellDef>Asunto</th>
+            <td mat-cell *matCellDef="let exp">{{ exp.asunto }}</td>
+          </ng-container>
+          <ng-container matColumnDef="proyecto">
+            <th mat-header-cell *matHeaderCellDef>Proyecto</th>
+            <td mat-cell *matCellDef="let exp">{{ exp.proyecto }}</td>
+          </ng-container>
+          <ng-container matColumnDef="fecha">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+            <td mat-cell *matCellDef="let exp">{{ exp.fecha }}</td>
+          </ng-container>
+          <ng-container matColumnDef="tipo">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let exp">{{ exp.tipo }}</td>
+          </ng-container>
+          <ng-container matColumnDef="reservado">
+            <th mat-header-cell *matHeaderCellDef>Reservado</th>
+            <td mat-cell *matCellDef="let exp">{{ exp.reservado ? 'Sí' : 'No' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let exp">
+              <mat-icon matTooltip="Ver Detalle" class="cursor-pointer"
+                (click)="abrirDetalle(exp)">visibility</mat-icon>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumnsExpedientes"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumnsExpedientes;"></tr>
+        </table>
+        <mat-paginator #paginatorExpedientes [pageSize]="5"></mat-paginator>
+      </div>
+    </mat-tab>
+
+    <!-- CARGOS -->
+    <mat-tab label="Cargos Generados">
+      <div class="mt-6">
+        <table mat-table [dataSource]="dataSourceCargos" class="w-full text-sm">
+          <ng-container matColumnDef="codigoCargo">
+            <th mat-header-cell *matHeaderCellDef>Código</th>
+            <td mat-cell *matCellDef="let c">{{ c.codigoCargo }}</td>
+          </ng-container>
+          <ng-container matColumnDef="fecha">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+            <td mat-cell *matCellDef="let c">{{ c.fecha }}</td>
+          </ng-container>
+          <ng-container matColumnDef="hora">
+            <th mat-header-cell *matHeaderCellDef>Hora</th>
+            <td mat-cell *matCellDef="let c">{{ c.hora }}</td>
+          </ng-container>
+          <ng-container matColumnDef="expediente">
+            <th mat-header-cell *matHeaderCellDef>Expediente</th>
+            <td mat-cell *matCellDef="let c">{{ c.expediente }}</td>
+          </ng-container>
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let c">
+              <a [href]="c.archivo" target="_blank">
+                <mat-icon matTooltip="Ver documento" class="cursor-pointer">visibility</mat-icon>
+              </a>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumnsCargos"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumnsCargos;"></tr>
+        </table>
+        <mat-paginator #paginatorCargos [pageSize]="5"></mat-paginator>
+      </div>
+    </mat-tab>
+
+    <!-- DOCUMENTOS -->
+    <mat-tab label="Documentos">
+      <div class="mt-6">
+        <table mat-table [dataSource]="dataSourceDocumentos" class="w-full text-sm">
+          <ng-container matColumnDef="nombre">
+            <th mat-header-cell *matHeaderCellDef>Nombre</th>
+            <td mat-cell *matCellDef="let d">{{ d.nombre }}</td>
+          </ng-container>
+          <ng-container matColumnDef="peso">
+            <th mat-header-cell *matHeaderCellDef>Peso</th>
+            <td mat-cell *matCellDef="let d">{{ d.peso }}</td>
+          </ng-container>
+          <ng-container matColumnDef="expediente">
+            <th mat-header-cell *matHeaderCellDef>Expediente</th>
+            <td mat-cell *matCellDef="let d">{{ d.expediente }}</td>
+          </ng-container>
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let d">
+              <a [href]="d.url" target="_blank">
+                <mat-icon matTooltip="Visualizar" class="cursor-pointer">visibility</mat-icon>
+              </a>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumnsDocumentos"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumnsDocumentos;"></tr>
+        </table>
+        <mat-paginator #paginatorDocumentos [pageSize]="5"></mat-paginator>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

@@ -1,15 +1,27 @@
-<!-- CONTENEDOR GLOBAL -->
-<div class="min-h-screen bg-gray-100 p-8 space-y-4">
-
-  <!-- Breadcrumb -->
+<!-- Breadcrumb -->
+<!-- Breadcrumb actualizado -->
+<!-- CONTENEDOR PESTAÑA 1 -->
+<div class="min-h-screen bg-gray-100 p-4 -space-y-8">
   <div class="text-sm text-gray-600 mb-2">
     <span class="text-[#004C77] font-semibold">Inicio</span> &gt;
     <span class="text-[#004C77] font-semibold">Expedientes</span> &gt;
-    <span class="text-[#F36C21] font-semibold">Adicionar expediente</span>
+    <span [ngClass]="{
+  'text-[#F36C21]': !tipoExpediente,
+  'text-[#004C77]': tipoExpediente
+}" class="font-semibold">
+      Adicionar expediente
+    </span>
+    <ng-container *ngIf="tipoExpediente">
+      &gt; <span class="text-[#F36C21] font-semibold capitalize">{{ tipoExpediente }}</span>
+    </ng-container>
   </div>
 
-  <!-- Título -->
-  <h1 class="text-2xl font-bold text-[#004C77] mb-4">Adicionar Expediente</h1>
+  <!-- Título actualizado -->
+  <h1 class="text-2xl font-bold text-[#004C77] mb-4">
+    Adicionar Expediente
+    <span *ngIf="tipoExpediente"> - {{ tipoExpediente | titlecase }}</span>
+  </h1>
+
 
   <!-- Barra de pasos -->
   <div class="flex items-center gap-2 mb-6">
@@ -23,10 +35,10 @@
   <div *ngIf="pasoActual === 1" class="bg-white rounded-xl shadow p-8 space-y-6">
     <h2 class="text-xl font-semibold text-[#004C77]">Seleccionar tipo de expediente</h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <button (click)="seleccionarTipo('interno')"
+      <button (click)="seleccionarTipo('Emisor')"
         class="cursor-pointer w-full py-1.5 bg-[#004C77] text-white font-semibold rounded hover:opacity-90 transition">Expediente
         Emisor</button>
-      <button (click)="seleccionarTipo('externo')"
+      <button (click)="seleccionarTipo('Receptor')"
         class="cursor-pointer w-full py-1.5 bg-[#F36C21] text-white font-semibold rounded hover:opacity-90 transition">Expediente
         Receptor</button>
     </div>
@@ -53,12 +65,24 @@
       <div class="md:col-span-2">
         <label class="text-sm font-medium text-gray-700 label-obligatorio">Usuario emisor</label>
         <mat-form-field matTooltip="Ingresa el/los remitente(s) del expediente" appearance="outline" class="w-full">
-          <mat-select [formControl]="controlUsuario" multiple class="max-w-full">
-            <ngx-mat-select-search [formControl]="searchCtrlUsuario" placeholderLabel="Buscar usuario..."
-              (keydown.enter)="abrirDialogoAgregarUsuario(searchCtrlUsuario.value || '', 'to')"
-              noEntriesFoundLabel="No encontrado. Presiona ENTER para agregar"></ngx-mat-select-search>
-
-            <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo">
+          <mat-select [formControl]="controlUsuario" multiple class="max-w-full" (closed)="reiniciarFiltroTipoTo()">
+            <!-- Agrupar el buscador y el filtro en un mat-option separado -->
+            <mat-option class="!cursor-default" disabled>
+              <ngx-mat-select-search [formControl]="searchCtrlUsuario" placeholderLabel="Buscar referencia..."
+                (keydown.enter)="abrirDialogoAgregarUsuario(searchCtrlUsuario.value || '','to')"
+                noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nueva referencia"></ngx-mat-select-search>
+            </mat-option>
+            <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
+              <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por segmento:</label>
+              <select [(ngModel)]="filtroTipoUsuarioTo" [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="filtrarUsuariosTo()"
+                class="cursor-pointer text-sm border border-gray-300 rounded px-2 py-1 bg-white focus-within:border-[#004C77] transition-colors duration-200 shadow-sm">
+                <option value="" class="cursor-pointer">Todos</option>
+                <option *ngFor="let tipo of tiposUsuario" [value]="tipo" class="cursor-pointer">{{ tipo }}</option>
+              </select>
+            </div>
+            <!-- Mostrar opciones agrupadas -->
+            <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo" [hidden]="!mostrarGrupo(tipo)">
               <mat-option *ngFor="let user of obtenerUsuariosPorTipo(usuariosFiltradosTo, tipo)" [value]="user.nombre">
                 {{ user.nombre }} - {{ user.correo }}
               </mat-option>
@@ -69,16 +93,27 @@
       <div class="md:col-span-2">
         <label class="text-sm font-medium text-gray-700 label-obligatorio">Usuario destinatario (CC)</label>
         <mat-form-field matTooltip="Ingresa el/los destinatario(s) en copia" appearance="outline" class="w-full">
-          <mat-select [formControl]="controlUsuarioCc" multiple>
-            <ngx-mat-select-search [formControl]="searchCtrlCc" placeholderLabel="Buscar usuario..."
-              (keydown.enter)="abrirDialogoAgregarUsuario(searchCtrlCc.value || '', 'cc')"
-              noEntriesFoundLabel="No encontrado. Presiona ENTER para agregar"></ngx-mat-select-search>
-
-            <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo">
+          <mat-select [formControl]="controlUsuarioCc" multiple class="max-w-full" (closed)="reiniciarFiltroTipoCc()">
+            <mat-option class="!cursor-default" disabled>
+              <ngx-mat-select-search [formControl]="searchCtrlCc" placeholderLabel="Buscar referencia..."
+                (keydown.enter)="abrirDialogoAgregarUsuario(searchCtrlCc.value || '','cc')"
+                noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nueva referencia"></ngx-mat-select-search>
+            </mat-option>
+            <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
+              <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por segmento:</label>
+              <select [(ngModel)]="filtroTipoUsuarioCc" [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="filtrarUsuariosCc()"
+                class="cursor-pointer text-sm border border-gray-300 rounded px-2 py-1 bg-white focus-within:border-[#004C77] transition-colors duration-200 shadow-sm">
+                <option value="" class="cursor-pointer">Todos</option>
+                <option *ngFor="let tipo of tiposUsuario" [value]="tipo" class="cursor-pointer">{{ tipo }}</option>
+              </select>
+            </div>
+            <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo" [hidden]="!mostrarGrupo(tipo)">
               <mat-option *ngFor="let user of obtenerUsuariosPorTipo(usuariosFiltradosCc, tipo)" [value]="user.nombre">
                 {{ user.nombre }} - {{ user.correo }}
               </mat-option>
             </mat-optgroup>
+
           </mat-select>
         </mat-form-field>
       </div>
@@ -87,15 +122,29 @@
         <label class="text-sm font-medium text-gray-700 label-obligatorio">Referencia(s)</label>
         <mat-form-field appearance="outline" class="w-full"
           matTooltip="Relaciona el expediente con una carta, documento o expediente anterior">
-          <mat-select [formControl]="controlReferencia" multiple>
-            <ngx-mat-select-search [formControl]="searchCtrlReferencia" placeholderLabel="Buscar referencia..."
-              (keydown.enter)="abrirDialogoAgregarReferencia(searchCtrlReferencia.value || '')"
-              noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nueva referencia"></ngx-mat-select-search>
+          <mat-select [formControl]="controlReferencia" multiple class="max-w-full"
+            (closed)="reiniciarFiltroTipoReferencia()">
+            <mat-option class="!cursor-default" disabled>
+              <ngx-mat-select-search [formControl]="searchCtrlReferencia" placeholderLabel="Buscar referencia..."
+                (keydown.enter)="abrirDialogoAgregarReferencia(searchCtrlReferencia.value || '')"
+                noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nueva referencia"></ngx-mat-select-search>
+            </mat-option>
+            <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
+              <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por tipo:</label>
+              <select [(ngModel)]="filtroTipoReferencia" [ngModelOptions]="{ standalone: true }"
+                class="cursor-pointer text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:border-[#004C77] transition-colors duration-200 shadow-sm"
+                (ngModelChange)="filtrarReferencias()">
+                <option value="">Todos</option>
+                <option *ngFor="let tipo of tiposReferencia" [value]="tipo">{{ tipo }}</option>
+              </select>
+            </div>
             <mat-optgroup *ngFor="let tipo of tiposReferencia" [label]="tipo">
-              <mat-option *ngFor="let ref of obtenerReferenciasPorTipo(tipo)" [value]="ref.serie">
-                {{ ref.serie }}
+              <mat-option *ngFor="let ref of obtenerReferenciasPorTipo(tipo)" [value]="ref.id">
+                {{ ref.serie }} - {{ ref.asunto }}
               </mat-option>
             </mat-optgroup>
+
+
           </mat-select>
         </mat-form-field>
       </div>
@@ -116,13 +165,6 @@
           <select formControlName="proyecto" class="w-full px-3 py-2 border rounded">
             <option value="" disabled selected>Seleccione</option>
             <option *ngFor="let proyecto of proyectos" [value]="proyecto">{{ proyecto }}</option>
-          </select>
-        </div>
-        <div class="flex-1">
-          <label class="text-sm font-medium text-gray-700 label-obligatorio">Tipo de documento del expediente</label>
-          <select formControlName="tipoDocumentoEntrada" class="w-full px-3 py-2 border rounded">
-            <option value="" disabled selected>Seleccione</option>
-            <option *ngFor="let tipo of tiposDocumento" [value]="tipo">{{ tipo }}</option>
           </select>
         </div>
       </div>
@@ -166,15 +208,6 @@
   <!-- PASO 3 -->
   <div *ngIf="pasoActual === 3" class="bg-white rounded-xl shadow p-8 space-y-6">
     <h2 class="text-xl font-semibold text-[#004C77]">Carga de documentos del expediente</h2>
-
-    <!-- Campos superiores -->
-    <form [formGroup]="formularioDocumento" class="grid grid-cols-1 md:grid-cols-3 gap-6 gap-y-2">
-      <div>
-        <label class="text-sm font-medium text-gray-700">Detalle</label>
-        <input type="text" formControlName="detalle3" class="w-full px-3 py-2 border rounded" />
-      </div>
-    </form>
-
 
     <!-- Drag & Drop -->
     <div class="border-2 border-dashed rounded-lg p-10 text-center transition-all duration-300" [ngClass]="{
@@ -271,7 +304,7 @@
 
       <div class="flex items-center gap-4">
         <button type="button" (click)="omitirCargaDocumentos()"
-          class="text-sm text-[#F36C21] hover:underline cursor-pointer">Omitir carga de documentos</button>
+          class="text-sm text-[#F36C21] hover:underline cursor-pointer">Registrar sin carga de documentos</button>
 
         <button (click)="onSubmit()" [disabled]="documentos.length === 0 || !todosLosDocumentosTienenTipo()"
           class="bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer">
@@ -280,38 +313,59 @@
 
       </div>
     </div>
-
-    <!-- Mensaje de éxito -->
-    <div *ngIf="exito" class="text-center mt-4">
-      <div class="inline-block bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded shadow">
-        Expediente registrado exitosamente
-      </div>
-    </div>
   </div>
-  <!-- PASO 4: Confirmación -->
-  <div *ngIf="pasoActual === 4" class="bg-white rounded-xl shadow p-8 space-y-6 text-center">
-    <div class="flex flex-col items-center justify-center space-y-4">
-      <!-- Icono de éxito animado (puedes usar Lottie o SVG) -->
-      <svg class="w-16 h-16 text-green-500 animate-bounce" fill="none" stroke="currentColor" stroke-width="2"
+  <!-- PASO 4: Confirmación y envío de cargo -->
+  <div *ngIf="pasoActual === 4" class="bg-white rounded-xl shadow p-8 space-y-6">
+    <div class="text-center space-y-4">
+      <svg class="w-16 h-16 text-green-500 animate-bounce mx-auto" fill="none" stroke="currentColor" stroke-width="2"
         viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
       </svg>
-
       <h2 class="text-2xl font-bold text-[#004C77]">¡Expediente registrado con éxito!</h2>
-      <p class="text-gray-600 max-w-lg mx-auto">
-        El expediente ha sido registrado y el cargo fue enviado al usuario emisor al correo:
-        <span class="font-medium text-[#F36C21]">
-          {{ correoEmisor }}
-        </span>
-      </p>
-      <!-- Botones -->
-      <div class="flex justify-center gap-4 mt-6">
-        <button (click)="irAlInicio()" class="bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 transition">Ir
-          al inicio</button>
-        <button (click)="visualizarExpediente()"
-          class="bg-[#F36C21] text-white px-6 py-2 rounded hover:opacity-90 transition">Visualizar expediente</button>
+      
+      <p class="text-gray-600 max-w-xl mx-auto">Puede generar y enviar el cargo.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 items-start mt-8">
+      <!-- Arrastrar documento -->
+      <div class="border-2 border-dashed rounded-lg p-6 transition-all text-center"
+        [ngClass]="{ 'border-[#004C77] bg-blue-50': arrastrandoCargo, 'border-gray-300 bg-gray-50': !arrastrandoCargo }"
+        (dragover)="arrastrandoCargo = true" (dragleave)="arrastrandoCargo = false" (drop)="onFileDropCargo($event)">
+        <label for="cargoInput" class="cursor-pointer flex flex-col items-center space-y-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#004C77]" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M16 12l-4-4m0 0l-4 4m4-4v12" />
+          </svg>
+          <span class="text-sm text-gray-600">Cargar documento de cargo (opcional)</span>
+          <span class="text-xs text-gray-400">PDF únicamente</span>
+        </label>
+        <input id="cargoInput" type="file" accept=".pdf" class="hidden" (change)="onCargoSelected($event)" />
+        <p class="text-sm mt-2 text-green-600" *ngIf="cargo?.name"> {{ cargo?.name }}</p>
+      </div>
+
+      <!-- Formulario lateral -->
+      <div class="flex flex-col justify-between">
+        <div class="flex items-center gap-4">
+          <div class="flex flex-col flex-1">
+            <label class="text-sm font-medium text-gray-700">Fecha del cargo <span class="text-red-600">*</span></label>
+            <input type="date" [(ngModel)]="fechaCargo" required class="border rounded px-3 py-2" />
+          </div>
+
+          <!-- Hora -->
+          <div class="flex flex-col flex-1">
+            <label class="text-sm font-medium text-gray-700">Hora <span class="text-red-600">*</span></label>
+            <input type="time" [(ngModel)]="horaCargo" class="border rounded px-3 py-2" />
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-center">
+          <button (click)="enviarCargo()"
+            class="cursor-pointer w-full max-w-[700px] bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 transition">
+            Enviar cargo
+          </button>
+        </div>
       </div>
     </div>
   </div>
-
 </div>

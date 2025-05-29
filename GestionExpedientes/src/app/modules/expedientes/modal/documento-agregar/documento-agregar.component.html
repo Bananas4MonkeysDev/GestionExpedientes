@@ -1,76 +1,104 @@
-<mat-dialog-content [formGroup]="form" class="bg-white rounded-2xl w-[520px] px-10 pt-6 pb-6 shadow-xl space-y-6">
+<div [formGroup]="form" class="h-full flex flex-col overflow-hidden px-6 py-4 text-[13px] leading-tight">
 
-  <!-- Título centrado -->
-  <h2 class="text-xl font-bold text-[#004C77] flex items-center justify-center gap-2">
+  <!-- Título -->
+  <h2 class="text-lg font-bold text-[#004C77] flex items-center justify-center gap-2 mb-4">
     <mat-icon fontIcon="person_add" class="text-[#004C77] text-xl">person_add</mat-icon>
     {{ modo === 'usuario' ? 'Agregar nuevo usuario' : 'Agregar nueva referencia' }}
   </h2>
 
-  <!-- Campo: Nombre o Serie -->
-  <div>
-    <label class="block text-sm font-semibold text-gray-700 mb-1">
-      {{ modo === 'usuario' ? 'Nombre completo' : 'Serie de referencia' }} <span class="text-red-500">*</span>
-    </label>
-    <mat-form-field appearance="outline" class="w-full !m-0 rounded-xl">
-      <input matInput [formControlName]="modo === 'usuario' ? 'nombre' : 'serie'"
-        [placeholder]="modo === 'usuario' ? 'Ej. Luis Cruzado' : 'Ej. DOC-001-2025'" class="text-sm" />
-      <mat-error
-        *ngIf="form.get(modo === 'usuario' ? 'nombre' : 'serie')?.touched && form.get(modo === 'usuario' ? 'nombre' : 'serie')?.hasError('required')">
-        Este campo es obligatorio.
-      </mat-error>
-    </mat-form-field>
+  <!-- Contenido con scroll -->
+  <div class="flex-1 overflow-y-auto pr-1">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- Nombre o Serie -->
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">
+          {{ modo === 'usuario' ? 'Nombre completo' : 'Serie de referencia' }} <span class="text-red-500">*</span>
+        </label>
+        <mat-form-field appearance="outline" class="w-full !m-0">
+          <input matInput [formControlName]="modo === 'usuario' ? 'nombre' : 'serie'"
+            [placeholder]="modo === 'usuario' ? 'Ej. Luis Cruzado' : 'Ej. DOC-001-2025'" />
+          <mat-error *ngIf="form.get(modo === 'usuario' ? 'nombre' : 'serie')?.hasError('required')">
+            Este campo es obligatorio.
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Correo (solo si es usuario) -->
+      <div *ngIf="modo === 'usuario'">
+        <label class="block text-xs font-medium text-gray-700 mb-1">Correo electrónico <span
+            class="text-red-500">*</span></label>
+        <mat-form-field appearance="outline" class="w-full !m-0">
+          <input matInput formControlName="correo" placeholder="ejemplo@correo.com" />
+          <mat-error *ngIf="form.get('correo')?.hasError('required')">Este campo es obligatorio.</mat-error>
+          <mat-error *ngIf="form.get('correo')?.hasError('email')">Correo inválido.</mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- CAMPOS ADICIONALES PARA USUARIO -->
+      <ng-container *ngIf="modo === 'usuario'">
+
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">DNI</label>
+          <mat-form-field appearance="outline" class="w-full !m-0">
+            <input matInput formControlName="dni" placeholder="Ej. 12345678" />
+          </mat-form-field>
+        </div>
+        <!-- Contraseña -->
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Contraseña <span
+              class="text-red-500">*</span></label>
+          <mat-form-field appearance="outline" class="w-full !m-0">
+            <input matInput type="password" formControlName="contraseña" placeholder="********" />
+            <mat-error *ngIf="form.get('contraseña')?.hasError('required')">Este campo es obligatorio.</mat-error>
+          </mat-form-field>
+        </div>
+        <!-- Rol -->
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Rol <span class="text-red-500">*</span></label>
+          <mat-form-field appearance="outline" class="w-full !m-0">
+            <mat-select formControlName="rol">
+              <mat-option value="EDICION">Edicion</mat-option>
+              <mat-option value="LECTURA">Lectura</mat-option>
+              <mat-option value="NODESCARGA">Lectura sin descarga</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <!-- Tipo Identidad -->
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Tipo Identidad</label>
+          <mat-form-field appearance="outline" class="w-full !m-0">
+            <mat-select formControlName="tipoIdentidad">
+              <mat-option value="PERSONA">Persona</mat-option>
+              <mat-option value="ENTIDAD">Entidad</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <!-- Tipo Usuario -->
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Tipo Usuario</label>
+          <mat-form-field appearance="outline" class="w-full !m-0">
+            <mat-select formControlName="tipoUsuario">
+              <mat-option value="ADMIN">Admin</mat-option>
+              <mat-option value="INTERNO">Interno</mat-option>
+              <mat-option value="EXTERNO">Externo</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+      </ng-container>
+    </div>
   </div>
-  <!-- Campo: Correo -->
-  <div>
-    <label class="block text-sm font-semibold text-gray-700 mb-1">Correo electrónico <span
-        class="text-red-500">*</span></label>
-    <mat-form-field appearance="outline" class="w-full !m-0 rounded-xl">
-      <input matInput formControlName="correo" placeholder="ejemplo@correo.com" class="text-sm" />
-      <mat-error *ngIf="form.get('correo')?.touched && form.get('correo')?.hasError('required')">
-        Este campo es obligatorio.
-      </mat-error>
-      <mat-error *ngIf="form.get('correo')?.touched && form.get('correo')?.hasError('email')">
-        Correo inválido.
-      </mat-error>
-    </mat-form-field>
+
+  <!-- BOTONES -->
+  <div class="pt-4 flex justify-end gap-3 border-t border-gray-200 mt-4">
+    <button mat-stroked-button type="button"
+      class="rounded-full px-6 text-xs border-[#004C77] text-[#004C77] hover:bg-[#004C77]/10"
+      (click)="cancelar()">Cancelar</button>
+
+    <button mat-flat-button type="submit" color="primary"
+      class="rounded-full px-8 text-xs bg-[#F36C21] hover:bg-[#d4570f] text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
+      (click)="guardar()" [disabled]="form.invalid">Agregar</button>
   </div>
 
-  <!-- Campo: Tipo -->
-  <div>
-    <label class="block text-sm font-semibold text-gray-700 mb-1">
-      {{ modo === 'usuario' ? 'Tipo de usuario' : 'Tipo de referencia' }} <span class="text-red-500">*</span>
-    </label>
-    <mat-form-field appearance="outline" class="w-full !m-0 rounded-xl">
-      <mat-select formControlName="tipo" class="text-sm">
-        <ng-container *ngIf="modo === 'usuario'; else tipoReferencia">
-          <mat-option value="Persona">Persona</mat-option>
-          <mat-option value="Entidad">Entidad</mat-option>
-        </ng-container>
-        <ng-template #tipoReferencia>
-          <mat-option value="Carta">Carta</mat-option>
-          <mat-option value="Documento">Documento</mat-option>
-          <mat-option value="Expediente">Expediente</mat-option>
-        </ng-template>
-      </mat-select>
-      <mat-error *ngIf="form.get('tipo')?.touched && form.get('tipo')?.hasError('required')">
-        Selecciona un tipo.
-      </mat-error>
-    </mat-form-field>
-  </div>
-
-
-  <!-- Botones -->
-  <div class="flex justify-end gap-4 pt-3">
-    <button mat-stroked-button class="rounded-full px-6 text-sm border-[#004C77] text-[#004C77] hover:bg-[#004C77]/10"
-      (click)="cancelar()">
-      Cancelar
-    </button>
-
-    <button mat-flat-button color="primary"
-      class="rounded-full px-6 text-sm bg-[#F36C21] hover:bg-[#d4570f] text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
-      (click)="guardar()" [disabled]="form.invalid">
-      Agregar
-    </button>
-  </div>
-
-</mat-dialog-content>
+</div>

@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
+import { UsuarioService } from '../../../../core/services/usuario.service';
 
 @Component({
   selector: 'app-login',
@@ -17,7 +18,8 @@ export class LoginComponent {
   errorLogin = false;
   verPassword = false;
 
-  constructor(private fb: FormBuilder, private router: Router) {
+  constructor(private fb: FormBuilder, private router: Router, private usuarioService: UsuarioService
+  ) {
     this.formularioLogin = this.fb.group({
       usuario: ['', Validators.required],
       password: ['', Validators.required]
@@ -31,16 +33,25 @@ export class LoginComponent {
 
       const { usuario, password } = this.formularioLogin.value;
 
-      setTimeout(() => {
-        if (usuario === 'admin' && password === 'admin') {
-          this.router.navigate(['/home']);
-        } else {
+      const loginData = {
+        correo: usuario,
+        contraseña: password
+      };
+
+      this.usuarioService.login(loginData).subscribe({
+        next: (response) => {
+          const token = response.token;
+          localStorage.setItem('jwt', token); this.router.navigate(['/home']);
+        },
+        error: (err) => {
+          console.error('Error en login:', err);
           this.errorLogin = true;
+          this.cargando = false;
         }
-        this.cargando = false;
-      }, 1000);
+      });
     } else {
       this.formularioLogin.markAllAsTouched();
     }
   }
+
 }

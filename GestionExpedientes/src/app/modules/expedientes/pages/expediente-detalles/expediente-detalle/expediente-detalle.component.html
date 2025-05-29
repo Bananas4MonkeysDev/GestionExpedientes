@@ -1,0 +1,200 @@
+<div class="bg-gray-100 p-8">
+    <!-- Breadcrumb -->
+    <div class="text-sm text-gray-600 mb-4">
+        <span class="text-[#004C77] font-semibold">Inicio</span> &gt;
+        <span class="text-[#004C77] font-semibold">Expediente T56-7C41</span> &gt;
+        <span class="text-[#F36C21] font-semibold">Detalles</span>
+    </div>
+
+    <!-- Título -->
+    <h1 class="text-2xl font-bold text-[#004C77]">Detalles del Expediente</h1>
+
+    <!-- Línea divisora con margen inferior -->
+    <hr class="border-t-2 border-[#004C77] rounded-full mb-6" />
+
+    <!-- Contenedor principal -->
+    <div class="w-full bg-white shadow rounded-xl p-6 space-y-6">
+
+        <div class="flex gap-6 text-sm font-medium">
+            <button (click)="seccion = 'expediente'"
+                [ngClass]="seccion === 'expediente' ? 'border-b-2 border-[#004C77] text-[#004C77]' : 'text-gray-500 hover:text-[#004C77]'"
+                class="cursor-pointer pb-2">Expediente</button>
+            <button (click)="seccion = 'estado'"
+                [ngClass]="seccion === 'estado' ? 'border-b-2 border-[#004C77] text-[#004C77]' : 'text-gray-500 hover:text-[#004C77]'"
+                class="cursor-pointer pb-2">Estado del Proceso</button>
+            <button (click)="seccion = 'auditoria'"
+                [ngClass]="seccion === 'auditoria' ? 'border-b-2 border-[#004C77] text-[#004C77]' : 'text-gray-500 hover:text-[#004C77]'"
+                class="cursor-pointer pb-2">Auditoría / Trazabilidad</button>
+        </div>
+
+        <!-- CONTENIDO -->
+        <ng-container [ngSwitch]="seccion">
+
+            <!-- DETALLE EXPEDIENTE -->
+            <!-- DETALLE EXPEDIENTE -->
+            <div *ngSwitchCase="'expediente'" class="space-y-6 text-sm text-gray-700">
+
+                <!-- Datos principales en grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8 text-sm">
+
+                    <div>
+                        <p class="text-gray-500 font-medium">Tipo</p>
+                        <p class="text-[#004C77] font-semibold">{{ expediente.tipo }}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-gray-500 font-medium">Asunto</p>
+                        <p class="text-[#004C77] font-semibold">{{ expediente.asunto }}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-gray-500 font-medium">Fecha</p>
+                        <p class="text-[#004C77] font-semibold">{{ expediente.fecha }}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-gray-500 font-medium">Proyecto</p>
+                        <p class="text-[#004C77] font-semibold">{{ expediente.proyecto }}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-gray-500 font-medium">Reservado</p>
+                        <p class="text-[#004C77] font-semibold">{{ expediente.reservado ? 'Sí' : 'No' }}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-gray-500 font-medium">Usuarios Emisor</p>
+                        <p class="text-[#004C77] font-semibold">{{ expediente.usuarios?.join(', ') }}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-gray-500 font-medium">Usuarios Destinatario</p>
+                        <p class="text-[#004C77] font-semibold">{{ expediente.usuarios?.join(', ') }}</p>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <p class="text-gray-500 font-medium">Observaciones</p>
+                        <p class="text-[#004C77] font-semibold">{{ expediente.comentario }}</p>
+                    </div>
+                </div>
+                <hr class="border-t-2 border-[#004C77] mt-6" />
+
+                <!-- Documentos asociados -->
+                <div *ngIf="expediente.documentos?.length" class="mt-6">
+                    <h3 class="text-lg font-semibold text-[#004C77] mb-2 text-center">Documentos asociados</h3>
+                    <div class="relative">
+                        <button class="slider-arrow left" (click)="scrollSlider('left')">&#8249;</button>
+                        <div #slider class="slider-container">
+                            <div *ngFor="let doc of expediente.documentos" class="slider-card">
+                                <svg class="w-6 h-6 text-[#004C77] mb-1" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-3-3v6m5-10H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2z" />
+                                </svg>
+                                <p class="font-semibold text-sm truncate">{{ doc.nombre }}</p>
+                                <p class="text-xs italic text-gray-500">{{ doc.tipo }}</p>
+                                <a [href]="doc.url" target="_blank"
+                                    class="text-[#004C77] underline text-sm mt-1 inline-block">Ver documento</a>
+                            </div>
+                        </div>
+                        <button class="slider-arrow right" (click)="scrollSlider('right')">&#8250;</button>
+                    </div>
+                    <hr class="border-t-2 border-[#004C77] mt-6" />
+                </div>
+
+                <!-- Cargo -->
+                <div class="bg-gray-50 border border-[#004C77] p-5 rounded-lg relative shadow-sm mt-4">
+                    <ng-container *ngIf="expediente.cargo; else noCargo">
+                        <h3 class="font-semibold text-[#004C77] mb-2">Cargo generado</h3>
+                        <div class="text-sm">
+                            <p><strong>Fecha:</strong> {{ expediente.cargo.fecha }}</p>
+                            <p><strong>Hora:</strong> {{ expediente.cargo.hora }}</p>
+                            <a [href]="expediente.cargo.archivo" target="_blank"
+                                class="text-[#004C77] underline text-sm block mt-1">Ver documento de cargo</a>
+                        </div>
+                        <!-- Acciones -->
+                        <div class="absolute top-4 right-4 flex gap-4 text-[#004C77] items-center">
+                            <mat-icon class="cursor-pointer" (click)="abrirDialogoCargo()"
+                                matTooltip="Editar">edit</mat-icon>
+                            <mat-icon class="cursor-pointer" (click)="eliminarCargo()"
+                                matTooltip="Eliminar">delete</mat-icon>
+                            <a [href]="expediente.cargo.archivo" target="_blank">
+                                <mat-icon class="cursor-pointer" matTooltip="Visualizar">visibility</mat-icon>
+                            </a>
+                        </div>
+                    </ng-container>
+                    <ng-template #noCargo>
+                        <div class="text-center">
+                            <p class="text-gray-600 mb-4">No se ha generado ningún cargo para este expediente.</p>
+                            <button (click)="abrirDialogoCargo()"
+                                class="cursor-pointer bg-[#004C77] text-white px-4 py-2 rounded hover:opacity-90 transition">
+                                + Agregar Cargo
+                            </button>
+                        </div>
+                    </ng-template>
+                </div>
+            </div>
+
+
+            <!-- ESTADO DEL PROCESO -->
+            <div *ngSwitchCase="'estado'" class="p-4">
+                <div class="p-6 bg-white rounded-lg shadow">
+                    <h3 class="text-lg font-semibold text-[#004C77] mb-6">Línea de tiempo del proceso</h3>
+                    <!-- Línea de tiempo del proceso -->
+                    <div class="relative pl-10">
+                        <!-- Línea vertical azul -->
+                        <div class="absolute left-6 top-0 bottom-0 w-0.5 bg-[#004C77]"></div>
+
+                        <!-- Etapas -->
+                        <div *ngFor="let etapa of expediente.estadoProceso; let i = index" class="relative mb-8">
+
+                            <!-- Círculo centrado -->
+                            <div class="absolute left-5 w-4 h-4 rounded-full border-4 z-10"
+                                style="top: calc(50% - 0.5rem);"
+                                [ngClass]="etapa.completado ? 'bg-[#004C77] border-[#004C77]' : 'bg-white border-gray-400'">
+                            </div>
+
+                            <!-- Card -->
+                            <div
+                                class="ml-12 bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                                <p class="font-semibold text-[#004C77]">{{ etapa.nombre }}</p>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    {{ etapa.fecha }} — {{ etapa.descripcion }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+
+            </div>
+
+            <!-- AUDITORÍA -->
+            <div *ngSwitchCase="'auditoria'" class="p-4">
+                <h3 class="font-semibold text-[#004C77] mb-4 text-lg">Registro de Auditoría</h3>
+                <table class="w-full text-sm table-auto border-collapse">
+                    <thead class="bg-[#004C77] text-white">
+                        <tr>
+                            <th class="p-2 text-left">Usuario</th>
+                            <th class="p-2 text-left">Acción</th>
+                            <th class="p-2 text-left">Fecha</th>
+                            <th class="p-2 text-left">Instancia</th>
+                            <th class="p-2 text-left">Documentos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let log of expediente.auditoria" class="border-b">
+                            <td class="p-2">{{ log.usuario }}</td>
+                            <td class="p-2">{{ log.accion }}</td>
+                            <td class="p-2">{{ log.fecha }}</td>
+                            <td class="p-2">{{ log.instancia }}</td>
+                            <td class="p-2">{{ log.documentos?.join(', ') }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </ng-container>
+    </div>
+</div>

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthService, UsuarioSesion } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -17,12 +18,23 @@ export class SidebarComponent {
   submenuAbierto: boolean = false;
   submenuMaestras: boolean = false;
 
+  nombreUsuario = '';
+  tipoUsuario = '';
+  ngOnInit(): void {
+    const user: UsuarioSesion | null = this.authService.getUserFromToken();
+    if (user) {
+      this.nombreUsuario = user.nombre;
+      this.tipoUsuario = user.tipoUsuario;
+      console.log('[Usuario Sidebar]', user);
+    }
+  }
   toggleSubmenuExpedientes(): void {
     this.submenuAbierto = !this.submenuAbierto;
   }
-  constructor(private router: Router) { }
+  constructor(private router: Router, private authService: AuthService) { }
 
   logout(): void {
+     this.authService.logout();
     this.router.navigate(['/login']);
   }
 
@@ -44,7 +56,7 @@ export class SidebarComponent {
   }
 
   irADashboard(): void {
-    this.router.navigate(['/home']);
+    this.router.navigate(['/dashboard']);
   }
 
   irA(ruta: string): void {
