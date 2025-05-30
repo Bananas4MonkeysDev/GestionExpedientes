@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { AbstractControl } from '@angular/forms';
 export interface Usuario {
   nombre: string;
   correo: string;
@@ -41,7 +42,34 @@ export class UsuarioService {
       Authorization: `Bearer ${token}`
     });
 
-    return this.http.post<Usuario>(`${this.apiUrl}/registro`, usuario, { headers });
+    return this.http.post<Usuario>(`${this.apiUrl}/registrar`, usuario, { headers });
+  }
+  verificarCorreoExistente(correo: string): Observable<boolean> {
+    const headers = this.getAuthHeaders();
+    return this.http.get<boolean>(`${this.apiUrl}/check-correo?correo=${correo}`, { headers });
+  }
+
+  // Método para verificar si el DNI ya está registrado
+  verificarDniExistente(dni: string): Observable<boolean> {
+    const headers = this.getAuthHeaders();
+    return this.http.get<boolean>(`${this.apiUrl}/check-dni?dni=${dni}`, { headers });
+  }
+  // Validador asincrónico para correo
+  validarCorreoAsync(usuarioService: UsuarioService) {
+    return (control: AbstractControl) => {
+      return control.value ? usuarioService.verificarCorreoExistente(control.value).pipe(
+        map(isExist => (isExist ? { correoExistente: true } : null))
+      ) : null;
+    };
+  }
+
+  // Validador asincrónico para DNI
+  validarDniAsync(usuarioService: UsuarioService) {
+    return (control: AbstractControl) => {
+      return control.value ? usuarioService.verificarDniExistente(control.value).pipe(
+        map(isExist => (isExist ? { dniExistente: true } : null))
+      ) : null;
+    };
   }
 
 }

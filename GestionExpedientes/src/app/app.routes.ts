@@ -22,7 +22,7 @@ export const routes: Routes = [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'monitoreo-expediente', component: ExpedientesMonitoreoComponent },
       { path: 'registro-expediente', component: ExpedientesRegisterComponent },
-      { path: 'detalle-expediente', component: ExpedienteDetalleComponent },
+      { path: 'detalle-expediente/:id', component: ExpedienteDetalleComponent },
       { path: 'usuarios-expedientes', component: UsuariosExpedientesComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]

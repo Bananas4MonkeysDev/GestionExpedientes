@@ -118,6 +118,8 @@ export class ExpedientesRegisterComponent implements OnInit {
       proyecto: ['', Validators.required],
       reservado: ['']
     });
+    this.setReferenciaValidator(false);  // Inicialmente, las referencias no son obligatorias
+
     this.usuarioService.obtenerUsuarios().subscribe({
       next: usuarios => {
         console.log('[DEBUG] Usuarios obtenidos del backend:', usuarios);
@@ -156,6 +158,14 @@ export class ExpedientesRegisterComponent implements OnInit {
     this.searchCtrlUsuario.valueChanges.subscribe(() => this.filtrarUsuariosTo());
     this.searchCtrlCc.valueChanges.subscribe(() => this.filtrarUsuariosCc());
     this.searchCtrlReferencia.valueChanges.subscribe(() => this.filtrarReferencias());
+  }
+  setReferenciaValidator(isRequired: boolean): void {
+    if (isRequired) {
+      this.controlReferencia.setValidators([Validators.required]);
+    } else {
+      this.controlReferencia.clearValidators();
+    }
+    this.controlReferencia.updateValueAndValidity();
   }
   inicializarFechaYHoraCargo() {
     const ahora = new Date();
@@ -230,14 +240,49 @@ export class ExpedientesRegisterComponent implements OnInit {
       data: { modo: 'usuario', nombre, destino }
     });
 
-    dialogRef.afterClosed().subscribe((nuevoUsuario: Usuario) => {
-      if (!nuevoUsuario) return;
-      this.todosUsuarios.push(nuevoUsuario);
-      const targetControl = destino === 'to' ? this.controlUsuario : this.controlUsuarioCc;
-      targetControl.setValue([...(targetControl.value || []), nuevoUsuario.nombre]);
-      destino === 'to' ? this.filtrarUsuariosTo() : this.filtrarUsuariosCc();
+    dialogRef.afterClosed().subscribe(() => {
+      console.log('[DEBUG] El diálogo de agregar usuario se cerró, recargando la lista de usuarios...');
+      // Llamar a cargarUsuarios para obtener la lista más actualizada después de agregar un nuevo usuario
+      this.cargarUsuarios();  // Recargamos la lista de usuarios
     });
   }
+
+
+  cargarUsuarios(): void {
+    console.log('[DEBUG] Cargando usuarios...');
+    this.usuarioService.obtenerUsuarios().subscribe({
+      next: (usuarios) => {
+        console.log('[DEBUG] Usuarios obtenidos del backend:', usuarios);
+
+        // Actualizar todos los usuarios
+        this.todosUsuarios = usuarios.map(user => ({
+          ...user,
+          tipo: user.tipoIdentidad.charAt(0).toUpperCase() + user.tipoIdentidad.slice(1).toLowerCase()
+        }));
+
+        // Actualizar las listas de los selects filtrados
+        this.usuariosFiltradosTo = [...this.todosUsuarios];
+        this.usuariosFiltradosCc = [...this.todosUsuarios];
+
+        // También actualizamos los valores seleccionados en los controles
+        this.controlUsuario.setValue(this.controlUsuario.value || []);
+        this.controlUsuarioCc.setValue(this.controlUsuarioCc.value || []);
+
+        // Reaplicar los filtros
+        this.filtrarUsuariosTo();
+        this.filtrarUsuariosCc();
+
+        console.log('[DEBUG] Usuarios filtrados para "to":', this.usuariosFiltradosTo);
+        console.log('[DEBUG] Usuarios filtrados para "cc":', this.usuariosFiltradosCc);
+      },
+      error: (err) => {
+        console.error('[ERROR] Error al cargar usuarios:', err);
+      }
+    });
+  }
+
+
+
 
   abrirDialogoAgregarReferencia(serie: string) {
     const dialogRef = this.dialog.open(DocumentoAgregarComponent, {
@@ -372,7 +417,7 @@ export class ExpedientesRegisterComponent implements OnInit {
       reservado: this.formularioPaso1.value.reservado === 'si',
       usuariosEmisores: this.obtenerIdsPorNombres(this.controlUsuario.value ?? []),
       usuariosDestinatarios: this.obtenerIdsPorNombres(this.controlUsuarioCc.value ?? []),
-      referencias: this.controlReferencia.value?.join('|'), // ya son strings
+      referencias: this.controlReferencia.value?.length ? this.controlReferencia.value?.join('|') : null, // ya son strings
 
       documentos: [] // no incluir aún, se enviarán luego
     };
@@ -381,6 +426,7 @@ export class ExpedientesRegisterComponent implements OnInit {
       next: (expediente) => {
         const expedienteId = expediente.id;
         this.expedienteIdRegistrado = expediente.id;
+        console.log(this.expedienteIdRegistrado);
         const uploads = this.documentos.map(doc => {
           const formData = new FormData();
           formData.append('file', doc.archivo);
@@ -415,13 +461,23 @@ export class ExpedientesRegisterComponent implements OnInit {
       }
     });
   }
-
   obtenerIdsPorNombres(nombresSeleccionados: string[]): string {
     const ids = this.todosUsuarios
       .filter(user => nombresSeleccionados.includes(user.nombre))
-      .map(user => user.id.toString());
+      .map(user => {
+        // Aseguramos que user.id esté definido antes de intentar convertirlo
+        if (user.id !== undefined && user.id !== null) {
+          return user.id.toString();
+        } else {
+          console.warn(`Usuario sin ID encontrado: ${user.nombre}`);
+          return ''; // Retorna un string vacío si no tiene id
+        }
+      })
+      .filter(id => id !== ''); // Filtramos los ids vacíos
+
     return ids.join('|');
   }
+
 
 
   omitirCargaDocumentos() {
@@ -439,13 +495,15 @@ export class ExpedientesRegisterComponent implements OnInit {
     };
 
     this.expedienteService.registrarExpediente(expedienteData).subscribe({
-      next: () => {
+      next: (expediente) => {
         Swal.fire({
           title: 'Expediente registrado',
           text: 'Aun no se cargo ningun documento',
           icon: 'success',
           confirmButtonColor: '#004C77'
         }).then(() => {
+          this.expedienteIdRegistrado = expediente.id;
+          console.log(this.expedienteIdRegistrado);
           this.pasoActual = 4;
           this.exito = true;
         });
@@ -534,6 +592,7 @@ export class ExpedientesRegisterComponent implements OnInit {
       });
       return;
     }
+    console.log(this.expedienteIdRegistrado);
 
     // Aquí debes usar el ID real del expediente creado
     const expedienteId = this.expedienteIdRegistrado || 0; // reemplaza por el ID correcto desde tu flujo
@@ -557,7 +616,11 @@ export class ExpedientesRegisterComponent implements OnInit {
           icon: 'success',
           confirmButtonColor: '#004C77'
         }).then(() => {
-          this.router.navigate(['/detalle-expediente']);
+          console.log(this.expedienteIdRegistrado);
+
+          this.router.navigate(['/detalle-expediente', this.expedienteIdRegistrado]).then(() => {
+            this.expedienteIdRegistrado = undefined;  // Limpiar variable después de navegar
+          });
         });
       },
       error: (err) => {
@@ -571,6 +634,25 @@ export class ExpedientesRegisterComponent implements OnInit {
       }
     });
   }
+  confirmarOmitirCargo() {
+    if (!this.expedienteIdRegistrado) {
+      console.error('No hay ID de expediente para mostrar detalle');
+      return;
+    }
+    Swal.fire({
+      title: '¿Omitir el cargo?',
+      text: 'Podrás registrar el cargo más adelante desde la vista de detalle del expediente.',
+      icon: 'warning',
+      showCancelButton: false,
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#F36C21'
+    }).then(() => {
+      console.log(this.expedienteIdRegistrado);
 
+      this.router.navigate(['/detalle-expediente', this.expedienteIdRegistrado]).then(() => {
+        this.expedienteIdRegistrado = undefined;  // Limpiar variable después de navegar
+      });
+    });
+  }
 
 }

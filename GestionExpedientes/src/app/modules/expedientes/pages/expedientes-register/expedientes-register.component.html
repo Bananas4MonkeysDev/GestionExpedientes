@@ -139,7 +139,7 @@
               </select>
             </div>
             <mat-optgroup *ngFor="let tipo of tiposReferencia" [label]="tipo">
-              <mat-option *ngFor="let ref of obtenerReferenciasPorTipo(tipo)" [value]="ref.id">
+              <mat-option *ngFor="let ref of obtenerReferenciasPorTipo(tipo)" [value]="ref.serie">
                 {{ ref.serie }} - {{ ref.asunto }}
               </mat-option>
             </mat-optgroup>
@@ -322,7 +322,7 @@
         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
       </svg>
       <h2 class="text-2xl font-bold text-[#004C77]">¡Expediente registrado con éxito!</h2>
-      
+
       <p class="text-gray-600 max-w-xl mx-auto">Puede generar y enviar el cargo.</p>
     </div>
 
@@ -359,12 +359,18 @@
           </div>
         </div>
 
-        <div class="mt-6 flex justify-center">
+        <div class="mt-6 flex flex-col md:flex-row justify-center gap-2">
           <button (click)="enviarCargo()"
-            class="cursor-pointer w-full max-w-[700px] bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 transition">
+            class="cursor-pointer w-full  bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 transition">
             Enviar cargo
           </button>
+
+          <button (click)="confirmarOmitirCargo()"
+            class="cursor-pointer w-full  bg-[#F36C21] text-white px-6 py-2 rounded hover:opacity-90 transition">
+            Omitir Cargo
+          </button>
         </div>
+
       </div>
     </div>
   </div>

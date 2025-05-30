@@ -32,6 +32,7 @@
           <input matInput formControlName="correo" placeholder="ejemplo@correo.com" />
           <mat-error *ngIf="form.get('correo')?.hasError('required')">Este campo es obligatorio.</mat-error>
           <mat-error *ngIf="form.get('correo')?.hasError('email')">Correo inválido.</mat-error>
+          <mat-error *ngIf="form.get('correo')?.hasError('correoExistente')">Este correo ya está registrado.</mat-error>
         </mat-form-field>
       </div>
 
@@ -41,7 +42,12 @@
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">DNI</label>
           <mat-form-field appearance="outline" class="w-full !m-0">
-            <input matInput formControlName="dni" placeholder="Ej. 12345678" />
+            <input matInput formControlName="dni" placeholder="Ej. 12345678" maxlength="8" />
+            <mat-error *ngIf="form.get('dni')?.hasError('required')">Este campo es obligatorio.</mat-error>
+            <mat-error *ngIf="form.get('dni')?.hasError('minlength')">El DNI debe tener 8 caracteres.</mat-error>
+            <mat-error *ngIf="form.get('dni')?.hasError('maxlength')">El DNI debe tener 8 caracteres.</mat-error>
+            <mat-error *ngIf="form.get('dni')?.hasError('dniExistente')">Este DNI ya está registrado.</mat-error>
+            <mat-error *ngIf="form.get('dni')?.hasError('pattern')">El DNI debe contener solo números.</mat-error>
           </mat-form-field>
         </div>
         <!-- Contraseña -->

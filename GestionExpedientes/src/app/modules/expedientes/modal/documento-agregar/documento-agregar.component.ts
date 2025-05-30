@@ -9,6 +9,7 @@ import { CommonModule } from '@angular/common';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import { UsuarioService, Usuario } from '../../../../core/services/usuario.service';
+import Swal from 'sweetalert2';
 
 type ModoDialogo = 'usuario' | 'referencia';
 
@@ -54,10 +55,16 @@ export class DocumentoAgregarComponent {
       data.modo === 'usuario'
         ? {
           nombre: ['', Validators.required],
-          correo: ['', [Validators.required, Validators.email]],
-          contraseña: ['', Validators.required],
-          dni: ['', Validators.required],
-          rol: ['', Validators.required],
+          correo: [
+            '',
+            [Validators.required, Validators.email],
+            [this.usuarioService.validarCorreoAsync(this.usuarioService)] // Asignamos el validador asincrónico para el correo
+          ], contraseña: ['', Validators.required],
+          dni: [
+            '',
+            [Validators.required, Validators.pattern('^[0-9]{8}$'), Validators.minLength(8), Validators.maxLength(8)],
+            [this.usuarioService.validarDniAsync(this.usuarioService)] // Asignamos el validador asincrónico para el DNI
+          ], rol: ['', Validators.required],
           ruc: [''],
           tipoIdentidad: ['', Validators.required],
           tipoUsuario: ['', Validators.required]
@@ -75,19 +82,20 @@ export class DocumentoAgregarComponent {
     this.dialogRef.close();
   }
 
-  guardar() {
+   guardar() {
     if (this.form.valid && this.modo === 'usuario') {
       const nuevoUsuario = this.form.value;
+      console.log('[DEBUG] Usuario a registrar:', nuevoUsuario);
       this.usuarioService.registrarUsuario(nuevoUsuario).subscribe({
         next: (res) => {
-          console.log('Usuario registrado con éxito:', res);
+          console.log('[DEBUG] Usuario registrado con éxito:', res);
           this.dialogRef.close(true);
         },
         error: (err) => {
-          console.error('Error al registrar usuario:', err);
+          console.error('[ERROR] Error al registrar usuario:', err);
         }
       });
-      this.dialogRef.close(nuevoUsuario);
     }
   }
+
 }
