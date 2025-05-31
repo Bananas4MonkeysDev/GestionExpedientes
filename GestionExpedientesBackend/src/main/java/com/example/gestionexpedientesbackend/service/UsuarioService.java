@@ -8,4 +8,8 @@ public interface UsuarioService {
     List<Usuario> obtenerTodos();
 
     Usuario login(String correo, String contraseña);
+    public boolean existsByCorreo(String correo);
+    public boolean existsByDni(String dni);
+    List<Usuario> obtenerPorIdsSeparados(String idsSeparadosPorPipe);
+
 }

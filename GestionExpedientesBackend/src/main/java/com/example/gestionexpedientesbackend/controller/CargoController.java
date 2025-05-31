@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/cargos")
@@ -36,6 +37,10 @@ public class CargoController {
         Cargo cargoCreado = cargoService.crearCargo(dto, archivo);
 
         return ResponseEntity.ok(cargoCreado);
+    }
+    @GetMapping("/expediente/{id}/historial")
+    public ResponseEntity<List<Cargo>> obtenerHistorial(@PathVariable Long id) {
+        return ResponseEntity.ok(cargoService.obtenerHistorialPorExpediente(id));
     }
 
 }

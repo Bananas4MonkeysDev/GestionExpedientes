@@ -1,4 +1,4 @@
-package com.example.gestionexpedientesbackend.service.impl;
+package com.example.gestionexpedientesbackend.service;
 
 import com.example.gestionexpedientesbackend.model.Documento;
 import com.example.gestionexpedientesbackend.model.Expediente;
@@ -12,6 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 @Service
 public class DocumentoServiceImpl implements DocumentoService {
@@ -51,12 +53,32 @@ public class DocumentoServiceImpl implements DocumentoService {
         Documento guardado = documentoRepository.save(doc);
 
         // 4. Generar el código con base en el ID ya asignado
-        String codigoGenerado = String.format("DOC-%05d", guardado.getId());
+        String codigoGenerado = String.format("DOC-%06d", guardado.getId());  // Usa el ID para generar el código
         guardado.setCodigo(codigoGenerado);
 
         // 5. Guardar nuevamente solo si el código cambió
         return documentoRepository.save(guardado);
     }
+    @Override
+    public Optional<Documento> obtenerPorId(Long id) {
+        return documentoRepository.findById(id);
+    }
 
+    @Override
+    @Transactional
+    public void eliminarPorId(Long id) {
+        documentoRepository.deleteById(id);
+    }
+    @Override
+    @Transactional
+    public Documento actualizarDocumento(Documento documento) {
+        // Simplemente guarda la entidad actualizada
+        return documentoRepository.save(documento);
+    }
+
+    @Override
+    public List<Documento> obtenerPorExpedienteId(Long expedienteId) {
+        return documentoRepository.findByExpedienteId(expedienteId);
+    }
 
 }

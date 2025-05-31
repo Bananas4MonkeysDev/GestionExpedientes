@@ -26,6 +26,16 @@ public class UsuarioController {
         Usuario nuevo = usuarioService.registrar(usuario); // ya encripta contraseña
         return ResponseEntity.ok(nuevo);
     }
+    @GetMapping("/check-correo")
+    public ResponseEntity<Boolean> checkCorreo(@RequestParam String correo) {
+        boolean exists = usuarioService.existsByCorreo(correo);
+        return ResponseEntity.ok(exists);
+    }
+    @GetMapping("/check-dni")
+    public ResponseEntity<Boolean> checkDni(@RequestParam String dni) {
+        boolean exists = usuarioService.existsByDni(dni);
+        return ResponseEntity.ok(exists);
+    }
     @GetMapping
     public ResponseEntity<List<Usuario>> obtenerUsuarios() {
         return ResponseEntity.ok(usuarioService.obtenerTodos());

@@ -4,12 +4,15 @@ import com.example.gestionexpedientesbackend.dto.CargoRequestDTO;
 import com.example.gestionexpedientesbackend.model.Cargo;
 import com.example.gestionexpedientesbackend.repository.CargoRepository;
 import com.example.gestionexpedientesbackend.service.CargoService;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 @Service
 public class CargoServiceImpl implements CargoService {
 
@@ -21,6 +24,22 @@ public class CargoServiceImpl implements CargoService {
     }
 
     // Ahora el archivo es un parámetro aparte, no parte del DTO
+    @Override
+    public Cargo obtenerPorExpedienteId(Long expedienteId) {
+        // antes (ERROR si hay 2 o más resultados)
+        // return cargoRepository.findByExpedienteId(expedienteId);
+
+        // ahora (agarra el más reciente por orden)
+        List<Cargo> cargos = cargoRepository.findAllByExpedienteIdOrderByOrdenDesc(expedienteId);
+        return cargos.isEmpty() ? null : cargos.get(0);
+    }
+
+    @Override
+    public List<Cargo> obtenerHistorialPorExpediente(Long expedienteId) {
+        return cargoRepository.findByExpedienteIdOrderByOrdenDesc(expedienteId);
+    }
+
+    @Transactional
     public Cargo crearCargo(CargoRequestDTO cargoRequest, MultipartFile archivo) throws IOException {
         if (cargoRequest.getFecha() == null)
             throw new IllegalArgumentException("La fecha es obligatoria");
@@ -33,10 +52,13 @@ public class CargoServiceImpl implements CargoService {
         cargo.setFecha(cargoRequest.getFecha());
         cargo.setHora(cargoRequest.getHora());
         cargo.setExpedienteId(cargoRequest.getExpedienteId());
+        Integer ultimoOrden = cargoRepository.findByExpedienteIdOrderByOrdenDesc(cargoRequest.getExpedienteId())
+                .stream().findFirst().map(Cargo::getOrden).orElse(0);
+        cargo.setOrden(ultimoOrden + 1);
 
         // Guardar primero para generar ID y código
-        cargo = cargoRepository.save(cargo);
-        String codigoGenerado = String.format("CAR-%06d", cargo.getId());
+        cargo = cargoRepository.save(cargo);  // El ID se genera automáticamente por la base de datos
+        String codigoGenerado = String.format("CAR-%06d", cargo.getId());  // Usa el ID para generar el código
         cargo.setCodigo(codigoGenerado);
 
         // Guardar archivo físico si existe

@@ -29,7 +29,10 @@ public class Cargo {
 
     @Column
     private String archivoPath; // Ruta o nombre del archivo adjunto, si se sube
-
+    @Column
+    private Integer orden;
+    public Integer getOrden() { return orden; }
+    public void setOrden(Integer orden) { this.orden = orden; }
     public Long getId() {
         return id;
     }

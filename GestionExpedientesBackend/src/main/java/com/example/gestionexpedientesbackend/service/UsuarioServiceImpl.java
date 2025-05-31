@@ -7,8 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
@@ -22,7 +24,14 @@ public class UsuarioServiceImpl implements UsuarioService {
     public List<Usuario> obtenerTodos() {
         return usuarioRepository.findAll();
     }
+    public boolean existsByCorreo(String correo) {
+        return usuarioRepository.existsByCorreo(correo);
+    }
 
+    // Verificar si el DNI ya existe
+    public boolean existsByDni(String dni) {
+        return usuarioRepository.existsByDni(dni);
+    }
     @Override
     public Usuario registrar(Usuario usuario) {
         // Encripta la contraseña antes de guardar
@@ -40,5 +49,13 @@ public class UsuarioServiceImpl implements UsuarioService {
             }
         }
         return null;
+    }
+    @Override
+    public List<Usuario> obtenerPorIdsSeparados(String idsSeparadosPorPipe) {
+        if (idsSeparadosPorPipe == null || idsSeparadosPorPipe.isEmpty()) return List.of();
+        List<Long> ids = Arrays.stream(idsSeparadosPorPipe.split("\\|"))
+                .map(Long::valueOf)
+                .collect(Collectors.toList());
+        return usuarioRepository.findAllById(ids);
     }
 }
