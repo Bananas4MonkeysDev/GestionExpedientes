@@ -20,6 +20,22 @@ export class ExpedienteService {
       headers: this.getHeaders()
     });
   }
+  actualizarDocumento(documentoId: number, data: any): Observable<any> {
+    return this.http.put(`${this.baseUrl}/documento/${documentoId}`, data, {
+      headers: this.getHeaders(),
+    });
+  }
+
+  eliminarDocumento(documentoId: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/${documentoId}`, {
+      headers: this.getHeaders(),
+    });
+  }
+  getHistorialCargos(expedienteId: number): Observable<any[]> {
+    const token = localStorage.getItem('jwt') || '';
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return this.http.get<any[]>(`http://localhost:8080/api/cargos/expediente/${expedienteId}/historial`, { headers });
+  }
 
   registrarExpediente(expediente: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/registrar`, expediente, {
@@ -41,11 +57,11 @@ export class ExpedienteService {
     return this.http.post(`http://localhost:8080/api/cargos/cargo`, cargo, { headers });
   }
   getExpedienteDetalle(id: number): Observable<any> {
-    const token = localStorage.getItem('token'); // O de donde guardes el token
+    const token = localStorage.getItem('jwt'); // O de donde guardes el token
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
 
-    return this.http.get<any>(`${this.baseUrl}/${id}/detalle`, { headers });
+    return this.http.get<any>(`http://localhost:8080/api/expedientes/${id}/detalle`, { headers });
   }
 }

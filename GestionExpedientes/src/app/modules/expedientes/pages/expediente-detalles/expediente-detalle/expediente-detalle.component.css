@@ -73,7 +73,14 @@
 }
 
 .slider-arrow:hover {
-  background-color: #F36C21;
-  color: white;
-  border-color: #F36C21;
+    background-color: #F36C21;
+    color: white;
+    border-color: #F36C21;
+}
+
+.mat-icon[_ngcontent-ng-c3010034806] {
+    font-size: 20px;
+    display: flex !important;
+    transition: transform 0.2s ease !important;
+    justify-content: center !important;
 }

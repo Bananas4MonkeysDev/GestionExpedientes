@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, NgZone, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { DialogoCargoComponent } from '../../../modal/dialogo-cargo/dialogo-cargo.component'; // Ajusta si tu ruta es distinta
@@ -16,6 +16,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { UsuarioService } from '../../../../../core/services/usuario.service';
+import { forkJoin } from 'rxjs';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+
 export interface Usuario {
   id: number; // ← Agregado
   nombre: string;
@@ -27,16 +30,38 @@ export interface Usuario {
   ruc?: string;
   dni: string;
 }
-interface DocumentoExpediente {
+interface DocumentoExistente {
+  id?: number;
+  nombreArchivo: string;
+  tipoDocumento?: string;
+  rutaArchivo?: string;
+  tamaño?: number;
+  visibleParaExternos?: boolean;
+  esExistente: true; // para diferenciarlos
+}
+
+interface DocumentoNuevo {
   nombre: string;
   archivo: File;
-  cargado: boolean;
+  cargado?: boolean;
   progreso?: number;
   visibleParaExternos?: boolean;
   tipoDocumento?: string;
+  esExistente: false;
+}
+
+interface DocumentoExpediente {
+  id?: number;
+  nombreArchivo: string;
+  tipoDocumento?: string;
+  rutaArchivo?: string;
+  tamaño?: number;
+  visibleParaExternos?: boolean;
+  esExistente: true;
 }
 @Component({
   selector: 'app-expediente-detalle',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule,
     FormsModule,
@@ -74,11 +99,13 @@ export class ExpedienteDetalleComponent implements OnInit {
   tiposUsuario: Usuario['tipoIdentidad'][] = ['PERSONA', 'GRUPO', 'ENTIDAD'];
   tiposReferencia: Referencia['tipo'][] = ['Documento', 'Expediente'];
   proyectos = ['Proyecto Alpha', 'Obra Central', 'Planta Nueva', 'Infraestructura Zonal'];
-  documentos: DocumentoExpediente[] = [];
+  documentosExistentes: DocumentoExpediente[] = [];
+  documentosNuevos: DocumentoNuevo[] = [];
   arrastrando = false;
   tiposDocumento = ['Anexos', 'Actas', 'Carta', 'Oficio', 'Contrato', 'Adenda', 'Solicitud de compra', 'Cotizaciones', 'Cuadro Comparativo', 'Orden de Compra', 'Guia', 'Factura', 'Informe', 'Anexo'];
+  historialCargos: any[] = [];
 
-  constructor(private route: ActivatedRoute, private expedienteService: ExpedienteService, private dialog: MatDialog, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
+  constructor(private sanitizer: DomSanitizer, private zone: NgZone, private route: ActivatedRoute, private cdr: ChangeDetectorRef, private expedienteService: ExpedienteService, private dialog: MatDialog, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
   @ViewChild('slider', { static: false }) sliderRef!: ElementRef;
   reiniciarFiltroTipoReferencia() {
     this.filtroTipoReferencia = '';
@@ -86,6 +113,9 @@ export class ExpedienteDetalleComponent implements OnInit {
   }
   obtenerUsuariosPorTipo(lista: Usuario[], tipo: Usuario['tipoIdentidad']): Usuario[] {
     return lista.filter(u => u.tipoIdentidad === tipo);
+  }
+  abrirEnNuevaVentana(url: string) {
+    window.open(url, '_blank');
   }
 
   obtenerIdsPorNombres(nombresSeleccionados: string[]): string {
@@ -103,7 +133,9 @@ export class ExpedienteDetalleComponent implements OnInit {
 
     return ids.join('|');
   }
-
+  isDocumentoNuevo(doc: DocumentoExpediente | DocumentoNuevo): doc is DocumentoNuevo {
+    return !doc.esExistente; // o doc.esExistente === false
+  }
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!id) {
@@ -118,9 +150,18 @@ export class ExpedienteDetalleComponent implements OnInit {
         console.log('[DEBUG] Datos recibidos del backend:', data);
         console.log('[DEBUG] Usuarios emisores raw:', data.usuariosEmisores);
         console.log('[DEBUG] Usuarios destinatarios raw:', data.usuariosDestinatarios);
-
+        this.documentosExistentes = data.documentos.map((doc: any) => ({
+          id: doc.id,
+          nombreArchivo: doc.nombreArchivo,
+          tipoDocumento: doc.tipoDocumento,
+          rutaArchivo: doc.rutaArchivo,
+          tamaño: doc.tamaño,
+          visibleParaExternos: doc.visibleParaExternos,
+          esExistente: true,
+        }));
         this.expediente = {
           id: data.expediente.id,
+          codigo:data.expediente.codigo,
           tipo: data.expediente.tipoExpediente,
           asunto: data.expediente.asunto,
           fecha: data.expediente.fecha,
@@ -128,17 +169,23 @@ export class ExpedienteDetalleComponent implements OnInit {
           reservado: data.expediente.reservado,
           comentario: data.expediente.comentario,
           documentos: data.documentos.map((doc: any) => ({
-            nombre: doc.nombreArchivo,
-            tipo: doc.tipoDocumento,
-            url: `${doc.rutaArchivo}`
+            id: doc.id,
+            nombreArchivo: doc.nombreArchivo,
+            tipoDocumento: doc.tipoDocumento,
+            rutaArchivo: doc.rutaArchivo,
+            tamaño: doc.tamaño,
+            visibleParaExternos: doc.visibleParaExternos,
           })),
           cargo: data.cargo
             ? {
               fecha: data.cargo.fecha,
               hora: data.cargo.hora,
-              archivo: `${data.cargo.archivoPath}`
+              codigo: data.cargo.codigo,
+              archivo: data.cargo.archivoPath || null,
+              mensaje: data.cargo.mensaje || ''
             }
             : null,
+
           referencias: data.expediente.referencias
             ? data.expediente.referencias.split('|')
             : [],
@@ -153,13 +200,42 @@ export class ExpedienteDetalleComponent implements OnInit {
 
         };
         console.log('[DEBUG] Objeto expediente armado:', this.expediente);
+        this.cdr.detectChanges();
+        this.expedienteService.getHistorialCargos(id).subscribe(historial => {
+          console.log('[DEBUG] Historial de cargos:', historial); // ← AÑADIDO
+          this.historialCargos = historial;
+          this.expediente.cargo = {
+            ...historial[0],
+            archivo: historial[0].archivoPath
+          };
+          this.cdr.markForCheck();
+        });
+
       },
       error: (err) => {
         console.error('Error al cargar expediente', err);
       }
     });
-
   }
+  transformarRutaCargo(path: string): string | null {
+    console.log('[DEBUG] path recibido en transformarRutaCargo:', path);
+    if (!path) return null;
+
+    const fileName = path.split(/\\|\//).pop();
+    const url = fileName ? `http://localhost:8080/files/${fileName}` : null;
+
+    console.log('[DEBUG] archivo convertido a URL:', url);
+    return url;
+  }
+
+  transformarRutaDocumento(path: string): string | null {
+    console.log('[DEBUG] path recibido en transformarRutaDocumento:', path);
+
+    if (!path) return null;
+    const fileName = path.split(/\\|\//).pop();
+    return fileName ? `http://localhost:8080/expedientes/${fileName}` : null;
+  }
+
   scrollSlider(direction: 'left' | 'right') {
     const slider = this.sliderRef.nativeElement as HTMLElement;
     slider.scrollBy({ left: direction === 'left' ? -250 : 250, behavior: 'smooth' });
@@ -179,24 +255,82 @@ export class ExpedienteDetalleComponent implements OnInit {
       referencia: this.controlReferencia
     });
   }
-
-  abrirDialogoCargo(): void {
-    const dialogRef = this.dialog.open(DialogoCargoComponent, {
-      data: {
-        cargoExistente: this.expediente.cargo || null
+  cargarDetalleExpediente(id: number) {
+    this.expedienteService.getExpedienteDetalle(id).subscribe({
+      next: (data) => {
+        this.expediente = data.expediente;
+        this.documentosExistentes = data.documentos.map((doc: any) => ({
+          id: doc.id,
+          nombreArchivo: doc.nombreArchivo,
+          tipoDocumento: doc.tipoDocumento,
+          rutaArchivo: doc.rutaArchivo,
+          tamaño: doc.tamaño,
+          visibleParaExternos: doc.visibleParaExternos,
+        }));
       },
-      width: '900px', // antes era 700px
-      maxWidth: '95vw', // opcional para evitar que se salga de pantallas pequeñas
-      disableClose: true // opcional, para que no se cierre por fuera accidentalmente
-    });
-
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.expediente.cargo = result;
-      }
+      error: (err) => {
+        console.error('Error al cargar detalle del expediente:', err);
+      },
     });
   }
+  abrirDialogoCargo(): void {
+    setTimeout(() => (document.activeElement as HTMLElement)?.blur(), 10);
+    const expedienteId = this.expediente?.id;
+    if (!expedienteId) return;
+
+    const dialogRef = this.dialog.open(DialogoCargoComponent, {
+      width: '800px',
+      maxWidth: '95vw',
+      disableClose: true,
+      data: {} // puedes pasar datos si el modal los necesita
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result) return; // Usuario canceló
+
+      const formData = new FormData();
+      const now = new Date();
+
+      formData.append('expedienteId', expedienteId.toString());
+      formData.append('fecha', result.fecha || now.toISOString().split('T')[0]);
+      formData.append('hora', result.hora || now.toTimeString().split(' ')[0]);
+      if (result.archivo) formData.append('archivo', result.archivo);
+
+      this.expedienteService.registrarCargo(formData).subscribe({
+        next: (nuevoCargo) => {
+          this.expediente.cargo = {
+            fecha: nuevoCargo.fecha,
+            hora: nuevoCargo.hora,
+            codigo: nuevoCargo.codigo,
+            archivo: nuevoCargo.archivoPath,
+            mensaje: nuevoCargo.mensaje
+          };
+
+          this.expedienteService.getHistorialCargos(expedienteId).subscribe(hist => {
+            this.historialCargos = hist;
+            this.cdr.markForCheck();
+          });
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Cargo generado correctamente',
+            confirmButtonColor: '#004C77'
+          });
+        },
+        error: (err) => {
+          console.error('Error al registrar cargo:', err);
+          Swal.fire({
+            icon: 'error',
+            title: 'No se pudo generar el cargo',
+            text: 'Verifica los datos enviados.',
+            confirmButtonColor: '#F36C21'
+          });
+        }
+      });
+    });
+  }
+
+
   cargarDatosEnFormulario(): void {
     if (!this.expediente) return;
 
@@ -396,15 +530,16 @@ export class ExpedienteDetalleComponent implements OnInit {
     for (const archivo of files) {
       if (archivo.type !== 'application/pdf') continue;
 
-      const nuevo = {
+      const nuevo: DocumentoNuevo = {
         nombre: archivo.name,
         archivo,
         cargado: false,
         progreso: 0,
         visibleParaExternos: false,
-        tipoDocumento: ''
+        tipoDocumento: '',
+        esExistente: false
       };
-      this.documentos.push(nuevo);
+      this.documentosNuevos.push(nuevo);
 
       const interval = setInterval(() => {
         if (nuevo.progreso! >= 100) {
@@ -416,64 +551,217 @@ export class ExpedienteDetalleComponent implements OnInit {
       }, 100);
     }
   }
+  actualizarDocumento(doc: DocumentoExpediente) {
+    if (!doc.id) return;
+
+    const payload = {
+      tipoDocumento: doc.tipoDocumento,
+      visibleParaExternos: doc.visibleParaExternos,
+    };
+
+    this.expedienteService.actualizarDocumento(doc.id, payload).subscribe({
+      next: () => {
+        Swal.fire('Éxito', 'Documento actualizado correctamente', 'success');
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo actualizar el documento', 'error');
+      },
+    });
+  }
+
+  toggleVisibilidadDocumento(doc: DocumentoExpediente) {
+    Swal.fire({
+      title: '¿Cambiar visibilidad?',
+      text: `¿Seguro que quieres cambiar la visibilidad de este documento "${doc.nombreArchivo}"?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#004C77',  // Añadimos la paleta de color
+      cancelButtonColor: '#F36C21'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Cambiar visibilidad
+        if (doc.visibleParaExternos === undefined) doc.visibleParaExternos = false;
+        doc.visibleParaExternos = !doc.visibleParaExternos;
+
+        this.actualizarDocumento(doc);
+      }
+    });
+  }
+
+  eliminarDocumentoExistente(doc: DocumentoExpediente) {
+    // Verificar si el documento es válido para eliminar (es decir, tiene un id)
+    if (!doc.id) {
+      console.log('Documento no tiene ID, no se puede eliminar:', doc);
+      return; // Documento sin ID no se puede eliminar
+    }
+
+    console.log('Eliminando documento:', doc);
+
+    // Mostrar alerta de confirmación
+    Swal.fire({
+      title: 'Confirmar eliminación',
+      text: `¿Seguro que quieres eliminar el documento "${doc.nombreArchivo}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#004C77',
+      cancelButtonColor: '#F36C21'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        console.log('Confirmación recibida, eliminando documento con ID:', doc.id);
+
+        this.expedienteService.eliminarDocumento(doc.id!).subscribe({
+          next: () => {
+            console.log('Eliminación exitosa del documento en backend');
+            // Actualizar los documentos locales en el frontend para reflejar la eliminación
+            this.documentosExistentes = this.documentosExistentes.filter(d => d.id !== doc.id);
+            console.log('Documentos restantes después de la eliminación:', this.documentosExistentes);
+
+            Swal.fire('Eliminado', 'Documento eliminado correctamente', 'success');
+          },
+          error: (err) => {
+            console.error('Error al eliminar documento:', err);
+            Swal.fire('Error', 'No se pudo eliminar el documento', 'error');
+          }
+        });
+        this.recargarDocumentosExistentes();
+
+      } else {
+        console.log('Eliminación cancelada');
+      }
+    });
+  }
+
   subirDocumentosAdicionales() {
     const expedienteId = this.expediente?.id;
     if (!expedienteId) {
-      console.error('Expediente ID no definido');
+      console.error('ID de expediente no definido');
       return;
     }
 
-    const uploads = this.documentos.map(doc => {
-      const formData = new FormData();
-      formData.append('file', doc.archivo);
-      formData.append('tipoDocumento', doc.tipoDocumento || '');
-      formData.append('visibleParaExternos', String(doc.visibleParaExternos ?? false));
-      formData.append('tamaño', doc.archivo.size.toString());
+    const uploads = this.documentosNuevos.
+      map(doc => {
+        if (!('archivo' in doc) || !doc.archivo) throw new Error('Documento sin archivo');
 
-      return this.expedienteService.registrarDocumento(expedienteId, formData);
-    });
+        const formData = new FormData();
+        formData.append('file', doc.archivo);
+        formData.append('tipoDocumento', doc.tipoDocumento || '');
+        formData.append('visibleParaExternos', String(doc.visibleParaExternos ?? false));
+        formData.append('tamaño', doc.archivo.size.toString());
 
-    Promise.all(uploads.map(req => req.toPromise())).then(() => {
-      Swal.fire({
-        title: 'Documentos añadidos',
-        text: 'Se cargaron correctamente los documentos adicionales.',
-        icon: 'success',
-        confirmButtonColor: '#004C77'
+        console.log('Subiendo documento:', doc.nombre, 'tipo:', doc.tipoDocumento, 'visible:', doc.visibleParaExternos);
+        return this.expedienteService.registrarDocumento(expedienteId, formData);
       });
-      this.documentos = []; // limpiar buffer
-      this.expedienteService.getExpedienteDetalle(expedienteId).subscribe({
-        next: (data) => {
-          this.expediente.documentos = data.documentos.map((doc: any) => ({
-            nombre: doc.nombreArchivo,
-            tipo: doc.tipoDocumento,
-            url: `${doc.rutaArchivo}`
-          }));
-        }
-      });
+
+    forkJoin(uploads).subscribe({
+      next: () => {
+        Swal.fire({
+          title: 'Documentos añadidos',
+          text: 'Se cargaron correctamente los documentos adicionales.',
+          icon: 'success',
+          confirmButtonColor: '#004C77'
+        });
+        this.documentosNuevos = [];
+        console.log('Datos recibidos del backend:', this.documentosExistentes);
+        this.recargarDocumentosExistentes();
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudieron subir todos los documentos.', 'error');
+      }
     });
   }
 
-  verDocumento(index: number) {
-    const url = URL.createObjectURL(this.documentos[index].archivo);
-    window.open(url, '_blank');
+  recargarDocumentosExistentes(): void {
+    if (!this.expediente?.id) return;
+
+    this.expedienteService.getExpedienteDetalle(this.expediente.id).subscribe({
+      next: (data) => {
+        const nuevosDocumentos: DocumentoExpediente[] = data.documentos.map((doc: any) => ({
+          id: doc.id,
+          nombreArchivo: doc.nombreArchivo,
+          tipoDocumento: doc.tipoDocumento,
+          rutaArchivo: doc.rutaArchivo,
+          tamaño: doc.tamaño,
+          visibleParaExternos: doc.visibleParaExternos,
+          esExistente: true
+        }));
+
+        // Usa NgZone para asegurarte de estar dentro del ciclo Angular
+        this.zone.run(() => {
+          this.documentosExistentes = [...nuevosDocumentos];
+          this.expediente = {
+            ...this.expediente,
+            documentos: [...nuevosDocumentos]
+          };
+          this.cdr.markForCheck(); // 🔁 Dispara verificación de cambio con OnPush
+        });
+      },
+      error: (error) => {
+        console.error('Error al cargar documentos:', error);
+      }
+    });
   }
+
+  confirmarCambioTipoDocumento(doc: DocumentoExpediente) {
+    Swal.fire({
+      title: '¿Confirmar cambio de tipo?',
+      text: `¿Seguro que quieres cambiar el tipo de documento a "${doc.tipoDocumento}"?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#004C77',  // Añadimos la paleta de color
+      cancelButtonColor: '#F36C21'   // Añadimos la paleta de color
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Llamar al método para actualizar el tipo de documento en el backend
+        this.actualizarDocumento(doc);
+      } else {
+        // Si no se confirma, revertimos el cambio
+        doc.tipoDocumento = '';  // O el valor anterior, si es necesario
+      }
+    });
+  }
+
+  verDocumentoExistente(index: number) {
+    const doc = this.documentosExistentes[index];
+    if (doc.rutaArchivo) {
+      window.open(doc.rutaArchivo, '_blank');
+    }
+  }
+
+  verDocumentoNuevo(index: number) {
+    const doc = this.documentosNuevos[index];
+    if (doc.archivo) {
+      const url = URL.createObjectURL(doc.archivo);
+      window.open(url, '_blank');
+    }
+  }
+
+
 
   eliminarDocumento(index: number) {
-    this.documentos.splice(index, 1);
+    this.documentosNuevos.splice(index, 1);
   }
 
+
   alternarVisibilidad(index: number) {
-    this.documentos[index].visibleParaExternos = !this.documentos[index].visibleParaExternos;
+    this.documentosNuevos[index].visibleParaExternos = !this.documentosNuevos[index].visibleParaExternos;
   }
 
   formatearPeso(bytes: number): string {
+    if (!bytes) return 'No especificado';
     return bytes >= 1024 * 1024
       ? (bytes / (1024 * 1024)).toFixed(1) + ' MB'
       : (bytes / 1024).toFixed(0) + ' KB';
   }
 
+
   todosLosDocumentosTienenTipo(): boolean {
-    return this.documentos.every(d => d.tipoDocumento && d.tipoDocumento.trim() !== '');
+    return this.documentosNuevos.every(d => d.tipoDocumento && d.tipoDocumento.trim() !== '');
   }
 
 }

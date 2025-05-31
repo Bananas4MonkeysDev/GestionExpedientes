@@ -76,17 +76,13 @@ export class DialogoCargoComponent {
       return;
     }
 
-    // Simulación de URL temporal (en proyecto real, subirías el archivo)
-    const urlSimulado = this.cargo
-      ? URL.createObjectURL(this.cargo)
-      : null;
-
     const nuevoCargo = {
       fecha: this.fechaCargo,
       hora: this.horaCargo,
-      archivo: urlSimulado
+      archivo: this.cargo
     };
 
     this.dialogRef.close(nuevoCargo);
   }
+
 }
