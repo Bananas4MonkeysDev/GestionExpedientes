@@ -20,10 +20,6 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;  // ← Asegúrate que esté aquí
-    @Override
-    public List<Usuario> obtenerTodos() {
-        return usuarioRepository.findAll();
-    }
     public boolean existsByCorreo(String correo) {
         return usuarioRepository.existsByCorreo(correo);
     }
@@ -58,4 +54,8 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .collect(Collectors.toList());
         return usuarioRepository.findAllById(ids);
     }
+    public List<Usuario> obtenerTodos() {
+        return usuarioRepository.findAll(); // o aplica filtros si deseas solo ciertos tipos
+    }
+
 }

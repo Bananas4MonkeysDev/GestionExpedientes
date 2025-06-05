@@ -40,5 +40,9 @@ public class UsuarioController {
     public ResponseEntity<List<Usuario>> obtenerUsuarios() {
         return ResponseEntity.ok(usuarioService.obtenerTodos());
     }
+    @GetMapping("/expedientes")
+    public ResponseEntity<List<Usuario>> obtenerUsuariosExpedientes() {
+        return ResponseEntity.ok(usuarioService.obtenerTodos());
+    }
 
 }

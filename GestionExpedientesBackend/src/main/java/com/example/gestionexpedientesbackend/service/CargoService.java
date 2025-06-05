@@ -11,5 +11,7 @@ public interface CargoService {
     Cargo crearCargo(CargoRequestDTO cargoRequest, MultipartFile archivo) throws IOException;
     Cargo obtenerPorExpedienteId(Long expedienteId);
     List<Cargo> obtenerHistorialPorExpediente(Long expedienteId);
+    Cargo obtenerPorId(Long id);
+    Cargo obtenerPorUuid(String uuid);
 
 }

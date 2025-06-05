@@ -29,6 +29,10 @@ public class DocumentoServiceImpl implements DocumentoService {
     @Override
     @Transactional
     public Documento guardarDocumento(MultipartFile file, Long expedienteId, String tipoDocumento, boolean visible) throws IOException {
+        System.out.println("→ Guardando documento en DocumentoService");
+        System.out.println("→ Expediente ID: " + expedienteId);
+        System.out.println("→ Nombre archivo: " + file.getOriginalFilename());
+        System.out.println("→ Visible: " + visible);
         Expediente expediente = expedienteRepository.findById(expedienteId)
                 .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
 

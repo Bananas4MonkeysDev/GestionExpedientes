@@ -9,8 +9,10 @@ import { ExpedientesMonitoreoComponent } from './modules/expedientes/pages/exped
 import { DashboardComponent } from './modules/dashboard/pages/dashboard/dashboard.component';
 import { ExpedienteDetalleComponent } from './modules/expedientes/pages/expediente-detalles/expediente-detalle/expediente-detalle.component';
 import { authGuard } from './core/guards/auth.guard';
+import { VerCargoComponent } from './modules/cargos/pages/ver-cargo/ver-cargo.component';
 
 export const routes: Routes = [
+  { path: 'ver-cargo/:uuid', component: VerCargoComponent },
   { path: 'login', component: LoginComponent },
   { path: 'restablecer-clave', component: RestablecerClaveComponent },
   {

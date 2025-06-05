@@ -58,6 +58,14 @@ public class ExpedienteController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Documento no encontrado");
         }
     }
+    @PostMapping("/notificar-expediente/{id}")
+    public ResponseEntity<Void> notificarRegistro(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "true") boolean conDocumentos) {
+        expedienteService.notificarRegistroExpediente(id, conDocumentos);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminarDocumento(@PathVariable Long id) {
         try {
@@ -82,13 +90,26 @@ public class ExpedienteController {
             @RequestParam("visibleParaExternos") boolean visible,
             @RequestParam("tamaño") Long tamaño
     ) {
+        System.out.println("========= [BACKEND] Subida de documento =========");
+        System.out.println("→ ID de expediente: " + id);
+        System.out.println("→ Nombre del archivo: " + file.getOriginalFilename());
+        System.out.println("→ Tipo documento: " + tipoDocumento);
+        System.out.println("→ Visible para externos: " + visible);
+        System.out.println("→ Tamaño recibido (param): " + tamaño);
+        System.out.println("→ Tamaño archivo (real): " + file.getSize());
+        System.out.println("→ Tipo MIME: " + file.getContentType());
+        System.out.println("==================================================");
+
         try {
             Documento guardado = documentoService.guardarDocumento(file, id, tipoDocumento, visible);
+            System.out.println("✔ Documento guardado correctamente.");
             return ResponseEntity.ok(guardado);
         } catch (IOException e) {
+            System.err.println("✖ Error al guardar el archivo: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al guardar el archivo");
         }
     }
+
     @GetMapping("/{id}/detalle")
     public ResponseEntity<ExpedienteDetalleResponseDTO> obtenerDetalle(@PathVariable Long id) {
         ExpedienteDetalleResponseDTO detalle = expedienteService.obtenerDetalleExpediente(id);

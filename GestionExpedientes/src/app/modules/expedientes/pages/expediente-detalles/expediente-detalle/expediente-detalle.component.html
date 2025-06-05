@@ -1,650 +1,661 @@
 <div class="bg-gray-100 p-8">
-    <!-- Breadcrumb -->
-    <div class="text-sm text-gray-600 mb-4">
-        <span class="text-[#004C77] font-semibold">Inicio</span> &gt;
-        <span class="text-[#004C77] font-semibold">Expediente {{ expediente?.codigo }}</span> &gt;
-        <span class="text-[#F36C21] font-semibold">Detalles</span>
-    </div>
+    <div>
 
-    <!-- Título -->
-    <h1 class="text-2xl font-bold text-[#004C77]">Detalles del Expediente</h1>
-
-    <!-- Línea divisora con margen inferior -->
-    <hr class="border-t-2 border-[#004C77] rounded-full mb-6" />
-
-    <!-- Contenedor principal -->
-    <div class="w-full bg-white shadow rounded-xl p-6 space-y-6">
-
-        <!-- Pestañas -->
-        <div class="flex gap-6 text-sm font-medium">
-            <button (click)="seccion = 'expediente'"
-                [ngClass]="seccion === 'expediente' ? 'border-b-2 border-[#004C77] text-[#004C77]' : 'text-gray-500 hover:text-[#004C77]'"
-                class="cursor-pointer pb-2">Expediente</button>
-
-            <button (click)="seccion = 'documentos'"
-                [ngClass]="seccion === 'documentos' ? 'border-b-2 border-[#004C77] text-[#004C77]' : 'text-gray-500 hover:text-[#004C77]'"
-                class="cursor-pointer pb-2">Documentos</button>
-
-            <button (click)="seccion = 'cargo'"
-                [ngClass]="seccion === 'cargo' ? 'border-b-2 border-[#004C77] text-[#004C77]' : 'text-gray-500 hover:text-[#004C77]'"
-                class="cursor-pointer pb-2">Cargo</button>
-
-            <button (click)="seccion = 'estado'"
-                [ngClass]="seccion === 'estado' ? 'border-b-2 border-[#004C77] text-[#004C77]' : 'text-gray-500 hover:text-[#004C77]'"
-                class="cursor-pointer pb-2">Estado del Proceso</button>
-
-            <button (click)="seccion = 'auditoria'"
-                [ngClass]="seccion === 'auditoria' ? 'border-b-2 border-[#004C77] text-[#004C77]' : 'text-gray-500 hover:text-[#004C77]'"
-                class="cursor-pointer pb-2">Auditoría / Trazabilidad</button>
+        <!-- Breadcrumb -->
+        <div class="text-sm text-gray-600 mb-4">
+            <span class="text-[#004C77] font-semibold">Inicio</span> &gt;
+            <span class="text-[#004C77] font-semibold">Expediente {{ expediente?.codigo }}</span> &gt;
+            <span class="text-[#F36C21] font-semibold">Detalles</span>
         </div>
 
-        <!-- Contenido -->
-        <ng-container [ngSwitch]="seccion">
+        <!-- Título -->
+        <h1 class="text-2xl font-bold text-[#004C77]">Detalles del Expediente</h1>
 
-            <!-- Expediente -->
-            <div *ngSwitchCase="'expediente'" class="space-y-6 text-sm text-gray-700">
-                <!-- Botón switch para modo edición -->
-                <div class="flex justify-end mb-4">
-                    <label class="flex items-center cursor-pointer">
-                        <div class="relative">
-                            <input type="checkbox" class="sr-only peer" [(ngModel)]="modoEdicionExpediente"
-                                (change)="activarModoEdicion()" />
-                            <div
-                                class="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-[#004C77] transition-colors duration-300">
-                            </div>
-                            <div
-                                class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 peer-checked:translate-x-5">
-                            </div>
-                        </div>
-                        <span class="ml-3 text-sm text-gray-700">Editar expediente</span>
-                    </label>
-                </div>
+        <!-- Línea divisora con margen inferior -->
+        <hr class="border-t-2 border-[#004C77] rounded-full mb-6" />
 
+        <!-- Contenedor principal -->
+        <div class="w-full bg-white shadow rounded-xl p-6 space-y-6">
 
-                <!-- Modo lectura -->
-                <div *ngIf="!modoEdicionExpediente; else formularioEdicion">
+            <!-- Pestañas -->
+            <div class="flex gap-6 text-sm font-medium">
+                <button (click)="seccion = 'expediente'"
+                    [ngClass]="seccion === 'expediente' ? 'border-b-2 border-[#004C77] text-[#004C77]' : 'text-gray-500 hover:text-[#004C77]'"
+                    class="cursor-pointer pb-2">Expediente</button>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8 text-sm">
+                <button (click)="seccion = 'documentos'"
+                    [ngClass]="seccion === 'documentos' ? 'border-b-2 border-[#004C77] text-[#004C77]' : 'text-gray-500 hover:text-[#004C77]'"
+                    class="cursor-pointer pb-2">Documentos</button>
 
-                        <div>
-                            <p class="text-gray-500 font-medium">Tipo</p>
-                            <p class="text-[#004C77] font-semibold">{{ expediente?.tipo }}</p>
-                        </div>
+                <button (click)="seccion = 'cargo'"
+                    [ngClass]="seccion === 'cargo' ? 'border-b-2 border-[#004C77] text-[#004C77]' : 'text-gray-500 hover:text-[#004C77]'"
+                    class="cursor-pointer pb-2">Cargo</button>
 
-                        <div>
-                            <p class="text-gray-500 font-medium">Asunto</p>
-                            <p class="text-[#004C77] font-semibold">{{ expediente?.asunto }}</p>
-                        </div>
+                <button (click)="seccion = 'estado'"
+                    [ngClass]="seccion === 'estado' ? 'border-b-2 border-[#004C77] text-[#004C77]' : 'text-gray-500 hover:text-[#004C77]'"
+                    class="cursor-pointer pb-2">Estado del Proceso</button>
 
-                        <div>
-                            <p class="text-gray-500 font-medium">Fecha</p>
-                            <p class="text-[#004C77] font-semibold">{{ expediente?.fecha }}</p>
-                        </div>
-
-                        <div>
-                            <p class="text-gray-500 font-medium">Proyecto</p>
-                            <p class="text-[#004C77] font-semibold">{{ expediente?.proyecto }}</p>
-                        </div>
-
-                        <!-- Usuarios Emisores -->
-                        <div>
-                            <p class="text-gray-500 font-medium mb-2">Usuarios Emisor</p>
-                            <div *ngIf="expediente?.usuariosEmisores?.length" class="space-y-2">
-                                <ng-container *ngFor="let user of expediente?.usuariosEmisores">
-                                    <div class="flex items-center gap-2">
-                                        <mat-icon inline class="text-[#004C77] cursor-pointer">person</mat-icon>
-                                        <span class="font-semibold text-[#004C77]">{{ user.nombre }}</span>
-                                        <span class="text-gray-600 text-sm">— {{ user.correo }}</span>
-                                    </div>
-                                </ng-container>
-                            </div>
-                        </div>
-
-                        <!-- Usuarios Destinatarios -->
-                        <div>
-                            <p class="text-gray-500 font-medium mb-2">Usuarios Destinatario</p>
-                            <div *ngIf="expediente?.usuariosDestinatarios?.length" class="space-y-2">
-                                <ng-container *ngFor="let user of expediente?.usuariosDestinatarios">
-                                    <div class="flex items-center gap-2">
-                                        <mat-icon inline class="text-[#004C77] cursor-pointer">person</mat-icon>
-                                        <span class="font-semibold text-[#004C77]">{{ user.nombre }}</span>
-                                        <span class="text-gray-600 text-sm">— {{ user.correo }}</span>
-                                    </div>
-                                </ng-container>
-                            </div>
-                        </div>
-
-                        <div>
-                            <p class="text-gray-500 font-medium">Reservado</p>
-                            <p class="text-[#004C77] font-semibold">{{ expediente?.reservado ? 'Sí' : 'No' }}</p>
-                        </div>
-
-                        <div>
-                            <p class="text-gray-500 font-medium">Observaciones</p>
-                            <p class="text-[#004C77] font-semibold">{{ expediente?.comentario }}</p>
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <p class="text-gray-500 font-medium mb-2">Referencias</p>
-                            <div *ngIf="expediente?.referencias?.length" class="space-y-2">
-                                <ng-container *ngFor="let ref of expediente?.referencias">
-                                    <div class="flex items-center gap-2">
-                                        <mat-icon inline class="cursor-pointer text-[#004C77]">description</mat-icon>
-                                        <span class="font-semibold text-[#004C77]">{{ ref }}</span>
-                                    </div>
-                                </ng-container>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- Formulario modo edición -->
-                <ng-template #formularioEdicion>
-                    <form *ngIf="formularioPaso1" [formGroup]="formularioPaso1" (ngSubmit)="guardarEdicion()"
-                        class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-
-                        <!-- Usuarios emisores -->
-                        <div class="md:col-span-2">
-                            <label class="text-sm font-medium text-gray-700 label-obligatorio">Usuario emisor</label>
-                            <mat-form-field matTooltip="Ingresa el/los remitente(s) del expediente" appearance="outline"
-                                class="w-full">
-                                <mat-select [formControl]="controlUsuario" multiple class="max-w-full"
-                                    (closed)="reiniciarFiltroTipoTo()">
-                                    <mat-option class="!cursor-default" disabled>
-                                        <ngx-mat-select-search [formControl]="searchCtrlUsuario"
-                                            placeholderLabel="Buscar referencia..."
-                                            (keydown.enter)="abrirDialogoAgregarUsuario(searchCtrlUsuario.value || '','to')"
-                                            noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nueva referencia"></ngx-mat-select-search>
-                                    </mat-option>
-                                    <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
-                                        <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por
-                                            segmento:</label>
-                                        <select [(ngModel)]="filtroTipoUsuarioTo"
-                                            [ngModelOptions]="{ standalone: true }"
-                                            (ngModelChange)="filtrarUsuariosTo()"
-                                            class="cursor-pointer text-sm border border-gray-300 rounded px-2 py-1 bg-white focus-within:border-[#004C77] transition-colors duration-200 shadow-sm">
-                                            <option value="" class="cursor-pointer">Todos</option>
-                                            <option *ngFor="let tipo of tiposUsuario" [value]="tipo"
-                                                class="cursor-pointer">{{ tipo }}</option>
-                                        </select>
-                                    </div>
-                                    <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo"
-                                        [hidden]="!mostrarGrupo(tipo)">
-                                        <mat-option
-                                            *ngFor="let user of obtenerUsuariosPorTipo(usuariosFiltradosTo, tipo)"
-                                            [value]="user.nombre">
-                                            {{ user.nombre }} - {{ user.correo }}
-                                        </mat-option>
-                                    </mat-optgroup>
-                                </mat-select>
-                            </mat-form-field>
-                        </div>
-
-                        <!-- Usuarios destinatarios -->
-                        <div class="md:col-span-2">
-                            <label class="text-sm font-medium text-gray-700 label-obligatorio">Usuario destinatario
-                                (CC)</label>
-                            <mat-form-field matTooltip="Ingresa el/los destinatario(s) en copia" appearance="outline"
-                                class="w-full">
-                                <mat-select [formControl]="controlUsuarioCc" multiple class="max-w-full"
-                                    (closed)="reiniciarFiltroTipoCc()">
-                                    <mat-option class="!cursor-default" disabled>
-                                        <ngx-mat-select-search [formControl]="searchCtrlCc"
-                                            placeholderLabel="Buscar referencia..."
-                                            (keydown.enter)="abrirDialogoAgregarUsuario(searchCtrlCc.value || '','cc')"
-                                            noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nueva referencia"></ngx-mat-select-search>
-                                    </mat-option>
-                                    <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
-                                        <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por
-                                            segmento:</label>
-                                        <select [(ngModel)]="filtroTipoUsuarioCc"
-                                            [ngModelOptions]="{ standalone: true }"
-                                            (ngModelChange)="filtrarUsuariosCc()"
-                                            class="cursor-pointer text-sm border border-gray-300 rounded px-2 py-1 bg-white focus-within:border-[#004C77] transition-colors duration-200 shadow-sm">
-                                            <option value="" class="cursor-pointer">Todos</option>
-                                            <option *ngFor="let tipo of tiposUsuario" [value]="tipo"
-                                                class="cursor-pointer">{{ tipo }}</option>
-                                        </select>
-                                    </div>
-                                    <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo"
-                                        [hidden]="!mostrarGrupo(tipo)">
-                                        <mat-option
-                                            *ngFor="let user of obtenerUsuariosPorTipo(usuariosFiltradosCc, tipo)"
-                                            [value]="user.nombre">
-                                            {{ user.nombre }} - {{ user.correo }}
-                                        </mat-option>
-                                    </mat-optgroup>
-                                </mat-select>
-                            </mat-form-field>
-                        </div>
-
-                        <!-- Referencias -->
-                        <div class="md:col-span-2">
-                            <label class="text-sm font-medium text-gray-700 label-obligatorio">Referencia(s)</label>
-                            <mat-form-field appearance="outline" class="w-full"
-                                matTooltip="Relaciona el expediente con una carta, documento o expediente anterior">
-                                <mat-select [formControl]="controlReferencia" multiple class="max-w-full"
-                                    (closed)="reiniciarFiltroTipoReferencia()">
-                                    <mat-option class="!cursor-default" disabled>
-                                        <ngx-mat-select-search [formControl]="searchCtrlReferencia"
-                                            placeholderLabel="Buscar referencia..."
-                                            (keydown.enter)="abrirDialogoAgregarReferencia(searchCtrlReferencia.value || '')"
-                                            noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nueva referencia"></ngx-mat-select-search>
-                                    </mat-option>
-                                    <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
-                                        <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por tipo:</label>
-                                        <select [(ngModel)]="filtroTipoReferencia"
-                                            [ngModelOptions]="{ standalone: true }"
-                                            class="cursor-pointer text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:border-[#004C77] transition-colors duration-200 shadow-sm"
-                                            (ngModelChange)="filtrarReferencias()">
-                                            <option value="">Todos</option>
-                                            <option *ngFor="let tipo of tiposReferencia" [value]="tipo">{{ tipo }}
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <mat-optgroup *ngFor="let tipo of tiposReferencia" [label]="tipo">
-                                        <mat-option *ngFor="let ref of obtenerReferenciasPorTipo(tipo)"
-                                            [value]="ref.serie">
-                                            {{ ref.serie }} - {{ ref.asunto }}
-                                        </mat-option>
-                                    </mat-optgroup>
-                                </mat-select>
-                            </mat-form-field>
-                        </div>
-
-                        <!-- Asunto -->
-                        <div>
-                            <label class="text-sm font-medium text-gray-700 label-obligatorio">Asunto</label>
-                            <input matTooltip="Resumen del contenido del expediente" type="text"
-                                formControlName="asunto" class="w-full px-3 py-2 border rounded" />
-                        </div>
-
-                        <!-- Fecha -->
-                        <div>
-                            <label class="text-sm font-medium text-gray-700 label-obligatorio">Fecha</label>
-                            <input type="date" formControlName="fecha" class="w-full px-3 py-2 border rounded" />
-                        </div>
-
-                        <!-- Proyecto -->
-                        <div class="md:col-span-2 flex flex-col md:flex-row gap-8">
-                            <div class="flex-1">
-                                <label class="text-sm font-medium text-gray-700 label-obligatorio">Proyecto</label>
-                                <select formControlName="proyecto" class="w-full px-3 py-2 border rounded">
-                                    <option value="" disabled selected>Seleccione</option>
-                                    <option *ngFor="let proyecto of proyectos" [value]="proyecto">{{ proyecto }}
-                                    </option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Reservado -->
-                        <div class="md:col-span-2">
-                            <label class="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F36C21]" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M12 11c0 1.104-.896 2-2 2s-2-.896-2-2 .896-2 2-2 2 .896 2 2z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4h16v16H4z" />
-                                </svg>
-                                Reservado
-                            </label>
-                            <div class="flex gap-6 mt-2">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" formControlName="reservado" value="si"
-                                        class="accent-[#004C77]" />
-                                    <span class="text-sm">Sí</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" formControlName="reservado" value="no"
-                                        class="accent-[#004C77]" />
-                                    <span class="text-sm">No</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Observaciones -->
-                        <div class="md:col-span-2">
-                            <label class="text-sm font-medium text-gray-700">Observaciones</label>
-                            <textarea formControlName="comentario" rows="3"
-                                class="w-full px-3 py-2 border rounded resize-none"></textarea>
-                        </div>
-
-                        <!-- Botones -->
-                        <div class="md:col-span-2 flex justify-end items-center mt-4 gap-4">
-                            <button type="button" (click)="cancelarEdicion()"
-                                class="cursor-pointer text-[#F36C21] border border-[#F36C21] px-6 py-2 rounded hover:bg-[#F36C21] hover:text-white transition">Cancelar</button>
-                            <button type="submit" [disabled]="formularioPaso1.invalid"
-                                class="bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 disabled:bg-gray-300 cursor-pointer">Guardar</button>
-                        </div>
-                    </form>
-                </ng-template>
-
+                <button (click)="seccion = 'auditoria'"
+                    [ngClass]="seccion === 'auditoria' ? 'border-b-2 border-[#004C77] text-[#004C77]' : 'text-gray-500 hover:text-[#004C77]'"
+                    class="cursor-pointer pb-2">Auditoría / Trazabilidad</button>
             </div>
 
-            <div *ngSwitchCase="'documentos'" class="p-4">
-                <h2 class="text-xl font-semibold text-[#004C77] mb-4">Documentos asociados</h2>
+            <!-- Contenido -->
+            <ng-container [ngSwitch]="seccion">
 
-                <!-- Documentos existentes: listado vertical con edición -->
-                <div class="space-y-4 mb-10">
-                    <div *ngFor="let doc of expediente?.documentos"
-                        class="flex items-center justify-between bg-white border border-gray-300 rounded-lg shadow-sm p-4 gap-6">
-
-                        <!-- Columna: Icono + Datos -->
-                        <div class="flex items-start gap-3 min-w-[384px] max-w-[420px]">
-                            <div class="flex flex-col overflow-hidden">
-                                <p class="font-semibold text-gray-800 truncate">{{ doc.nombreArchivo }}</p>
-                                <p class="text-xs italic text-gray-500 mt-0.5 truncate">
-                                    {{ doc.tipoDocumento || 'No especificado' }}
-                                </p>
-                                <span class="text-xs text-gray-500 mt-1">{{ formatearPeso(doc['tamaño']) }}</span>
+                <!-- Expediente -->
+                <div *ngSwitchCase="'expediente'" class="space-y-6 text-sm text-gray-700">
+                    <!-- Botón switch para modo edición -->
+                    <div class="flex justify-end mb-4">
+                        <label class="flex items-center cursor-pointer">
+                            <div class="relative">
+                                <input type="checkbox" class="sr-only peer" [(ngModel)]="modoEdicionExpediente"
+                                    (change)="activarModoEdicion()" />
+                                <div
+                                    class="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-[#004C77] transition-colors duration-300">
+                                </div>
+                                <div
+                                    class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 peer-checked:translate-x-5">
+                                </div>
                             </div>
-                        </div>
-
-                        <!-- Selector -->
-                        <div class="flex flex-col w-[180px]">
-                            <label class="text-xs text-gray-600 mb-1 select-none">Tipo de documento</label>
-                            <select [(ngModel)]="doc.tipoDocumento" (change)="confirmarCambioTipoDocumento(doc)"
-                                class="border border-gray-300 rounded px-2 py-1 text-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#004C77]">
-                                <option value="" disabled>Seleccione tipo</option>
-                                <option *ngFor="let tipo of tiposDocumento" [value]="tipo">{{ tipo }}</option>
-                            </select>
-                        </div>
-
-                        <!-- Acciones -->
-                        <div class="flex items-center gap-2 pr-1">
-                            <button (click)="toggleVisibilidadDocumento(doc)"
-                                matTooltip="{{ doc.visibleParaExternos ? 'Visible para externos' : 'Oculto para externos' }}"
-                                class="p-1 rounded hover:bg-gray-100 transition cursor-pointer">
-                                <mat-icon color="warn">
-                                    {{ doc.visibleParaExternos ? 'visibility' : 'visibility_off' }}
-                                </mat-icon>
-                            </button>
-
-                            <button (click)="abrirEnNuevaVentana(transformarRutaDocumento(doc.rutaArchivo)!)"
-                                matTooltip="Ver documento"
-                                class="text-[#004C77] hover:text-[#F36C21] cursor-pointer p-1 rounded hover:bg-gray-100 transition">
-                                <mat-icon>picture_as_pdf</mat-icon>
-                            </button>
-
-                            <button (click)="eliminarDocumentoExistente(doc)" matTooltip="Eliminar documento"
-                                class="text-red-600 cursor-pointer p-1 rounded hover:bg-gray-100 transition">
-                                <mat-icon>delete</mat-icon>
-                            </button>
-                        </div>
+                            <span class="ml-3 text-sm text-gray-700">Editar expediente</span>
+                        </label>
                     </div>
-                </div>
 
-                <h2 class="text-xl font-semibold text-[#004C77] mb-4">Anexar documentos adicionales</h2>
 
-                <!-- Drag & Drop para subir archivos -->
-                <div class="border-2 border-dashed rounded-lg p-10 text-center transition-all duration-300"
-                    [ngClass]="{ 'border-[#004C77] bg-blue-50': arrastrando, 'border-gray-300 bg-gray-50': !arrastrando }"
-                    (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onFileDrop($event)">
-                    <label for="uploadInput" class="cursor-pointer flex flex-col items-center space-y-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#004C77]" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M16 12l-4-4m0 0l-4 4m4-4v12" />
-                        </svg>
-                        <span class="text-sm text-gray-600">Arrastra archivos aquí o haz clic para seleccionar</span>
-                        <span class="text-xs text-gray-400">Solo PDFs</span>
-                    </label>
-                    <input id="uploadInput" type="file" accept=".pdf" multiple class="hidden"
-                        (change)="onMultipleFilesSelected($event)" />
-                </div>
+                    <!-- Modo lectura -->
+                    <div *ngIf="!modoEdicionExpediente; else formularioEdicion">
 
-                <!-- Documentos nuevos (upload) -->
-                <div class="space-y-2 mt-4" *ngIf="documentosNuevos.length > 0">
-                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Documentos añadidos</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8 text-sm">
 
-                    <div *ngFor="let doc of documentosNuevos; let i = index"
-                        class="flex justify-between items-center bg-white border border-gray-200 shadow-sm rounded px-4 py-3">
+                            <div>
+                                <p class="text-gray-500 font-medium">Tipo</p>
+                                <p class="text-[#004C77] font-semibold">{{ expediente?.tipo }}</p>
+                            </div>
 
-                        <div class="flex items-center gap-4 w-full justify-between">
-                            <!-- Icono PDF + nombre + progreso -->
-                            <div class="flex items-center gap-3 w-full">
-                                <svg class="w-5 h-5 text-[#004C77] flex-shrink-0" fill="none" stroke="currentColor"
-                                    stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M7 7h10M7 11h10M7 15h10M5 5v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2z" />
-                                </svg>
-                                <span class="text-sm text-gray-700 w-[200px] truncate" title="{{ doc.nombre }}">
-                                    {{ doc.nombre }}
-                                </span>
+                            <div>
+                                <p class="text-gray-500 font-medium">Asunto</p>
+                                <p class="text-[#004C77] font-semibold">{{ expediente?.asunto }}</p>
+                            </div>
 
-                                <div class="flex-1 flex items-center gap-2">
-                                    <span class="text-xs text-gray-500 min-w-[55px] text-right">
-                                        {{ formatearPeso(doc.archivo.size) }}
-                                    </span>
+                            <div>
+                                <p class="text-gray-500 font-medium">Fecha</p>
+                                <p class="text-[#004C77] font-semibold">{{ expediente?.fecha }}</p>
+                            </div>
 
-                                    <div class="w-full max-w-[150px] h-2 bg-gray-200 rounded-full overflow-hidden">
-                                        <div class="h-full bg-[#004C77] transition-all duration-300"
-                                            [style.width.%]="doc.progreso"></div>
-                                    </div>
+                            <div>
+                                <p class="text-gray-500 font-medium">Proyecto</p>
+                                <p class="text-[#004C77] font-semibold">{{ expediente?.proyecto }}</p>
+                            </div>
 
-                                    <svg *ngIf="doc.cargado" class="w-5 h-5 text-green-600" fill="none"
-                                        stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
+                            <!-- Usuarios Emisores -->
+                            <div>
+                                <p class="text-gray-500 font-medium mb-2">Usuarios Emisor</p>
+                                <div *ngIf="expediente?.usuariosEmisores?.length" class="space-y-2">
+                                    <ng-container *ngFor="let user of expediente?.usuariosEmisores">
+                                        <div class="flex items-center gap-2">
+                                            <mat-icon inline class="text-[#004C77] cursor-pointer">person</mat-icon>
+                                            <span class="font-semibold text-[#004C77]">{{ user.nombre }}</span>
+                                            <span class="text-gray-600 text-sm">— {{ user.correo }}</span>
+                                        </div>
+                                    </ng-container>
                                 </div>
                             </div>
 
-                            <!-- Tipo de documento -->
-                            <div class="w-[180px]">
-                                <label class="text-xs text-gray-500 block mb-1 select-none">Tipo de documento</label>
-                                <select [(ngModel)]="doc.tipoDocumento" [ngModelOptions]="{ standalone: true }"
-                                    class="cursor-pointer w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                                    required>
-                                    <option value="" disabled>Seleccione</option>
+                            <!-- Usuarios Destinatarios -->
+                            <div>
+                                <p class="text-gray-500 font-medium mb-2">Usuarios Destinatario</p>
+                                <div *ngIf="expediente?.usuariosDestinatarios?.length" class="space-y-2">
+                                    <ng-container *ngFor="let user of expediente?.usuariosDestinatarios">
+                                        <div class="flex items-center gap-2">
+                                            <mat-icon inline class="text-[#004C77] cursor-pointer">person</mat-icon>
+                                            <span class="font-semibold text-[#004C77]">{{ user.nombre }}</span>
+                                            <span class="text-gray-600 text-sm">— {{ user.correo }}</span>
+                                        </div>
+                                    </ng-container>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p class="text-gray-500 font-medium">Reservado</p>
+                                <p class="text-[#004C77] font-semibold">{{ expediente?.reservado ? 'Sí' : 'No' }}</p>
+                            </div>
+
+                            <div>
+                                <p class="text-gray-500 font-medium">Observaciones</p>
+                                <p class="text-[#004C77] font-semibold">{{ expediente?.comentario }}</p>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <p class="text-gray-500 font-medium mb-2">Referencias</p>
+                                <div *ngIf="expediente?.referencias?.length" class="space-y-2">
+                                    <ng-container *ngFor="let ref of expediente?.referencias">
+                                        <div class="flex items-center gap-2">
+                                            <mat-icon inline
+                                                class="cursor-pointer text-[#004C77]">description</mat-icon>
+                                            <span class="font-semibold text-[#004C77]">{{ ref }}</span>
+                                        </div>
+                                    </ng-container>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Formulario modo edición -->
+                    <ng-template #formularioEdicion>
+                        <form *ngIf="formularioPaso1" [formGroup]="formularioPaso1" (ngSubmit)="guardarEdicion()"
+                            class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+
+                            <!-- Usuarios emisores -->
+                            <div class="md:col-span-2">
+                                <label class="text-sm font-medium text-gray-700 label-obligatorio">Usuario
+                                    emisor</label>
+                                <mat-form-field matTooltip="Ingresa el/los remitente(s) del expediente"
+                                    appearance="outline" class="w-full">
+                                    <mat-select [formControl]="controlUsuario" multiple class="max-w-full"
+                                        (closed)="reiniciarFiltroTipoTo()">
+                                        <mat-option class="!cursor-default" disabled>
+                                            <ngx-mat-select-search [formControl]="searchCtrlUsuario"
+                                                placeholderLabel="Buscar referencia..."
+                                                (keydown.enter)="abrirDialogoAgregarUsuario(searchCtrlUsuario.value || '','to')"
+                                                noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nueva referencia"></ngx-mat-select-search>
+                                        </mat-option>
+                                        <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
+                                            <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por
+                                                segmento:</label>
+                                            <select [(ngModel)]="filtroTipoUsuarioTo"
+                                                [ngModelOptions]="{ standalone: true }"
+                                                (ngModelChange)="filtrarUsuariosTo()"
+                                                class="cursor-pointer text-sm border border-gray-300 rounded px-2 py-1 bg-white focus-within:border-[#004C77] transition-colors duration-200 shadow-sm">
+                                                <option value="" class="cursor-pointer">Todos</option>
+                                                <option *ngFor="let tipo of tiposUsuario" [value]="tipo"
+                                                    class="cursor-pointer">{{ tipo }}</option>
+                                            </select>
+                                        </div>
+                                        <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo"
+                                            [hidden]="!mostrarGrupo(tipo)">
+                                            <mat-option
+                                                *ngFor="let user of obtenerUsuariosPorTipo(usuariosFiltradosTo, tipo)"
+                                                [value]="user.nombre">
+                                                {{ user.nombre }} - {{ user.correo }}
+                                            </mat-option>
+                                        </mat-optgroup>
+                                    </mat-select>
+                                </mat-form-field>
+                            </div>
+
+                            <!-- Usuarios destinatarios -->
+                            <div class="md:col-span-2">
+                                <label class="text-sm font-medium text-gray-700 label-obligatorio">Usuario destinatario
+                                    (CC)</label>
+                                <mat-form-field matTooltip="Ingresa el/los destinatario(s) en copia"
+                                    appearance="outline" class="w-full">
+                                    <mat-select [formControl]="controlUsuarioCc" multiple class="max-w-full"
+                                        (closed)="reiniciarFiltroTipoCc()">
+                                        <mat-option class="!cursor-default" disabled>
+                                            <ngx-mat-select-search [formControl]="searchCtrlCc"
+                                                placeholderLabel="Buscar referencia..."
+                                                (keydown.enter)="abrirDialogoAgregarUsuario(searchCtrlCc.value || '','cc')"
+                                                noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nueva referencia"></ngx-mat-select-search>
+                                        </mat-option>
+                                        <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
+                                            <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por
+                                                segmento:</label>
+                                            <select [(ngModel)]="filtroTipoUsuarioCc"
+                                                [ngModelOptions]="{ standalone: true }"
+                                                (ngModelChange)="filtrarUsuariosCc()"
+                                                class="cursor-pointer text-sm border border-gray-300 rounded px-2 py-1 bg-white focus-within:border-[#004C77] transition-colors duration-200 shadow-sm">
+                                                <option value="" class="cursor-pointer">Todos</option>
+                                                <option *ngFor="let tipo of tiposUsuario" [value]="tipo"
+                                                    class="cursor-pointer">{{ tipo }}</option>
+                                            </select>
+                                        </div>
+                                        <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo"
+                                            [hidden]="!mostrarGrupo(tipo)">
+                                            <mat-option
+                                                *ngFor="let user of obtenerUsuariosPorTipo(usuariosFiltradosCc, tipo)"
+                                                [value]="user.nombre">
+                                                {{ user.nombre }} - {{ user.correo }}
+                                            </mat-option>
+                                        </mat-optgroup>
+                                    </mat-select>
+                                </mat-form-field>
+                            </div>
+
+                            <!-- Referencias -->
+                            <div class="md:col-span-2">
+                                <label class="text-sm font-medium text-gray-700 label-obligatorio">Referencia(s)</label>
+                                <mat-form-field appearance="outline" class="w-full"
+                                    matTooltip="Relaciona el expediente con una carta, documento o expediente anterior">
+                                    <mat-select [formControl]="controlReferencia" multiple class="max-w-full"
+                                        (closed)="reiniciarFiltroTipoReferencia()">
+                                        <mat-option class="!cursor-default" disabled>
+                                            <ngx-mat-select-search [formControl]="searchCtrlReferencia"
+                                                placeholderLabel="Buscar referencia..."
+                                                (keydown.enter)="abrirDialogoAgregarReferencia(searchCtrlReferencia.value || '')"
+                                                noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nueva referencia"></ngx-mat-select-search>
+                                        </mat-option>
+                                        <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
+                                            <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por
+                                                tipo:</label>
+                                            <select [(ngModel)]="filtroTipoReferencia"
+                                                [ngModelOptions]="{ standalone: true }"
+                                                class="cursor-pointer text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:border-[#004C77] transition-colors duration-200 shadow-sm"
+                                                (ngModelChange)="filtrarReferencias()">
+                                                <option value="">Todos</option>
+                                                <option *ngFor="let tipo of tiposReferencia" [value]="tipo">{{ tipo }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <mat-optgroup *ngFor="let tipo of tiposReferencia" [label]="tipo">
+                                            <mat-option *ngFor="let ref of obtenerReferenciasPorTipo(tipo)"
+                                                [value]="ref.serie">
+                                                {{ ref.serie }} - {{ ref.asunto }}
+                                            </mat-option>
+                                        </mat-optgroup>
+                                    </mat-select>
+                                </mat-form-field>
+                            </div>
+
+                            <!-- Asunto -->
+                            <div>
+                                <label class="text-sm font-medium text-gray-700 label-obligatorio">Asunto</label>
+                                <input matTooltip="Resumen del contenido del expediente" type="text"
+                                    formControlName="asunto" class="w-full px-3 py-2 border rounded" />
+                            </div>
+
+                            <!-- Fecha -->
+                            <div>
+                                <label class="text-sm font-medium text-gray-700 label-obligatorio">Fecha</label>
+                                <input type="date" formControlName="fecha" class="w-full px-3 py-2 border rounded" />
+                            </div>
+
+                            <!-- Proyecto -->
+                            <div class="md:col-span-2 flex flex-col md:flex-row gap-8">
+                                <div class="flex-1">
+                                    <label class="text-sm font-medium text-gray-700 label-obligatorio">Proyecto</label>
+                                    <select formControlName="proyecto" class="w-full px-3 py-2 border rounded">
+                                        <option value="" disabled selected>Seleccione</option>
+                                        <option *ngFor="let proyecto of proyectos" [value]="proyecto">{{ proyecto }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Reservado -->
+                            <div class="md:col-span-2">
+                                <label class="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F36C21]" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M12 11c0 1.104-.896 2-2 2s-2-.896-2-2 .896-2 2-2 2 .896 2 2z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4h16v16H4z" />
+                                    </svg>
+                                    Reservado
+                                </label>
+                                <div class="flex gap-6 mt-2">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" formControlName="reservado" value="si"
+                                            class="accent-[#004C77]" />
+                                        <span class="text-sm">Sí</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" formControlName="reservado" value="no"
+                                            class="accent-[#004C77]" />
+                                        <span class="text-sm">No</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Observaciones -->
+                            <div class="md:col-span-2">
+                                <label class="text-sm font-medium text-gray-700">Observaciones</label>
+                                <textarea formControlName="comentario" rows="3"
+                                    class="w-full px-3 py-2 border rounded resize-none"></textarea>
+                            </div>
+
+                            <!-- Botones -->
+                            <div class="md:col-span-2 flex justify-end items-center mt-4 gap-4">
+                                <button type="button" (click)="cancelarEdicion()"
+                                    class="cursor-pointer text-[#F36C21] border border-[#F36C21] px-6 py-2 rounded hover:bg-[#F36C21] hover:text-white transition">Cancelar</button>
+                                <button type="submit" [disabled]="formularioPaso1.invalid"
+                                    class="bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 disabled:bg-gray-300 cursor-pointer">Guardar</button>
+                            </div>
+                        </form>
+                    </ng-template>
+
+                </div>
+
+                <div *ngSwitchCase="'documentos'" class="p-4">
+                    <h2 class="text-xl font-semibold text-[#004C77] mb-4">Documentos asociados</h2>
+
+                    <!-- Documentos existentes: listado vertical con edición -->
+                    <div class="space-y-4 mb-10">
+                        <div *ngFor="let doc of expediente?.documentos"
+                            class="flex items-center justify-between bg-white border border-gray-300 rounded-lg shadow-sm p-4 gap-6">
+
+                            <!-- Columna: Icono + Datos -->
+                            <div class="flex items-start gap-3 min-w-[384px] max-w-[420px]">
+                                <div class="flex flex-col overflow-hidden">
+                                    <p class="font-semibold text-gray-800 truncate">{{ doc.nombreArchivo }}</p>
+                                    <p class="text-xs italic text-gray-500 mt-0.5 truncate">
+                                        {{ doc.tipoDocumento || 'No especificado' }}
+                                    </p>
+                                    <span class="text-xs text-gray-500 mt-1">{{ formatearPeso(doc['tamaño']) }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Selector -->
+                            <div class="flex flex-col w-[180px]">
+                                <label class="text-xs text-gray-600 mb-1 select-none">Tipo de documento</label>
+                                <select [(ngModel)]="doc.tipoDocumento" (change)="confirmarCambioTipoDocumento(doc)"
+                                    class="border border-gray-300 rounded px-2 py-1 text-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#004C77]">
+                                    <option value="" disabled>Seleccione tipo</option>
                                     <option *ngFor="let tipo of tiposDocumento" [value]="tipo">{{ tipo }}</option>
                                 </select>
                             </div>
 
                             <!-- Acciones -->
-                            <div class="flex gap-3 text-sm items-center">
-
-                                <button
-                                    [matTooltip]="doc.visibleParaExternos ? 'Visible para externos' : 'Oculto para externos'"
-                                    (click)="alternarVisibilidad(i)"
-                                    class="cursor-pointer p-1 rounded hover:bg-gray-100 transition">
-                                    <svg *ngIf="doc.visibleParaExternos" class="w-5 h-5 text-[#F36C21]" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                    <svg *ngIf="!doc.visibleParaExternos" class="w-5 h-5 text-gray-400" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.969 9.969 0 012.386-3.872M10.6 4.184a9.957 9.957 0 012.268-.184c4.477 0 8.268 2.943 9.542 7a9.97 9.97 0 01-4.293 5.187M3 3l18 18" />
-                                    </svg>
+                            <div class="flex items-center gap-2 pr-1">
+                                <button (click)="toggleVisibilidadDocumento(doc)"
+                                    matTooltip="{{ doc.visibleParaExternos ? 'Visible para externos' : 'Oculto para externos' }}"
+                                    class="p-1 rounded hover:bg-gray-100 transition cursor-pointer">
+                                    <mat-icon color="warn">
+                                        {{ doc.visibleParaExternos ? 'visibility' : 'visibility_off' }}
+                                    </mat-icon>
                                 </button>
 
-                                <button (click)="verDocumentoNuevo(i)" matTooltip="Visualizar Documento"
+                                <button (click)="abrirEnNuevaVentana(transformarRutaDocumento(doc.rutaArchivo)!)"
+                                    matTooltip="Ver documento"
                                     class="text-[#004C77] hover:text-[#F36C21] cursor-pointer p-1 rounded hover:bg-gray-100 transition">
                                     <mat-icon>picture_as_pdf</mat-icon>
                                 </button>
 
-                                <button (click)="eliminarDocumento(i)" matTooltip="Eliminar Documento"
-                                    class="text-red-600 hover:text-red-800 cursor-pointer p-1 rounded hover:bg-gray-100 transition">
+                                <button (click)="eliminarDocumentoExistente(doc)" matTooltip="Eliminar documento"
+                                    class="text-red-600 cursor-pointer p-1 rounded hover:bg-gray-100 transition">
                                     <mat-icon>delete</mat-icon>
                                 </button>
-
                             </div>
-
                         </div>
                     </div>
-                </div>
-                <div class="flex justify-end mt-4">
-                    <button (click)="subirDocumentosAdicionales()"
-                        [disabled]="documentosNuevos.length === 0 || !todosLosDocumentosTienenTipo()"
-                        class="bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                        Subir documentos adicionales
-                    </button>
-                </div>
-            </div>
 
-            <!-- CARGO -->
-            <div *ngSwitchCase="'cargo'" class="p-4 space-y-6">
-                <!-- Top section -->
-                <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                    <h2 class="text-xl font-semibold text-[#004C77] mb-4">Anexar documentos adicionales</h2>
 
-                    <!-- Card -->
-                    <div class="bg-white border border-gray-300 rounded-lg shadow-md p-5 flex-1">
-                        <ng-container *ngIf="expediente?.cargo; else noCargo">
-                            <h3 class="text-lg font-semibold text-[#004C77] mb-3">Cargo generado actual</h3>
+                    <!-- Drag & Drop para subir archivos -->
+                    <div class="border-2 border-dashed rounded-lg p-10 text-center transition-all duration-300"
+                        [ngClass]="{ 'border-[#004C77] bg-blue-50': arrastrando, 'border-gray-300 bg-gray-50': !arrastrando }"
+                        (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onFileDrop($event)">
+                        <label for="uploadInput" class="cursor-pointer flex flex-col items-center space-y-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#004C77]" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M16 12l-4-4m0 0l-4 4m4-4v12" />
+                            </svg>
+                            <span class="text-sm text-gray-600">Arrastra archivos aquí o haz clic para
+                                seleccionar</span>
+                            <span class="text-xs text-gray-400">Solo PDFs</span>
+                        </label>
+                        <input id="uploadInput" type="file" accept=".pdf" multiple class="hidden"
+                            (change)="onMultipleFilesSelected($event)" />
+                    </div>
 
-                            <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-800">
-                                <div class="flex items-center gap-1">
-                                    <mat-icon class="align-middle text-base leading-none">confirmation_number</mat-icon>
-                                    <strong>Código:</strong> {{ expediente.cargo.codigo || 'Sin código' }}
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <mat-icon class="align-middle text-base leading-none">calendar_today</mat-icon>
-                                    <strong>Fecha:</strong> {{ expediente.cargo.fecha }}
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <mat-icon class="align-middle text-base leading-none">schedule</mat-icon>
-                                    <strong>Hora:</strong> {{ expediente.cargo.hora }}
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <ng-container
-                                        *ngIf="transformarRutaCargo(expediente.cargo.archivo); else sinArchivo">
-                                        <button
-                                            (click)="abrirEnNuevaVentana(transformarRutaCargo(expediente.cargo.archivo)!)"
-                                            class="text-[#004C77] hover:text-[#F36C21] cursor-pointer flex items-center gap-1"
-                                            matTooltip="Ver documento PDF">
-                                            <mat-icon>description</mat-icon>
-                                            Ver documento
-                                        </button>
+                    <!-- Documentos nuevos (upload) -->
+                    <div class="space-y-2 mt-4" *ngIf="documentosNuevos.length > 0">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Documentos añadidos</h4>
 
-                                    </ng-container>
-                                    <ng-template #sinArchivo>
-                                        <span class="text-gray-400 italic flex items-center gap-1">
-                                            <mat-icon>block</mat-icon> Sin archivo
+                        <div *ngFor="let doc of documentosNuevos; let i = index"
+                            class="flex justify-between items-center bg-white border border-gray-200 shadow-sm rounded px-4 py-3">
+
+                            <div class="flex items-center gap-4 w-full justify-between">
+                                <!-- Icono PDF + nombre + progreso -->
+                                <div class="flex items-center gap-3 w-full">
+                                    <svg class="w-5 h-5 text-[#004C77] flex-shrink-0" fill="none" stroke="currentColor"
+                                        stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M7 7h10M7 11h10M7 15h10M5 5v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2z" />
+                                    </svg>
+                                    <span class="text-sm text-gray-700 w-[200px] truncate" title="{{ doc.nombre }}">
+                                        {{ doc.nombre }}
+                                    </span>
+
+                                    <div class="flex-1 flex items-center gap-2">
+                                        <span class="text-xs text-gray-500 min-w-[55px] text-right">
+                                            {{ formatearPeso(doc.archivo.size) }}
                                         </span>
-                                    </ng-template>
+
+                                        <div class="w-full max-w-[150px] h-2 bg-gray-200 rounded-full overflow-hidden">
+                                            <div class="h-full bg-[#004C77] transition-all duration-300"
+                                                [style.width.%]="doc.progreso"></div>
+                                        </div>
+
+                                        <svg *ngIf="doc.cargado" class="w-5 h-5 text-green-600" fill="none"
+                                            stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <!-- Tipo de documento -->
+                                <div class="w-[180px]">
+                                    <label class="text-xs text-gray-500 block mb-1 select-none">Tipo de
+                                        documento</label>
+                                    <select [(ngModel)]="doc.tipoDocumento" [ngModelOptions]="{ standalone: true }"
+                                        class="cursor-pointer w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                                        required>
+                                        <option value="" disabled>Seleccione</option>
+                                        <option *ngFor="let tipo of tiposDocumento" [value]="tipo">{{ tipo }}</option>
+                                    </select>
+                                </div>
+
+                                <!-- Acciones -->
+                                <div class="flex gap-3 text-sm items-center">
+
+                                    <button
+                                        [matTooltip]="doc.visibleParaExternos ? 'Visible para externos' : 'Oculto para externos'"
+                                        (click)="alternarVisibilidad(i)"
+                                        class="cursor-pointer p-1 rounded hover:bg-gray-100 transition">
+                                        <svg *ngIf="doc.visibleParaExternos" class="w-5 h-5 text-[#F36C21]" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        <svg *ngIf="!doc.visibleParaExternos" class="w-5 h-5 text-gray-400" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.969 9.969 0 012.386-3.872M10.6 4.184a9.957 9.957 0 012.268-.184c4.477 0 8.268 2.943 9.542 7a9.97 9.97 0 01-4.293 5.187M3 3l18 18" />
+                                        </svg>
+                                    </button>
+
+                                    <button (click)="verDocumentoNuevo(i)" matTooltip="Visualizar Documento"
+                                        class="text-[#004C77] hover:text-[#F36C21] cursor-pointer p-1 rounded hover:bg-gray-100 transition">
+                                        <mat-icon>picture_as_pdf</mat-icon>
+                                    </button>
+
+                                    <button (click)="eliminarDocumento(i)" matTooltip="Eliminar Documento"
+                                        class="text-red-600 hover:text-red-800 cursor-pointer p-1 rounded hover:bg-gray-100 transition">
+                                        <mat-icon>delete</mat-icon>
+                                    </button>
+
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-4">
+                        <button (click)="subirDocumentosAdicionales()"
+                            [disabled]="documentosNuevos.length === 0 || !todosLosDocumentosTienenTipo()"
+                            class="bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            Subir documentos adicionales
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CARGO -->
+                <div *ngSwitchCase="'cargo'" class="p-4 space-y-6">
+                    <!-- Top section -->
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+
+                        <!-- Card -->
+                        <div class="bg-white border border-gray-300 rounded-lg shadow-md p-5 flex-1">
+                            <ng-container *ngIf="expediente?.cargo; else noCargo">
+                                <h3 class="text-lg font-semibold text-[#004C77] mb-3">Cargo generado actual</h3>
+
+                                <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-800">
+                                    <div class="flex items-center gap-1">
+                                        <mat-icon
+                                            class="align-middle text-base leading-none">confirmation_number</mat-icon>
+                                        <strong>Código:</strong> {{ expediente.cargo.codigo || 'Sin código' }}
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <mat-icon class="align-middle text-base leading-none">calendar_today</mat-icon>
+                                        <strong>Fecha:</strong> {{ expediente.cargo.fecha }}
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <mat-icon class="align-middle text-base leading-none">schedule</mat-icon>
+                                        <strong>Hora:</strong> {{ expediente.cargo.hora }}
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <ng-container
+                                            *ngIf="transformarRutaCargo(expediente.cargo.archivo); else sinArchivo">
+                                            <button
+                                                (click)="abrirEnNuevaVentana(transformarRutaCargo(expediente.cargo.archivo)!)"
+                                                class="text-[#004C77] hover:text-[#F36C21] cursor-pointer flex items-center gap-1"
+                                                matTooltip="Ver documento PDF">
+                                                <mat-icon>description</mat-icon>
+                                                Ver documento
+                                            </button>
+
+                                        </ng-container>
+                                        <ng-template #sinArchivo>
+                                            <span class="text-gray-400 italic flex items-center gap-1">
+                                                <mat-icon>block</mat-icon> Sin archivo
+                                            </span>
+                                        </ng-template>
+                                    </div>
+                                </div>
+                            </ng-container>
+
+                            <ng-template #noCargo>
+                                <p class="text-gray-500 italic text-center">No se ha generado ningún cargo aún.</p>
+                            </ng-template>
+                        </div>
+
+                        <!-- Botón -->
+                        <button
+                            class="bg-[#004C77] hover:bg-[#F36C21] text-white px-4 py-2 rounded-md shadow flex items-center gap-2 transition-all cursor-pointer w-full md:w-auto"
+                            matTooltip="Generar un nuevo cargo" (click)="abrirDialogoCargo()">
+                            <mat-icon class="!text-white">add_circle_outline</mat-icon>
+                            <span>Generar nuevo Cargo</span>
+                        </button>
+
+                    </div>
+
+                    <!-- HISTORIAL -->
+                    <div>
+                        <h4 class="text-[#004C77] font-semibold text-base mb-3">Historial de Cargos</h4>
+                        <ng-container *ngIf="historialCargos.length > 1; else noHistorial">
+                            <div
+                                class="space-y-2 max-h-[320px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                                <div *ngFor="let cargo of historialCargos.slice(1)"
+                                    class="bg-white border border-gray-200 rounded-md px-4 py-3 flex justify-between items-center text-sm text-gray-800">
+
+                                    <div class="flex gap-6 items-center flex-wrap">
+                                        <span class="flex items-center gap-1">
+                                            <mat-icon class="text-base">confirmation_number</mat-icon>
+                                            <strong>Código:</strong> {{ cargo.codigo }}
+                                        </span>
+                                        <span class="flex items-center gap-1">
+                                            <mat-icon class="text-base">calendar_today</mat-icon>
+                                            <strong>Fecha:</strong> {{ cargo.fecha }}
+                                        </span>
+                                        <span class="flex items-center gap-1">
+                                            <mat-icon class="text-base">schedule</mat-icon>
+                                            <strong>Hora:</strong> {{ cargo.hora }}
+                                        </span>
+                                    </div>
+
+                                    <div>
+                                        <ng-container
+                                            *ngIf="transformarRutaCargo(cargo.archivoPath); else sinArchivoHist">
+                                            <button
+                                                (click)="abrirEnNuevaVentana(transformarRutaCargo(cargo.archivoPath)!)"
+                                                class="text-[#004C77] hover:text-[#F36C21] cursor-pointer flex items-center gap-1"
+                                                matTooltip="Ver documento">
+                                                <mat-icon>description</mat-icon>
+                                                Ver documento
+                                            </button>
+
+                                        </ng-container>
+                                        <ng-template #sinArchivoHist>
+                                            <span class="text-gray-400 italic flex items-center gap-1">
+                                                <mat-icon>block</mat-icon> Sin archivo
+                                            </span>
+                                        </ng-template>
+                                    </div>
                                 </div>
                             </div>
                         </ng-container>
 
-                        <ng-template #noCargo>
-                            <p class="text-gray-500 italic text-center">No se ha generado ningún cargo aún.</p>
+                        <ng-template #noHistorial>
+                            <p class="text-gray-500 italic">No hay cargos anteriores aún.</p>
                         </ng-template>
                     </div>
-
-                    <!-- Botón -->
-                    <button
-                        class="bg-[#004C77] hover:bg-[#F36C21] text-white px-4 py-2 rounded-md shadow flex items-center gap-2 transition-all cursor-pointer w-full md:w-auto"
-                        matTooltip="Generar un nuevo cargo" (click)="abrirDialogoCargo()">
-                        <mat-icon class="!text-white">add_circle_outline</mat-icon>
-                        <span>Generar nuevo Cargo</span>
-                    </button>
-
                 </div>
 
-                <!-- HISTORIAL -->
-                <div>
-                    <h4 class="text-[#004C77] font-semibold text-base mb-3">Historial de Cargos</h4>
-                    <ng-container *ngIf="historialCargos.length > 1; else noHistorial">
-                        <div
-                            class="space-y-2 max-h-[320px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                            <div *ngFor="let cargo of historialCargos.slice(1)"
-                                class="bg-white border border-gray-200 rounded-md px-4 py-3 flex justify-between items-center text-sm text-gray-800">
+                <!-- Estado del Proceso -->
+                <div *ngSwitchCase="'estado'" class="p-4">
+                    <div class="p-6 bg-white rounded-lg shadow">
+                        <h3 class="text-lg font-semibold text-[#004C77] mb-6">Línea de tiempo del proceso</h3>
+                        <div class="relative pl-10">
+                            <div class="absolute left-6 top-0 bottom-0 w-0.5 bg-[#004C77]"></div>
 
-                                <div class="flex gap-6 items-center flex-wrap">
-                                    <span class="flex items-center gap-1">
-                                        <mat-icon class="text-base">confirmation_number</mat-icon>
-                                        <strong>Código:</strong> {{ cargo.codigo }}
-                                    </span>
-                                    <span class="flex items-center gap-1">
-                                        <mat-icon class="text-base">calendar_today</mat-icon>
-                                        <strong>Fecha:</strong> {{ cargo.fecha }}
-                                    </span>
-                                    <span class="flex items-center gap-1">
-                                        <mat-icon class="text-base">schedule</mat-icon>
-                                        <strong>Hora:</strong> {{ cargo.hora }}
-                                    </span>
+                            <div *ngFor="let etapa of expediente.estadoProceso; let i = index" class="relative mb-8">
+                                <div class="absolute left-5 w-4 h-4 rounded-full border-4 z-10"
+                                    style="top: calc(50% - 0.5rem);"
+                                    [ngClass]="etapa.completado ? 'bg-[#004C77] border-[#004C77]' : 'bg-white border-gray-400'">
                                 </div>
 
-                                <div>
-                                    <ng-container *ngIf="transformarRutaCargo(cargo.archivoPath); else sinArchivoHist">
-                                        <button (click)="abrirEnNuevaVentana(transformarRutaCargo(cargo.archivoPath)!)"
-                                            class="text-[#004C77] hover:text-[#F36C21] cursor-pointer flex items-center gap-1"
-                                            matTooltip="Ver documento">
-                                            <mat-icon>description</mat-icon>
-                                            Ver documento
-                                        </button>
-
-                                    </ng-container>
-                                    <ng-template #sinArchivoHist>
-                                        <span class="text-gray-400 italic flex items-center gap-1">
-                                            <mat-icon>block</mat-icon> Sin archivo
-                                        </span>
-                                    </ng-template>
+                                <div
+                                    class="ml-12 bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                                    <p class="font-semibold text-[#004C77]">{{ etapa.nombre }}</p>
+                                    <p class="text-sm text-gray-500 mt-1">
+                                        {{ etapa.fecha }} — {{ etapa.descripcion }}
+                                    </p>
                                 </div>
-                            </div>
-                        </div>
-                    </ng-container>
-
-                    <ng-template #noHistorial>
-                        <p class="text-gray-500 italic">No hay cargos anteriores aún.</p>
-                    </ng-template>
-                </div>
-            </div>
-
-            <!-- Estado del Proceso -->
-            <div *ngSwitchCase="'estado'" class="p-4">
-                <div class="p-6 bg-white rounded-lg shadow">
-                    <h3 class="text-lg font-semibold text-[#004C77] mb-6">Línea de tiempo del proceso</h3>
-                    <div class="relative pl-10">
-                        <div class="absolute left-6 top-0 bottom-0 w-0.5 bg-[#004C77]"></div>
-
-                        <div *ngFor="let etapa of expediente.estadoProceso; let i = index" class="relative mb-8">
-                            <div class="absolute left-5 w-4 h-4 rounded-full border-4 z-10"
-                                style="top: calc(50% - 0.5rem);"
-                                [ngClass]="etapa.completado ? 'bg-[#004C77] border-[#004C77]' : 'bg-white border-gray-400'">
-                            </div>
-
-                            <div
-                                class="ml-12 bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all">
-                                <p class="font-semibold text-[#004C77]">{{ etapa.nombre }}</p>
-                                <p class="text-sm text-gray-500 mt-1">
-                                    {{ etapa.fecha }} — {{ etapa.descripcion }}
-                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Auditoría -->
-            <div *ngSwitchCase="'auditoria'" class="p-4">
-                <h3 class="font-semibold text-[#004C77] mb-4 text-lg">Registro de Auditoría</h3>
-                <table class="w-full text-sm table-auto border-collapse">
-                    <thead class="bg-[#004C77] text-white">
-                        <tr>
-                            <th class="p-2 text-left">Usuario</th>
-                            <th class="p-2 text-left">Acción</th>
-                            <th class="p-2 text-left">Fecha</th>
-                            <th class="p-2 text-left">Instancia</th>
-                            <th class="p-2 text-left">Documentos</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let log of expediente.auditoria" class="border-b">
-                            <td class="p-2">{{ log.usuario }}</td>
-                            <td class="p-2">{{ log.accion }}</td>
-                            <td class="p-2">{{ log.fecha }}</td>
-                            <td class="p-2">{{ log.instancia }}</td>
-                            <td class="p-2">{{ log.documentos?.join(', ') }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                <!-- Auditoría -->
+                <div *ngSwitchCase="'auditoria'" class="p-4">
+                    <h3 class="font-semibold text-[#004C77] mb-4 text-lg">Registro de Auditoría</h3>
+                    <table class="w-full text-sm table-auto border-collapse">
+                        <thead class="bg-[#004C77] text-white">
+                            <tr>
+                                <th class="p-2 text-left">Usuario</th>
+                                <th class="p-2 text-left">Acción</th>
+                                <th class="p-2 text-left">Fecha</th>
+                                <th class="p-2 text-left">Instancia</th>
+                                <th class="p-2 text-left">Documentos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let log of expediente.auditoria" class="border-b">
+                                <td class="p-2">{{ log.usuario }}</td>
+                                <td class="p-2">{{ log.accion }}</td>
+                                <td class="p-2">{{ log.fecha }}</td>
+                                <td class="p-2">{{ log.instancia }}</td>
+                                <td class="p-2">{{ log.documentos?.join(', ') }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-        </ng-container>
+            </ng-container>
+        </div>
     </div>
 </div>

@@ -1,3 +1,8 @@
+<div *ngIf="isLoading" class="fixed inset-0 bg-white bg-opacity-70 z-50 flex flex-col items-center justify-center">
+    <div class="animate-spin border-4 border-[#004C77] border-t-transparent rounded-full h-12 w-12 mb-4"></div>
+    <p class="text-[#004C77] font-semibold text-lg">Enviando cargo y correo...</p>
+</div>
+
 <div class="w-full max-w-4xl p-6 bg-white rounded-xl shadow space-y-6">
     <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-bold text-[#004C77]">Agregar / Editar Cargo</h2>

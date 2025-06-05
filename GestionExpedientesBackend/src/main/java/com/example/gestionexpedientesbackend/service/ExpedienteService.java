@@ -13,5 +13,6 @@ public interface ExpedienteService {
 
     ExpedienteDetalleResponseDTO obtenerDetalleExpediente(Long id);
     void actualizar(Long id, ExpedienteDTO datosActualizados);
+   void notificarRegistroExpediente(Long expedienteId, boolean conDocumentos);
 
 }

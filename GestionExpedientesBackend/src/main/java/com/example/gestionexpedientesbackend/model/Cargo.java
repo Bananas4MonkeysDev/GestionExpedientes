@@ -3,6 +3,7 @@ package com.example.gestionexpedientesbackend.model;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "cargo")
@@ -23,6 +24,16 @@ public class Cargo {
 
     @Column(nullable = false)
     private Long expedienteId;
+    @Column(unique = true, nullable = false)
+    private String uuid = UUID.randomUUID().toString();
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
 
     @Column(length = 2000)
     private String mensaje;

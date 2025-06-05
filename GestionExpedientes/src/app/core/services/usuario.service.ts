@@ -32,6 +32,10 @@ export class UsuarioService {
       headers: this.getAuthHeaders()
     });
   }
+  obtenerUsuariosParaExpedientes(): Observable<Usuario[]> {
+    const headers = this.getAuthHeaders();
+    return this.http.get<Usuario[]>(`${this.apiUrl}/expedientes`, { headers });
+  }
 
   login(data: { correo: string, contraseña: string }): Observable<any> {
     return this.http.post('http://localhost:8080/api/auth/login', data);

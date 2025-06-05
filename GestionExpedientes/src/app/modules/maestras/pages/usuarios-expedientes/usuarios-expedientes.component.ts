@@ -13,15 +13,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { UsuarioService, Usuario } from '../../../../core/services/usuario.service';
 
-interface UsuarioExpediente {
-  nombre: string;
-  correo: string;
-  telefono: string;
-  tipo: 'Persona' | 'Entidad';
-  ruc?: string;
-  origen: 'Emisor' | 'Destinatario';
-}
+
 
 @Component({
   selector: 'app-usuarios-expedientes',
@@ -42,14 +36,16 @@ interface UsuarioExpediente {
 })
 export class UsuariosExpedientesComponent implements OnInit {
   columnas: string[] = ['select', 'nombre', 'correo', 'telefono', 'tipo', 'ruc', 'origen', 'acciones'];
-  dataSource = new MatTableDataSource<UsuarioExpediente>();
-  selection = new SelectionModel<UsuarioExpediente>(true, []);
+  dataSource = new MatTableDataSource<any>(); // usamos `any` para mapear estructura personalizada
+  selection = new SelectionModel<any>(true, []);
 
   aplicarFiltroGlobal(event: Event): void {
     const filtro = (event.target as HTMLInputElement).value.trim().toLowerCase();
     this.dataSource.filter = filtro;
   }
-  getValor(data: UsuarioExpediente, columna: string): string {
+  constructor(private usuarioService: UsuarioService) { }
+
+  getValor(data: Usuario, columna: string): string {
     return (data as any)[columna] ?? '';
   }
 
@@ -74,45 +70,31 @@ export class UsuariosExpedientesComponent implements OnInit {
   @ViewChild(MatSort) sort!: MatSort;
 
   ngOnInit() {
-    this.dataSource.data = this.obtenerUsuarios();
+    this.usuarioService.obtenerUsuarios().subscribe({
+      next: (usuarios) => {
+        this.dataSource.data = usuarios.map(u => ({
+          nombre: u.nombre,
+          correo: u.correo,
+          telefono: u.telefono,
+          tipo: u.tipoIdentidad === 'ENTIDAD' ? 'Entidad' : 'Persona',
+          ruc: u.ruc,
+          origen: u.tipoUsuario === 'INTERNO' ? 'Emisor' : 'Destinatario'
+        }));
+      },
+      error: (err) => {
+        console.error('Error al cargar usuarios:', err);
+      }
+    });
   }
+
+
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
   }
 
-  obtenerUsuarios(): UsuarioExpediente[] {
-    return [
-      { nombre: 'María López', correo: 'm.lopez@juridicosac.com', telefono: '987123456', tipo: 'Entidad', ruc: '20600123456', origen: 'Emisor' },
-      { nombre: 'Pedro García', correo: 'p.garcia@correo.com', telefono: '998765432', tipo: 'Persona', origen: 'Destinatario' },
-      { nombre: 'Asesoría Legal SRL', correo: 'contacto@asesorialegal.com', telefono: '933456789', tipo: 'Entidad', ruc: '20451234567', origen: 'Emisor' },
-      { nombre: 'Laura Méndez', correo: 'laura.mendez@gmail.com', telefono: '955667788', tipo: 'Persona', origen: 'Emisor' },
-      { nombre: 'Instituto Técnico del Norte', correo: 'info@itn.edu.pe', telefono: '900112233', tipo: 'Entidad', ruc: '20555678901', origen: 'Destinatario' },
-      { nombre: 'Laura Méndez', correo: 'laura.mendez@gmail.com', telefono: '955667788', tipo: 'Persona', origen: 'Emisor' },
-      { nombre: 'Instituto Técnico del Norte', correo: 'info@itn.edu.pe', telefono: '900112233', tipo: 'Entidad', ruc: '20555678901', origen: 'Destinatario' },
-      { nombre: 'Instituto Técnico del Norte', correo: 'info@itn.edu.pe', telefono: '900112233', tipo: 'Entidad', ruc: '20555678901', origen: 'Destinatario' },
-      { nombre: 'Laura Méndez', correo: 'laura.mendez@gmail.com', telefono: '955667788', tipo: 'Persona', origen: 'Emisor' },
-      { nombre: 'Instituto Técnico del Norte', correo: 'info@itn.edu.pe', telefono: '900112233', tipo: 'Entidad', ruc: '20555678901', origen: 'Destinatario' },
-      { nombre: 'Laura Méndez', correo: 'laura.mendez@gmail.com', telefono: '955667788', tipo: 'Persona', origen: 'Emisor' },
-      { nombre: 'Instituto Técnico del Norte', correo: 'info@itn.edu.pe', telefono: '900112233', tipo: 'Entidad', ruc: '20555678901', origen: 'Destinatario' },
-      { nombre: 'Laura Méndez', correo: 'laura.mendez@gmail.com', telefono: '955667788', tipo: 'Persona', origen: 'Emisor' },
-      { nombre: 'Instituto Técnico del Norte', correo: 'info@itn.edu.pe', telefono: '900112233', tipo: 'Entidad', ruc: '20555678901', origen: 'Destinatario' },
-      { nombre: 'Laura Méndez', correo: 'laura.mendez@gmail.com', telefono: '955667788', tipo: 'Persona', origen: 'Emisor' },
-      { nombre: 'Instituto Técnico del Norte', correo: 'info@itn.edu.pe', telefono: '900112233', tipo: 'Entidad', ruc: '20555678901', origen: 'Destinatario' },
-      { nombre: 'Laura Méndez', correo: 'laura.mendez@gmail.com', telefono: '955667788', tipo: 'Persona', origen: 'Emisor' },
-      { nombre: 'Instituto Técnico del Norte', correo: 'info@itn.edu.pe', telefono: '900112233', tipo: 'Entidad', ruc: '20555678901', origen: 'Destinatario' },
-      { nombre: 'Laura Méndez', correo: 'laura.mendez@gmail.com', telefono: '955667788', tipo: 'Persona', origen: 'Emisor' },
-      { nombre: 'Instituto Técnico del Norte', correo: 'info@itn.edu.pe', telefono: '900112233', tipo: 'Entidad', ruc: '20555678901', origen: 'Destinatario' },
-      { nombre: 'Laura Méndez', correo: 'laura.mendez@gmail.com', telefono: '955667788', tipo: 'Persona', origen: 'Emisor' },
-      { nombre: 'Instituto Técnico del Norte', correo: 'info@itn.edu.pe', telefono: '900112233', tipo: 'Entidad', ruc: '20555678901', origen: 'Destinatario' },
-      { nombre: 'Laura Méndez', correo: 'laura.mendez@gmail.com', telefono: '955667788', tipo: 'Persona', origen: 'Emisor' },
-      { nombre: 'Instituto Técnico del Norte', correo: 'info@itn.edu.pe', telefono: '900112233', tipo: 'Entidad', ruc: '20555678901', origen: 'Destinatario' },
-      { nombre: 'Laura Méndez', correo: 'laura.mendez@gmail.com', telefono: '955667788', tipo: 'Persona', origen: 'Emisor' },
-      { nombre: 'Instituto Técnico del Norte', correo: 'info@itn.edu.pe', telefono: '900112233', tipo: 'Entidad', ruc: '20555678901', origen: 'Destinatario' },
-      { nombre: 'Laura Méndez', correo: 'laura.mendez@gmail.com', telefono: '955667788', tipo: 'Persona', origen: 'Emisor' }
-    ];
-  }
+
 
   isAllSelected() {
     return this.selection.selected.length === this.dataSource.data.length;
@@ -129,7 +111,7 @@ export class UsuariosExpedientesComponent implements OnInit {
     this.selection.clear();
   }
 
-  checkboxLabel(row?: UsuarioExpediente): string {
+  checkboxLabel(row?: Usuario): string {
     return !row ? 'select all' : `select row ${row.nombre}`;
   }
 

@@ -1,0 +1,9 @@
+<!-- src/app/components/loading-overlay/loading-overlay.component.html -->
+<div
+  *ngIf="loadingOverlayService.loading$ | async"
+  class="fixed inset-0 z-50 bg-white bg-opacity-70 flex items-center justify-center">
+  <div class="flex flex-col items-center gap-4">
+    <div class="h-12 w-12 border-4 border-[#004C77] border-t-transparent rounded-full animate-spin"></div>
+    <p class="text-[#004C77] font-semibold text-lg">Procesando, por favor espere...</p>
+  </div>
+</div>

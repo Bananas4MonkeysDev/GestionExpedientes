@@ -8,6 +8,7 @@ import java.util.List;
 public interface CargoRepository extends JpaRepository<Cargo, Long> {
     List<Cargo> findAllByExpedienteIdOrderByOrdenDesc(Long expedienteId);
     List<Cargo> findByExpedienteIdOrderByOrdenDesc(Long expedienteId);
+    Cargo findByUuid(String uuid);
 
 }
 

@@ -15,6 +15,8 @@ export class DialogoCargoComponent {
   horaCargo: string = '';
   cargo: File | null = null;
   arrastrandoCargo = false;
+  isLoading = false;
+
   constructor(
     public dialogRef: MatDialogRef<DialogoCargoComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
@@ -75,6 +77,7 @@ export class DialogoCargoComponent {
       alert('Fecha y hora son obligatorias.');
       return;
     }
+    this.isLoading = true;
 
     const nuevoCargo = {
       fecha: this.fechaCargo,

@@ -16,6 +16,7 @@ import { Router } from '@angular/router';
 import { ExpedienteService } from '../../../../core/services/expediente.service';
 import { UsuarioService } from '../../../../core/services/usuario.service';
 import { ReferenciaService, Referencia } from '../../../../core/services/referencia.service';
+import { LoadingOverlayService } from '../../../../core/services/loading-overlay.service';
 
 interface DocumentoExpediente {
   nombre: string;
@@ -69,6 +70,7 @@ export class ExpedientesRegisterComponent implements OnInit {
   pasoActual = 1;
   tipoExpediente: 'Emisor' | 'Receptor' | null = null;
   correoEmisor = '';
+  isLoading = false;
 
   formularioPaso1!: FormGroup;
   formularioDocumento!: FormGroup;
@@ -105,7 +107,7 @@ export class ExpedientesRegisterComponent implements OnInit {
   arrastrando = false;
   seccionActiva: 'registro' | 'estado' | 'auditoria' = 'registro';
 
-  constructor(private fb: FormBuilder, private dialog: MatDialog, private router: Router, private expedienteService: ExpedienteService, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
+  constructor(private loadingService: LoadingOverlayService, private fb: FormBuilder, private dialog: MatDialog, private router: Router, private expedienteService: ExpedienteService, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
 
   ngOnInit(): void {
     this.formularioPaso1 = this.fb.group({
@@ -438,19 +440,27 @@ export class ExpedientesRegisterComponent implements OnInit {
           return this.expedienteService.registrarDocumento(expedienteId, formData); // ← clave
         });
 
+        this.loadingService.show();
 
         // enviar todos los documentos
         Promise.all(uploads.map(u => u.toPromise())).then(() => {
-          Swal.fire({
-            title: 'Expediente registrado',
-            text: 'Los documentos fueron cargados exitosamente.',
-            icon: 'success',
-            confirmButtonColor: '#004C77'
-          }).then(() => {
-            this.pasoActual = 4;
-            this.exito = true;
+          this.expedienteService.notificarExpediente(this.expedienteIdRegistrado!).subscribe({
+            next: () => {
+              this.loadingService.hide(); Swal.fire({
+                title: 'Expediente registrado',
+                text: 'Los documentos fueron cargados exitosamente.',
+                icon: 'success',
+                confirmButtonColor: '#004C77'
+              }).then(() => {
+                this.pasoActual = 4;
+                this.exito = true;
+              }); console.log('[✔] Notificación enviada correctamente');
+            },
+            error: (err) => { this.loadingService.hide(); console.error('[✖] Error al enviar notificación:', err); }
           });
         });
+
+
       },
       error: (err) => {
         Swal.fire({
@@ -493,19 +503,29 @@ export class ExpedientesRegisterComponent implements OnInit {
       referencias: this.controlReferencia.value?.join('|'),
       documentos: [] // explícitamente vacío
     };
-
+    this.loadingService.show();
     this.expedienteService.registrarExpediente(expedienteData).subscribe({
       next: (expediente) => {
-        Swal.fire({
-          title: 'Expediente registrado',
-          text: 'Aun no se cargo ningun documento',
-          icon: 'success',
-          confirmButtonColor: '#004C77'
-        }).then(() => {
-          this.expedienteIdRegistrado = expediente.id;
-          console.log(this.expedienteIdRegistrado);
-          this.pasoActual = 4;
-          this.exito = true;
+        this.expedienteIdRegistrado = expediente.id;
+        console.log(this.expedienteIdRegistrado);
+        this.expedienteService.notificarExpediente(this.expedienteIdRegistrado!).subscribe({
+          next: () => {
+            this.loadingService.hide();
+            Swal.fire({
+              title: 'Expediente registrado',
+              text: 'Aun no se cargo ningun documento',
+              icon: 'success',
+              confirmButtonColor: '#004C77'
+            }).then(() => {
+              this.pasoActual = 4;
+              this.exito = true;
+            });
+            console.log('[✔] Notificación enviada sin documentos');
+          },
+          error: (err) => {
+            this.loadingService.hide();
+            console.error('[✖] Error en notificación sin documentos:', err);
+          }
         });
         this.pasoActual = 4;
       },
@@ -592,6 +612,7 @@ export class ExpedientesRegisterComponent implements OnInit {
       });
       return;
     }
+    this.loadingService.show();
     console.log(this.expedienteIdRegistrado);
 
     // Aquí debes usar el ID real del expediente creado
@@ -608,22 +629,25 @@ export class ExpedientesRegisterComponent implements OnInit {
 
     this.expedienteService.registrarCargo(formData).subscribe({
       next: () => {
+        this.loadingService.hide();
+
         Swal.fire({
           title: 'Cargo registrado',
           text: this.cargo
-            ? 'El documento de cargo fue enviado con la fecha seleccionada.'
-            : 'Se notificó la fecha del cargo. No se adjuntó documento.',
+            ? 'El documento de cargo fue enviado con éxito.'
+            : 'Se registró el cargo sin documento.',
           icon: 'success',
-          confirmButtonColor: '#004C77'
-        }).then(() => {
-          console.log(this.expedienteIdRegistrado);
-
-          this.router.navigate(['/detalle-expediente', this.expedienteIdRegistrado]).then(() => {
-            this.expedienteIdRegistrado = undefined;  // Limpiar variable después de navegar
-          });
+          confirmButtonColor: '#004C77',
+          timer: 2000,
+          showConfirmButton: true
         });
-      },
+
+        this.router.navigate(['/detalle-expediente', this.expedienteIdRegistrado]);
+        this.expedienteIdRegistrado = undefined;
+      }
+      ,
       error: (err) => {
+        this.loadingService.hide();
         Swal.fire({
           title: 'Error',
           text: 'No se pudo registrar el cargo.',

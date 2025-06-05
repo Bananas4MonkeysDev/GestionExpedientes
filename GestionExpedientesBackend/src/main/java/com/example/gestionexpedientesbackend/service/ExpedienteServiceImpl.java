@@ -10,6 +10,7 @@ import com.example.gestionexpedientesbackend.repository.ExpedienteRepository;
 import com.example.gestionexpedientesbackend.service.ExpedienteService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,10 +24,15 @@ public class ExpedienteServiceImpl implements ExpedienteService {
 
     @Autowired
     private DocumentoService documentoService;
-
     @Autowired
+    private EmailService emailService;
+
     private CargoService cargoService;
 
+    @Autowired
+    public void setCargoService(@Lazy CargoService cargoService) {
+        this.cargoService = cargoService;
+    }
     @Autowired
     private UsuarioService usuarioService;
     @Override
@@ -90,9 +96,28 @@ public class ExpedienteServiceImpl implements ExpedienteService {
         // Generar el código basado en el ID ya asignado
         String codigo = String.format("EXP-%06d", expediente.getId());  // Esto usa el ID generado por la DB
         expediente.setCodigo(codigo);
+        // Obtener destinatarios
+        List<Usuario> destinatarios = usuarioService.obtenerPorIdsSeparados(expediente.getUsuariosDestinatarios());
+        List<String> correos = destinatarios.stream().map(Usuario::getCorreo).toList();
+
+// Obtener documentos
+        List<Documento> documentos = documentoService.obtenerPorExpedienteId(expediente.getId());
+
 
         // Volver a guardar con el código actualizado, sin cambiar el ID
         return expedienteRepository.save(expediente);
+    }
+    public void notificarRegistroExpediente(Long expedienteId, boolean conDocumentos) {
+        Expediente expediente = expedienteRepository.findById(expedienteId).orElseThrow();
+        List<Usuario> destinatarios = usuarioService.obtenerPorIdsSeparados(expediente.getUsuariosDestinatarios());
+        List<String> correos = destinatarios.stream().map(Usuario::getCorreo).toList();
+
+        List<Documento> documentos = conDocumentos
+                ? documentoService.obtenerPorExpedienteId(expedienteId)
+                : List.of(); // lista vacía
+
+        String mensaje = emailService.generarMensajeExpediente(expediente, documentos);
+        emailService.enviarCorreoSimple(correos, "Nuevo expediente registrado – " + expediente.getCodigo(), mensaje);
     }
 
 }

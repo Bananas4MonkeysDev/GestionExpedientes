@@ -18,6 +18,7 @@ import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { UsuarioService } from '../../../../../core/services/usuario.service';
 import { forkJoin } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { LoadingOverlayService } from '../../../../../core/services/loading-overlay.service';
 
 export interface Usuario {
   id: number; // ← Agregado
@@ -104,8 +105,10 @@ export class ExpedienteDetalleComponent implements OnInit {
   arrastrando = false;
   tiposDocumento = ['Anexos', 'Actas', 'Carta', 'Oficio', 'Contrato', 'Adenda', 'Solicitud de compra', 'Cotizaciones', 'Cuadro Comparativo', 'Orden de Compra', 'Guia', 'Factura', 'Informe', 'Anexo'];
   historialCargos: any[] = [];
+  isLoading = false;
 
-  constructor(private sanitizer: DomSanitizer, private zone: NgZone, private route: ActivatedRoute, private cdr: ChangeDetectorRef, private expedienteService: ExpedienteService, private dialog: MatDialog, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
+  constructor(private loadingService: LoadingOverlayService,
+    private sanitizer: DomSanitizer, private zone: NgZone, private route: ActivatedRoute, private cdr: ChangeDetectorRef, private expedienteService: ExpedienteService, private dialog: MatDialog, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
   @ViewChild('slider', { static: false }) sliderRef!: ElementRef;
   reiniciarFiltroTipoReferencia() {
     this.filtroTipoReferencia = '';
@@ -161,7 +164,7 @@ export class ExpedienteDetalleComponent implements OnInit {
         }));
         this.expediente = {
           id: data.expediente.id,
-          codigo:data.expediente.codigo,
+          codigo: data.expediente.codigo,
           tipo: data.expediente.tipoExpediente,
           asunto: data.expediente.asunto,
           fecha: data.expediente.fecha,
@@ -295,9 +298,10 @@ export class ExpedienteDetalleComponent implements OnInit {
       formData.append('fecha', result.fecha || now.toISOString().split('T')[0]);
       formData.append('hora', result.hora || now.toTimeString().split(' ')[0]);
       if (result.archivo) formData.append('archivo', result.archivo);
-
+      this.loadingService.show();
       this.expedienteService.registrarCargo(formData).subscribe({
         next: (nuevoCargo) => {
+          this.loadingService.hide();
           this.expediente.cargo = {
             fecha: nuevoCargo.fecha,
             hora: nuevoCargo.hora,
@@ -318,6 +322,7 @@ export class ExpedienteDetalleComponent implements OnInit {
           });
         },
         error: (err) => {
+          this.loadingService.hide();
           console.error('Error al registrar cargo:', err);
           Swal.fire({
             icon: 'error',
