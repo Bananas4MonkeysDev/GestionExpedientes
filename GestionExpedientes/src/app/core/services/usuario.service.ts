@@ -36,6 +36,24 @@ export class UsuarioService {
     const headers = this.getAuthHeaders();
     return this.http.get<Usuario[]>(`${this.apiUrl}/expedientes`, { headers });
   }
+  // Paso 1: Recuperar clave, enviando el correo
+  recuperarClave(correo: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/recuperar-clave`, { correo });
+  }
+
+  // Paso 2: Validar el token 
+  validarTokenRecuperacion(token: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/restablecer-clave/validar-token/${token}`);
+  }
+
+  // Paso 3: Restablecer la clave con el token
+  restablecerClave(token: string, nuevaClave: string): Observable<any> {
+    const body = new URLSearchParams();
+    body.set('nuevaClave', nuevaClave);
+    return this.http.post<any>(`${this.apiUrl}/restablecer-clave/${token}`, body.toString(), {
+      headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded')
+    });
+  }
 
   login(data: { correo: string, contraseña: string }): Observable<any> {
     return this.http.post('http://localhost:8080/api/auth/login', data);

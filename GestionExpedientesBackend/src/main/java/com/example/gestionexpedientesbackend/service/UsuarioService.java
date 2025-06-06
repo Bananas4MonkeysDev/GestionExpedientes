@@ -6,6 +6,14 @@ import java.util.List;
 public interface UsuarioService {
     Usuario registrar(Usuario usuario);
     List<Usuario> obtenerTodos();
+    void enviarCorreoRecuperacion(String correo, String token);
+
+    Usuario findByTokenRecuperacion(String token);
+    void guardarTokenRecuperacion(Long usuarioId, String token);
+
+
+    void actualizarContraseña(Long usuarioId, String nuevaClave);
+    Usuario findByCorreo(String correo);
 
     Usuario login(String correo, String contraseña);
     public boolean existsByCorreo(String correo);

@@ -2,6 +2,8 @@ package com.example.gestionexpedientesbackend.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "usuarios")
 public class Usuario {
@@ -14,6 +16,11 @@ public class Usuario {
 
     @Column(unique = true)
     private String correo;
+    @Column(nullable = true)
+    private String tokenRecuperacion;
+
+    @Column(nullable = true)
+    private LocalDateTime fechaTokenRecuperacion;
 
     private String contraseña;
 
@@ -26,6 +33,22 @@ public class Usuario {
     private String ruc; // opcional, para entidades
     private String rol;
     private String dni;
+
+    public String getTokenRecuperacion() {
+        return tokenRecuperacion;
+    }
+
+    public void setTokenRecuperacion(String tokenRecuperacion) {
+        this.tokenRecuperacion = tokenRecuperacion;
+    }
+
+    public LocalDateTime getFechaTokenRecuperacion() {
+        return fechaTokenRecuperacion;
+    }
+
+    public void setFechaTokenRecuperacion(LocalDateTime fechaTokenRecuperacion) {
+        this.fechaTokenRecuperacion = fechaTokenRecuperacion;
+    }
 
     public String getDni() {
         return dni;

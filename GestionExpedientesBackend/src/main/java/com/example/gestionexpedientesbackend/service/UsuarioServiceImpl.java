@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +18,8 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
-
+    @Autowired
+    private EmailService emailService;
     @Autowired
     private PasswordEncoder passwordEncoder;  // ← Asegúrate que esté aquí
     public boolean existsByCorreo(String correo) {
@@ -33,6 +35,38 @@ public class UsuarioServiceImpl implements UsuarioService {
         // Encripta la contraseña antes de guardar
         usuario.setContraseña(passwordEncoder.encode(usuario.getContraseña()));
         return usuarioRepository.save(usuario);
+    }
+    @Override
+    public Usuario findByCorreo(String correo) {
+        return usuarioRepository.findByCorreo(correo).orElse(null);
+    }
+
+    @Override
+    public void guardarTokenRecuperacion(Long usuarioId, String token) {
+        Usuario usuario = usuarioRepository.findById(usuarioId).orElseThrow();
+        usuario.setTokenRecuperacion(token);
+        usuario.setFechaTokenRecuperacion(LocalDateTime.now().plusHours(1)); // Expira en 1 hora
+        usuarioRepository.save(usuario);
+    }
+
+    @Override
+    public void enviarCorreoRecuperacion(String correo, String token) {
+        String asunto = "Recuperación de contraseña";
+        String mensaje = "Para restablecer tu contraseña, ingresa este token: " + token;
+
+        // Usamos el método de enviar correo simple
+        emailService.enviarCorreoSimple(List.of(correo), asunto, mensaje);
+    }
+
+    @Override
+    public Usuario findByTokenRecuperacion(String token) {
+        return usuarioRepository.findByTokenRecuperacion(token).orElse(null);
+    }
+    @Override
+    public void actualizarContraseña(Long usuarioId, String nuevaClave) {
+        Usuario usuario = usuarioRepository.findById(usuarioId).orElseThrow();
+        usuario.setContraseña(passwordEncoder.encode(nuevaClave)); // Usa el passwordEncoder
+        usuarioRepository.save(usuario);
     }
 
     @Override
