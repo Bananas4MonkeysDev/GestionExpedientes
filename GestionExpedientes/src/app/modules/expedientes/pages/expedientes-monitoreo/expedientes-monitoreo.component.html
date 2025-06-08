@@ -9,8 +9,6 @@
 
     <!-- Título -->
     <h1 class="text-2xl font-bold text-[#004C77]">Monitoreo de Expediente</h1>
-
-    <!-- Línea divisora -->
     <hr class="border-t-2 border-[#004C77] rounded-full" />
 
     <!-- Buscador -->
@@ -32,9 +30,10 @@
                 class="relative inline-block bg-white rounded-lg shadow px-4 py-3 cursor-pointer hover:shadow-lg transition min-w-[200px] max-w-xs"
                 [class.border-2]="exp === expedienteSeleccionado"
                 [class.border-[#004C77]]="exp === expedienteSeleccionado">
-                <h3 class="text-[#004C77] font-semibold text-sm truncate">{{ exp.numero }}</h3>
-                <p class="text-xs text-gray-500">Área: {{ exp.areaActual }}</p>
-                <p class="text-xs text-gray-500">Estado: {{ exp.estado }}</p>
+                <h3 class="text-[#004C77] font-semibold text-sm truncate">{{ exp.codigo }}</h3>
+                <p class="text-xs text-gray-500">Proyecto: {{ exp.proyecto }}</p>
+                <p class="text-xs text-gray-500">Tipo: {{ exp.tipoExpediente }}</p>
+                <p class="text-xs text-gray-500">Reservado: {{ exp.reservado ? 'Sí' : 'No' }}</p>
                 <div *ngIf="exp.nuevo"
                     class="absolute top-1 right-1 bg-green-600 text-white text-xs px-2 py-0.5 rounded">Nuevo</div>
             </div>
@@ -52,57 +51,62 @@
         <!-- Progreso -->
         <div class="bg-white p-6 rounded-lg shadow col-span-2">
             <h3 class="text-lg font-semibold text-[#004C77] mb-4">Progreso del Expediente</h3>
-            <div class="border-l-2 border-[#004C77] space-y-4 pl-4">
-                <div *ngFor="let paso of expedienteSeleccionado.progreso">
-                    <div class="flex items-start gap-2">
-                        <div class="w-3 h-3 mt-1 bg-white border-2 border-[#004C77] rounded-full"></div>
-                        <div>
-                            <p class="font-semibold text-[#004C77] text-sm">{{ paso.area }}</p>
-                            <p class="text-xs text-gray-500">{{ paso.fecha }} — {{ paso.responsable }}</p>
-                            <p class="text-sm">{{ paso.descripcion }}</p>
-                        </div>
-                    </div>
-                </div>
+        </div>
+        <!-- Resumen mejorado -->
+        <div class="bg-white p-6 rounded-lg shadow space-y-2">
+            <h3 class="text-lg font-semibold text-[#004C77] mb-4 flex items-center gap-2">
+                <mat-icon matTooltip="Resumen del expediente">assignment</mat-icon> Resumen del expediente
+            </h3>
+
+            <div class="flex items-center gap-2 text-sm text-gray-700">
+                <mat-icon matTooltip="Código del expediente">confirmation_number</mat-icon>
+                <span><strong>Código:</strong> {{ expedienteSeleccionado.codigo }}</span>
             </div>
 
-            <!-- Documentos asociados -->
-            <div *ngIf="expedienteSeleccionado.documentos?.length" class="mt-8">
-                <h4 class="text-md font-semibold text-[#004C77] mb-2">Documentos asociados</h4>
-                <div class="space-y-2">
-                    <div *ngFor="let doc of expedienteSeleccionado.documentos"
-                        class="flex items-center justify-between bg-gray-50 px-4 py-2 rounded border border-gray-200 shadow-sm">
-                        <div class="text-sm text-gray-700">{{ doc.nombre }}</div>
-                        <a [href]="doc.url" target="_blank"
-                            class="text-[#004C77] text-sm underline hover:text-[#F36C21] cursor-pointer">
-                            Ver documento
-                        </a>
-                    </div>
-                </div>
+            <div class="flex items-center gap-2 text-sm text-gray-700">
+                <mat-icon matTooltip="Tipo de expediente">category</mat-icon>
+                <span><strong>Tipo:</strong> {{ expedienteSeleccionado.tipoExpediente }}</span>
             </div>
 
-            <!-- Decisión -->
-            <div class="flex justify-end mt-6 gap-4">
-                <button (click)="cancelarExpediente()"
-                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">
-                    Rechazar expediente
-                </button>
-                <button (click)="responderExpediente()"
-                    class="px-4 py-2 bg-[#004C77] text-white rounded hover:bg-[#003355] transition">
-                    Responder expediente
+            <div class="flex items-center gap-2 text-sm text-gray-700">
+                <mat-icon matTooltip="Fecha de creación">event</mat-icon>
+                <span><strong>Fecha:</strong> {{ expedienteSeleccionado.fecha }}</span>
+            </div>
+
+            <div class="flex items-center gap-2 text-sm text-gray-700">
+                <mat-icon matTooltip="Proyecto asociado">business</mat-icon>
+                <span><strong>Proyecto:</strong> {{ expedienteSeleccionado.proyecto }}</span>
+            </div>
+
+            <div class="flex items-center gap-2 text-sm text-gray-700">
+                <mat-icon matTooltip="Estado del expediente">info</mat-icon>
+                <span><strong>Estado:</strong> {{ expedienteSeleccionado.estado }}</span>
+            </div>
+
+            <div class="flex items-center gap-2 text-sm text-gray-700">
+                <mat-icon matTooltip="Reservado o no">lock</mat-icon>
+                <span><strong>Reservado:</strong> {{ expedienteSeleccionado.reservado ? 'Sí' : 'No' }}</span>
+            </div>
+
+            <div class="flex items-center gap-2 text-sm text-gray-700">
+                <mat-icon matTooltip="Asunto">subject</mat-icon>
+                <span><strong>Asunto:</strong> {{ expedienteSeleccionado.asunto }}</span>
+            </div>
+
+            <div class="flex items-center gap-2 text-sm text-gray-700">
+                <mat-icon matTooltip="Comentario adicional">comment</mat-icon>
+                <span><strong>Comentario:</strong> {{ expedienteSeleccionado.comentario || '—' }}</span>
+            </div>
+
+            <div class="flex justify-end mt-4">
+                <button
+                    class="flex items-center gap-1 text-sm px-3 py-2 text-white bg-[#004C77] rounded hover:bg-[#003355] transition cursor-pointer"
+                    (click)="verDetalleExpediente()">
+                    <mat-icon>visibility</mat-icon> Ver detalle
                 </button>
             </div>
         </div>
 
-        <!-- Resumen -->
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h3 class="text-lg font-semibold text-[#004C77] mb-4">Resumen del expediente</h3>
-            <p><strong>Número:</strong> {{ expedienteSeleccionado.numero }}</p>
-            <p><strong>Tipo:</strong> {{ expedienteSeleccionado.tipo }}</p>
-            <p><strong>Fecha:</strong> {{ expedienteSeleccionado.fecha }}</p>
-            <p><strong>Área:</strong> {{ expedienteSeleccionado.areaActual }}</p>
-            <p><strong>Responsable:</strong> {{ expedienteSeleccionado.responsable }}</p>
-            <p><strong>Estado:</strong> {{ expedienteSeleccionado.estado }}</p>
-        </div>
     </div>
 
     <ng-template #mensajeInicial>

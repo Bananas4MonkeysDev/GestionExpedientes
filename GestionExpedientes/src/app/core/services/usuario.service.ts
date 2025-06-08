@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { catchError, map, Observable, of } from 'rxjs';
 import { AuthService } from './auth.service';
-import { AbstractControl } from '@angular/forms';
+import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/forms';
 export interface Usuario {
   nombre: string;
   correo: string;
@@ -71,11 +71,7 @@ export class UsuarioService {
     return this.http.get<boolean>(`${this.apiUrl}/check-correo?correo=${correo}`, { headers });
   }
 
-  // Método para verificar si el DNI ya está registrado
-  verificarDniExistente(dni: string): Observable<boolean> {
-    const headers = this.getAuthHeaders();
-    return this.http.get<boolean>(`${this.apiUrl}/check-dni?dni=${dni}`, { headers });
-  }
+
   // Validador asincrónico para correo
   validarCorreoAsync(usuarioService: UsuarioService) {
     return (control: AbstractControl) => {
@@ -84,14 +80,30 @@ export class UsuarioService {
       ) : null;
     };
   }
+validarDniAsync(): AsyncValidatorFn {
+  return (control: AbstractControl): Observable<ValidationErrors | null> => {
+    const dni = control.value;
+    if (!dni) return of(null);
 
-  // Validador asincrónico para DNI
-  validarDniAsync(usuarioService: UsuarioService) {
-    return (control: AbstractControl) => {
-      return control.value ? usuarioService.verificarDniExistente(control.value).pipe(
-        map(isExist => (isExist ? { dniExistente: true } : null))
-      ) : null;
-    };
+    return this.verificarDniExistente(dni).pipe(
+      map(existe => (existe ? { dniExistente: true } : null)),
+      catchError(() => of(null))
+    );
+  };
+}
+
+verificarDniExistente(dni: string): Observable<boolean> {
+  const headers = this.getAuthHeaders();
+  return this.http.get<boolean>(`${this.apiUrl}/existe-dni`, {
+    headers,
+    params: { dni }
+  });
+}
+
+
+  obtenerUsuariosPorIds(ids: string[]): Observable<any[]> {
+    const headers = this.getAuthHeaders();
+    return this.http.post<any[]>(`${this.apiUrl}/por-ids`, ids, { headers });
   }
 
 }

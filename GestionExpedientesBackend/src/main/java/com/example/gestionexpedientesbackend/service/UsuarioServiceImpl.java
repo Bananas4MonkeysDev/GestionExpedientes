@@ -57,6 +57,10 @@ public class UsuarioServiceImpl implements UsuarioService {
         // Usamos el método de enviar correo simple
         emailService.enviarCorreoSimple(List.of(correo), asunto, mensaje);
     }
+    @Override
+    public List<Usuario> obtenerPorIds(List<Long> ids) {
+        return usuarioRepository.findAllById(ids);
+    }
 
     @Override
     public Usuario findByTokenRecuperacion(String token) {

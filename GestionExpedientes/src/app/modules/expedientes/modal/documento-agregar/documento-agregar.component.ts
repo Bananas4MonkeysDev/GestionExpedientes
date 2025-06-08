@@ -10,6 +10,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import { UsuarioService, Usuario } from '../../../../core/services/usuario.service';
 import Swal from 'sweetalert2';
+import { AuthService } from '../../../../core/services/auth.service';
 
 type ModoDialogo = 'usuario' | 'referencia';
 
@@ -43,14 +44,19 @@ type DatosDialogo = DatosUsuario | DatosReferencia;
 export class DocumentoAgregarComponent {
   form: FormGroup;
   modo: ModoDialogo;
+  tipoUsuarioActual: string = '';
 
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<DocumentoAgregarComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DatosDialogo,
-    private usuarioService: UsuarioService
+    private usuarioService: UsuarioService,
+    private authService: AuthService
   ) {
     this.modo = data.modo;
+    const user = this.authService.getUserFromToken();
+    this.tipoUsuarioActual = user?.tipoUsuario || '';
+
     this.form = this.fb.group(
       data.modo === 'usuario'
         ? {
@@ -58,14 +64,12 @@ export class DocumentoAgregarComponent {
           correo: [
             '',
             [Validators.required, Validators.email],
-            [this.usuarioService.validarCorreoAsync(this.usuarioService)] // Asignamos el validador asincrónico para el correo
-          ], contraseña: ['', Validators.required],
-          dni: [
-            '',
-            [Validators.required, Validators.pattern('^[0-9]{8}$'), Validators.minLength(8), Validators.maxLength(8)],
-            [this.usuarioService.validarDniAsync(this.usuarioService)] // Asignamos el validador asincrónico para el DNI
-          ], rol: ['', Validators.required],
+            [this.usuarioService.validarCorreoAsync(usuarioService)]
+          ],
+          contraseña: ['', Validators.required],
+          dni: ['', [Validators.pattern('^[0-9]{8}$'), Validators.minLength(8), Validators.maxLength(8)]],
           ruc: [''],
+          rol: ['', Validators.required],
           tipoIdentidad: ['', Validators.required],
           tipoUsuario: ['', Validators.required]
         }
@@ -75,6 +79,29 @@ export class DocumentoAgregarComponent {
         }
     );
 
+    // Reaccionar a cambios en tipoIdentidad
+    this.form.get('tipoIdentidad')?.valueChanges.subscribe((tipo: string) => {
+      const dniControl = this.form.get('dni');
+      const rucControl = this.form.get('ruc');
+
+      if (tipo === 'ENTIDAD') {
+        dniControl?.clearValidators(); // quitar required
+        rucControl?.setValidators([
+        Validators.required, Validators.pattern('^[0-9]{11}$'), Validators.minLength(11),
+        Validators.maxLength(11)]); // activar validaciones
+      } else {
+        dniControl?.setValidators([
+          Validators.required,
+          Validators.pattern('^[0-9]{8}$'),
+          Validators.minLength(8),
+          Validators.maxLength(8)
+        ]);
+        rucControl?.clearValidators(); // no requerido
+      }
+
+      dniControl?.updateValueAndValidity();
+      rucControl?.updateValueAndValidity();
+    });
 
   }
 
@@ -82,20 +109,51 @@ export class DocumentoAgregarComponent {
     this.dialogRef.close();
   }
 
-   guardar() {
+  guardar() {
     if (this.form.valid && this.modo === 'usuario') {
       const nuevoUsuario = this.form.value;
-      console.log('[DEBUG] Usuario a registrar:', nuevoUsuario);
+
+      Swal.fire({
+        title: 'Registrando usuario...',
+        text: 'Por favor, espera un momento',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
       this.usuarioService.registrarUsuario(nuevoUsuario).subscribe({
         next: (res) => {
-          console.log('[DEBUG] Usuario registrado con éxito:', res);
+          Swal.fire({
+            icon: 'success',
+            title: 'Usuario registrado',
+            text: 'El usuario fue registrado correctamente.',
+            confirmButtonColor: '#004C77'
+          });
           this.dialogRef.close(true);
         },
         error: (err) => {
           console.error('[ERROR] Error al registrar usuario:', err);
+
+          const mensajeError = err?.error?.mensaje || 'Ocurrió un error inesperado al registrar el usuario.';
+
+          Swal.fire({
+            icon: 'error',
+            title: 'Error al registrar',
+            text: mensajeError,
+            confirmButtonColor: '#F36C21'
+          });
         }
+      });
+    } else {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Formulario incompleto',
+        text: 'Por favor, completa todos los campos obligatorios antes de continuar.',
+        confirmButtonColor: '#F36C21'
       });
     }
   }
+
 
 }

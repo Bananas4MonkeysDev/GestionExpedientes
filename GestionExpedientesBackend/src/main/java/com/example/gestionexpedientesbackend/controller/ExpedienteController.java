@@ -9,6 +9,7 @@ import com.example.gestionexpedientesbackend.service.ExpedienteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -108,6 +109,15 @@ public class ExpedienteController {
             System.err.println("✖ Error al guardar el archivo: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al guardar el archivo");
         }
+    }
+    @GetMapping
+    public ResponseEntity<List<Expediente>> obtenerTodos() {
+        return ResponseEntity.ok(expedienteService.obtenerTodos());
+    }
+
+    @GetMapping("/por-usuario/{id}")
+    public ResponseEntity<List<Expediente>> obtenerPorUsuario(@PathVariable Long id) {
+        return ResponseEntity.ok(expedienteService.obtenerPorUsuario(id));
     }
 
     @GetMapping("/{id}/detalle")

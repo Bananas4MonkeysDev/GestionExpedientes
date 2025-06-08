@@ -1,5 +1,6 @@
 package com.example.gestionexpedientesbackend.controller;
 
+import com.example.gestionexpedientesbackend.dto.UsuarioNombreDTO;
 import com.example.gestionexpedientesbackend.model.Usuario;
 import com.example.gestionexpedientesbackend.dto.UsuarioLoginDTO;
 import com.example.gestionexpedientesbackend.service.EmailService;
@@ -118,6 +119,21 @@ public class UsuarioController {
         Usuario nuevo = usuarioService.registrar(usuario);
         return ResponseEntity.ok(nuevo);
     }
+    @PostMapping("/por-ids")
+    public ResponseEntity<List<UsuarioNombreDTO>> obtenerPorIds(@RequestBody List<String> ids) {
+        List<Long> idsLong = ids.stream()
+                .map(Long::parseLong)
+                .toList();
+
+        List<Usuario> usuarios = usuarioService.obtenerPorIds(idsLong);
+
+        List<UsuarioNombreDTO> result = usuarios.stream()
+                .map(u -> new UsuarioNombreDTO(u.getId(), u.getNombre()))
+                .toList();
+
+        return ResponseEntity.ok(result);
+    }
+
     @PostMapping("/registrar")
     public ResponseEntity<Usuario> registrarUsuario(@RequestBody Usuario usuario) {
         Usuario nuevo = usuarioService.registrar(usuario); // ya encripta contraseña

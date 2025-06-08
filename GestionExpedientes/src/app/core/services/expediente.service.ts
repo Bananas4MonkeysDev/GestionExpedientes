@@ -41,7 +41,7 @@ export class ExpedienteService {
   }
   getHistorialCargos(expedienteId: number): Observable<any[]> {
     const token = localStorage.getItem('jwt') || '';
-   console.log('[DEBUG] JWT token:', localStorage.getItem('jwt'));
+    console.log('[DEBUG] JWT token:', localStorage.getItem('jwt'));
 
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     return this.http.get<any[]>(`http://localhost:8080/api/cargos/expediente/${expedienteId}/historial`, { headers });
@@ -56,7 +56,7 @@ export class ExpedienteService {
   }
 
   registrarDocumento(expedienteId: number, documento: FormData): Observable<any> {
-   console.log('[DEBUG] JWT token:', localStorage.getItem('jwt'));
+    console.log('[DEBUG] JWT token:', localStorage.getItem('jwt'));
 
     return this.http.post(`${this.baseUrl}/${expedienteId}/documento`, documento, {
       headers: this.getHeaders()
@@ -72,7 +72,7 @@ export class ExpedienteService {
 
   registrarCargo(cargo: FormData): Observable<any> {
     const token = localStorage.getItem('jwt') || '';
-   console.log('[DEBUG] JWT token:', localStorage.getItem('jwt'));
+    console.log('[DEBUG] JWT token:', localStorage.getItem('jwt'));
 
     const headers = new HttpHeaders({
       Authorization: `Bearer ${token}`
@@ -88,5 +88,16 @@ export class ExpedienteService {
     });
 
     return this.http.get<any>(`http://localhost:8080/api/expedientes/${id}/detalle`, { headers });
+  }
+  obtenerTodosExpedientes(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  obtenerExpedientesPorUsuario(usuarioId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/por-usuario/${usuarioId}`, {
+      headers: this.getHeaders()
+    });
   }
 }

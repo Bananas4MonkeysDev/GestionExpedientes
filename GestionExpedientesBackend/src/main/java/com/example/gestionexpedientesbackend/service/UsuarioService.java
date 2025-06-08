@@ -11,6 +11,7 @@ public interface UsuarioService {
     Usuario findByTokenRecuperacion(String token);
     void guardarTokenRecuperacion(Long usuarioId, String token);
 
+    List<Usuario> obtenerPorIds(List<Long> ids);
 
     void actualizarContraseña(Long usuarioId, String nuevaClave);
     Usuario findByCorreo(String correo);

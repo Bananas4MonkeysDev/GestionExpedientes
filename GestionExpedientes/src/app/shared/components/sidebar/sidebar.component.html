@@ -106,6 +106,15 @@
             </button>
 
             <div *ngIf="submenuMaestras" class="ml-6 space-y-1">
+              <a (click)="irA('proyectos')"
+                class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M3 7V6a2 2 0 012-2h2l2-2h6l2 2h2a2 2 0 012 2v1M3 7h18v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                </svg>
+                Proyectos
+              </a>
+
               <a (click)="irA('usuarios-expedientes')"
                 class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

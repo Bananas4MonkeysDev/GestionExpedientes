@@ -32,3 +32,21 @@ body {
   display: flex;
   flex-direction: column;
 }
+
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline {
+  border-color: #cbd5e1;
+  /* tailwind: border-gray-300 */
+}
+
+::ng-deep .mat-form-field-appearance-outline.mat-focused .mat-form-field-outline-thick {
+  border-color: #004C77 !important;
+  border-width: 2px !important;
+}
+
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-outline-thick {
+  border-width: 1px;
+}
+
+::ng-deep .mat-form-field-appearance-outline.mat-focused .mat-form-field-outline {
+  box-shadow: none;
+}

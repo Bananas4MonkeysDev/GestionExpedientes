@@ -10,6 +10,7 @@ import { DashboardComponent } from './modules/dashboard/pages/dashboard/dashboar
 import { ExpedienteDetalleComponent } from './modules/expedientes/pages/expediente-detalles/expediente-detalle/expediente-detalle.component';
 import { authGuard } from './core/guards/auth.guard';
 import { VerCargoComponent } from './modules/cargos/pages/ver-cargo/ver-cargo.component';
+import { ProyectoComponent } from './modules/maestras/pages/proyectos/proyecto/proyecto.component';
 
 export const routes: Routes = [
   { path: 'ver-cargo/:uuid', component: VerCargoComponent },
@@ -26,6 +27,7 @@ export const routes: Routes = [
       { path: 'registro-expediente', component: ExpedientesRegisterComponent },
       { path: 'detalle-expediente/:id', component: ExpedienteDetalleComponent },
       { path: 'usuarios-expedientes', component: UsuariosExpedientesComponent },
+      { path: 'proyectos', component: ProyectoComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },

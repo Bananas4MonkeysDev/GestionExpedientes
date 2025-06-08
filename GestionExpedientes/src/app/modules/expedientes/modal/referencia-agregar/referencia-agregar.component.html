@@ -1,0 +1,32 @@
+<div [formGroup]="form" class="h-full flex flex-col overflow-hidden px-6 py-4 text-[13px] leading-tight">
+
+  <!-- Título -->
+  <h2 class="text-lg font-bold text-[#004C77] flex items-center justify-center gap-2 mb-4">
+    <mat-icon fontIcon="bookmark" class="text-[#004C77] text-xl">bookmark</mat-icon>
+    Agregar nueva referencia
+  </h2>
+
+  <!-- Cuerpo con scroll -->
+  <div class="space-y-4">
+    <div formArrayName="referencias" *ngFor="let ctrl of referencias.controls; let i = index" class="flex items-center gap-3">
+      <mat-form-field appearance="outline" class="flex-1 !m-0">
+        <input matInput [formControlName]="i" placeholder="Ej. DOC-2025-001" />
+      </mat-form-field>
+      <button type="button" mat-icon-button color="warn" (click)="quitarCampo(i)" matTooltip="Eliminar campo">
+        <mat-icon fontIcon="delete">delete</mat-icon>
+      </button>
+    </div>
+
+    <div class="flex justify-start">
+      <button type="button" mat-stroked-button color="primary" class="text-xs rounded-full px-4" (click)="agregarCampo()">
+        + Agregar otra
+      </button>
+    </div>
+  </div>
+
+  <!-- Acciones -->
+  <div class="pt-4 flex justify-end gap-3 border-t border-gray-200 mt-4">
+    <button mat-stroked-button type="button" class="rounded-full px-6 text-xs border-[#004C77] text-[#004C77] hover:bg-[#004C77]/10" (click)="cancelar()">Cancelar</button>
+    <button mat-flat-button type="submit" color="primary" class="rounded-full px-8 text-xs bg-[#F36C21] hover:bg-[#d4570f] text-white disabled:bg-gray-300 disabled:cursor-not-allowed" (click)="guardar()" [disabled]="form.invalid">Agregar</button>
+  </div>
+</div>

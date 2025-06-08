@@ -17,6 +17,17 @@ import { ExpedienteService } from '../../../../core/services/expediente.service'
 import { UsuarioService } from '../../../../core/services/usuario.service';
 import { ReferenciaService, Referencia } from '../../../../core/services/referencia.service';
 import { LoadingOverlayService } from '../../../../core/services/loading-overlay.service';
+import { ReferenciaAgregarComponent } from '../../modal/referencia-agregar/referencia-agregar.component';
+import { MatChipsModule } from '@angular/material/chips';
+import { ProyectoService } from '../../../../core/services/proyecto.service';
+import { Proyecto } from '../../../../core/models/proyecto.model';
+import { ProyectoAgregarComponent } from '../../modal/proyecto-agregar/proyecto-agregar.component';
+
+interface ReferenciaCompleta {
+  serie: string;
+  asunto: string;
+  tipo: 'Documento' | 'Expediente' | 'MANUAL';
+}
 
 interface DocumentoExpediente {
   nombre: string;
@@ -39,15 +50,13 @@ export interface Usuario {
   ruc?: string;
   dni: string;
 }
-
-
-
 @Component({
   selector: 'app-expedientes-register',
   templateUrl: './expedientes-register.component.html',
   styleUrls: ['./expedientes-register.component.css'],
   standalone: true,
   imports: [
+    MatChipsModule,
     ReactiveFormsModule,
     FormsModule,
     CommonModule,
@@ -75,7 +84,7 @@ export class ExpedientesRegisterComponent implements OnInit {
   formularioPaso1!: FormGroup;
   formularioDocumento!: FormGroup;
 
-  proyectos = ['Proyecto Alpha', 'Obra Central', 'Planta Nueva', 'Infraestructura Zonal'];
+  proyectos: Proyecto[] = [];
   tiposDocumento = ['Anexos', 'Actas', 'Carta', 'Oficio', 'Contrato', 'Adenda', 'Solicitud de compra', 'Cotizaciones', 'Cuadro Comparativo', 'Orden de Compra', 'Guia', 'Factura', 'Informe', 'Anexo'];
 
   tiposUsuario: Usuario['tipoIdentidad'][] = ['PERSONA', 'GRUPO', 'ENTIDAD'];
@@ -88,7 +97,7 @@ export class ExpedientesRegisterComponent implements OnInit {
 
   controlUsuario = new FormControl<string[]>([], Validators.required);
   controlUsuarioCc = new FormControl<string[]>([], Validators.required);
-  controlReferencia = new FormControl<string[]>([], Validators.required);
+  controlReferencia = new FormControl<ReferenciaCompleta[]>([], Validators.required);
 
   searchCtrlUsuario = new FormControl('');
   searchCtrlCc = new FormControl('');
@@ -101,13 +110,16 @@ export class ExpedientesRegisterComponent implements OnInit {
   usuariosFiltradosTo: Usuario[] = [];
   usuariosFiltradosCc: Usuario[] = [];
   referenciasFiltradas: Referencia[] = [];
+  compararReferencias = (a: any, b: any): boolean => {
+    return a?.serie === b?.serie;
+  };
 
   documentos: DocumentoExpediente[] = [];
   exito = false;
   arrastrando = false;
   seccionActiva: 'registro' | 'estado' | 'auditoria' = 'registro';
 
-  constructor(private loadingService: LoadingOverlayService, private fb: FormBuilder, private dialog: MatDialog, private router: Router, private expedienteService: ExpedienteService, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
+  constructor(private proyectoService: ProyectoService, private loadingService: LoadingOverlayService, private fb: FormBuilder, private dialog: MatDialog, private router: Router, private expedienteService: ExpedienteService, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
 
   ngOnInit(): void {
     this.formularioPaso1 = this.fb.group({
@@ -136,7 +148,9 @@ export class ExpedientesRegisterComponent implements OnInit {
         console.error('[ERROR] Error al cargar usuarios:', err);
       }
     });
-
+    this.proyectoService.getAll().subscribe(data => {
+      this.proyectos = data;
+    });
     this.formularioDocumento = this.fb.group({
       detalle3: [''],
       tipoDocumento: ['', Validators.required]
@@ -152,14 +166,25 @@ export class ExpedientesRegisterComponent implements OnInit {
       }
     });
 
-
-
     this.usuariosFiltradosTo = this.todosUsuarios;
     this.usuariosFiltradosCc = this.todosUsuarios;
 
     this.searchCtrlUsuario.valueChanges.subscribe(() => this.filtrarUsuariosTo());
     this.searchCtrlCc.valueChanges.subscribe(() => this.filtrarUsuariosCc());
     this.searchCtrlReferencia.valueChanges.subscribe(() => this.filtrarReferencias());
+  }
+  abrirDialogoProyecto(): void {
+    const dialogRef = this.dialog.open(ProyectoAgregarComponent, {
+      width: '1000px' // o incluso '90vw' si quieres algo más flexible
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === true) {
+        this.proyectoService.getAll().subscribe(data => {
+          this.proyectos = data;
+        });
+      }
+    });
   }
   setReferenciaValidator(isRequired: boolean): void {
     if (isRequired) {
@@ -188,6 +213,17 @@ export class ExpedientesRegisterComponent implements OnInit {
       (u.nombre.toLowerCase().includes(texto) || u.correo.toLowerCase().includes(texto))
     );
   }
+  removerReferencia(ref: ReferenciaCompleta): void {
+    const actuales = this.controlReferencia.value ?? [];
+    this.controlReferencia.setValue(actuales.filter(r => r.serie !== ref.serie));
+  }
+
+
+  removerUsuarioCc(nombre: string): void {
+    const actuales = this.controlUsuarioCc.value ?? [];
+    this.controlUsuarioCc.setValue(actuales.filter(n => n !== nombre));
+  }
+
 
   filtrarUsuariosCc(): void {
     const texto = this.searchCtrlCc.value?.toLowerCase() || '';
@@ -198,24 +234,17 @@ export class ExpedientesRegisterComponent implements OnInit {
   }
   filtrarReferencias(): void {
     const texto = this.searchCtrlReferencia.value?.toLowerCase().trim() || '';
-    const seleccionadasSeries = (this.controlReferencia.value || []).filter((v): v is string => v !== null && v !== undefined);
-
-    console.log('[DEBUG] Texto de búsqueda:', texto);
-    console.log('[DEBUG] Referencias seleccionadas (series):', seleccionadasSeries);
+    const seleccionadas: ReferenciaCompleta[] = this.controlReferencia.value || [];
 
     const filtradas = this.referenciasOriginales.filter(ref => {
       const coincideTipo = !this.filtroTipoReferencia || ref.tipo === this.filtroTipoReferencia;
-      const serie = ref.serie?.toLowerCase() || '';
-      const asunto = ref.asunto?.toLowerCase() || '';
-      const coincideTexto = serie.includes(texto) || asunto.includes(texto);
+      const coincideTexto =
+        ref.serie?.toLowerCase().includes(texto) || ref.asunto?.toLowerCase().includes(texto);
       return coincideTipo && coincideTexto;
     });
 
     this.referenciasFiltradas = filtradas;
-    console.log('[RESULTADO] referenciasFiltradas:', this.referenciasFiltradas);
   }
-
-
 
 
   // Helpers visuales
@@ -230,23 +259,27 @@ export class ExpedientesRegisterComponent implements OnInit {
     return this.referenciasFiltradas.filter(r => r.tipo === tipo);
   }
 
-
+  desenfocarYabrir(element: HTMLElement, valor: string, destino: 'to' | 'cc') {
+    element.blur(); // Remueve el foco
+    this.abrirDialogoAgregarUsuario(valor, destino);
+  }
 
   // Diálogos
   abrirDialogoAgregarUsuario(nombre: string, destino: 'to' | 'cc') {
-    const dialogRef = this.dialog.open(DocumentoAgregarComponent, {
-      width: '800px',  // o incluso '90vw' si quieres algo más flexible
-      maxWidth: '95vw',
-      height: '585px',
-      maxHeight: '90vh',
-      data: { modo: 'usuario', nombre, destino }
-    });
+    setTimeout(() => {
+      const dialogRef = this.dialog.open(DocumentoAgregarComponent, {
+        width: '800px',  // o incluso '90vw' si quieres algo más flexible
+        maxWidth: '95vw',
+        height: '585px',
+        maxHeight: '90vh',
+        data: { modo: 'usuario', nombre, destino }
+      });
 
-    dialogRef.afterClosed().subscribe(() => {
-      console.log('[DEBUG] El diálogo de agregar usuario se cerró, recargando la lista de usuarios...');
-      // Llamar a cargarUsuarios para obtener la lista más actualizada después de agregar un nuevo usuario
-      this.cargarUsuarios();  // Recargamos la lista de usuarios
-    });
+      dialogRef.afterClosed().subscribe(() => {
+        console.log('[DEBUG] El diálogo de agregar usuario se cerró, recargando la lista de usuarios...');
+        this.cargarUsuarios();  // Recargamos la lista de usuarios
+      });
+    }, 0);
   }
 
 
@@ -280,23 +313,6 @@ export class ExpedientesRegisterComponent implements OnInit {
       error: (err) => {
         console.error('[ERROR] Error al cargar usuarios:', err);
       }
-    });
-  }
-
-
-
-
-  abrirDialogoAgregarReferencia(serie: string) {
-    const dialogRef = this.dialog.open(DocumentoAgregarComponent, {
-      width: '720px',
-      data: { modo: 'referencia', serie }
-    });
-
-    dialogRef.afterClosed().subscribe((nuevaReferencia: Referencia) => {
-      if (!nuevaReferencia) return;
-      this.todasReferencias.push(nuevaReferencia);
-      this.controlReferencia.setValue([...(this.controlReferencia.value || []), nuevaReferencia.serie]);
-      this.filtrarReferencias();
     });
   }
 
@@ -406,6 +422,64 @@ export class ExpedientesRegisterComponent implements OnInit {
   todosLosDocumentosTienenTipo(): boolean {
     return this.documentos.every(d => d.tipoDocumento && d.tipoDocumento.trim() !== '');
   }
+  agregarReferenciaManual(event: Event): void {
+    event.preventDefault();
+
+    const teclado = event as KeyboardEvent;
+
+    const valor = this.searchCtrlReferencia.value?.trim();
+    if (!valor) return;
+
+    const actuales: ReferenciaCompleta[] = this.controlReferencia.value || [];
+
+    const yaExiste = actuales.some(ref => ref.serie === valor);
+    if (yaExiste) return;
+
+    const nueva: ReferenciaCompleta = {
+      serie: valor,
+      asunto: '(Referencia manual)',
+      tipo: 'MANUAL'
+    };
+
+    this.controlReferencia.setValue([...actuales, nueva]);
+    this.searchCtrlReferencia.setValue('', { emitEvent: false });
+  }
+  removerUsuario(nombre: string): void {
+    const actuales = this.controlUsuario.value || [];
+    this.controlUsuario.setValue(actuales.filter(u => u !== nombre));
+  }
+
+  abrirDialogoAgregarReferencia() {
+    const dialogRef = this.dialog.open(ReferenciaAgregarComponent, {
+      width: '500px'
+    });
+
+    dialogRef.afterClosed().subscribe((result: string[] | null) => {
+      if (!result || !result.length) return;
+
+      const actuales: ReferenciaCompleta[] = this.controlReferencia.value || [];
+
+      result.forEach(valor => {
+        const yaExiste = actuales.some(ref => ref.serie === valor);
+        if (!yaExiste) {
+          actuales.push({
+            serie: valor,
+            asunto: '(Referencia manual)',
+            tipo: 'MANUAL'
+          });
+        }
+      });
+
+      this.controlReferencia.setValue([...actuales]);
+    });
+  }
+
+  referenciasLibresSeleccionadas(): ReferenciaCompleta[] {
+    const seleccionadas = this.controlReferencia.value || [];
+    const conocidas = this.referenciasOriginales.map(r => r.serie);
+    return seleccionadas.filter(r => !conocidas.includes(r.serie));
+  }
+
 
   onSubmit() {
     if (this.documentos.length === 0 || !this.todosLosDocumentosTienenTipo()) return;
@@ -419,8 +493,7 @@ export class ExpedientesRegisterComponent implements OnInit {
       reservado: this.formularioPaso1.value.reservado === 'si',
       usuariosEmisores: this.obtenerIdsPorNombres(this.controlUsuario.value ?? []),
       usuariosDestinatarios: this.obtenerIdsPorNombres(this.controlUsuarioCc.value ?? []),
-      referencias: this.controlReferencia.value?.length ? this.controlReferencia.value?.join('|') : null, // ya son strings
-
+      referencias: this.obtenerReferenciasFinales(),
       documentos: [] // no incluir aún, se enviarán luego
     };
 
@@ -471,6 +544,13 @@ export class ExpedientesRegisterComponent implements OnInit {
       }
     });
   }
+  obtenerReferenciasFinales(): string | null {
+    const referencias: ReferenciaCompleta[] = this.controlReferencia.value || [];
+    if (!referencias.length) return null;
+
+    return referencias.map(ref => ref.serie).join('|');
+  }
+
   obtenerIdsPorNombres(nombresSeleccionados: string[]): string {
     const ids = this.todosUsuarios
       .filter(user => nombresSeleccionados.includes(user.nombre))
@@ -500,7 +580,7 @@ export class ExpedientesRegisterComponent implements OnInit {
       reservado: this.formularioPaso1.value.reservado === 'si',
       usuariosEmisores: this.obtenerIdsPorNombres(this.controlUsuario.value ?? []),
       usuariosDestinatarios: this.obtenerIdsPorNombres(this.controlUsuarioCc.value ?? []),
-      referencias: this.controlReferencia.value?.join('|'),
+      referencias: this.obtenerReferenciasFinales(),
       documentos: [] // explícitamente vacío
     };
     this.loadingService.show();
@@ -548,6 +628,17 @@ export class ExpedientesRegisterComponent implements OnInit {
   visualizarExpediente() {
     window.location.href = '/expedientes';
   }
+  get referenciasCompletas(): ReferenciaCompleta[] {
+    const actuales: ReferenciaCompleta[] = this.controlReferencia.value ?? [];
+    const conocidas = this.referenciasOriginales.map(ref => ref.serie);
+
+    const libres: ReferenciaCompleta[] = actuales.filter(ref =>
+      !conocidas.includes(ref.serie) && ref.tipo === 'MANUAL'
+    );
+
+    return [...this.referenciasFiltradas, ...libres];
+  }
+
 
   formatearPeso(bytes: number): string {
     return bytes >= 1024 * 1024

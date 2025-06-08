@@ -40,6 +40,19 @@ public class ExpedienteServiceImpl implements ExpedienteService {
         return expedienteRepository.findById(id);
     }
 
+    @Override
+    public List<Expediente> obtenerTodos() {
+        return expedienteRepository.findAll();
+    }
+
+    @Override
+    public List<Expediente> obtenerPorUsuario(Long usuarioId) {
+        String target = "|" + usuarioId + "|";
+        return expedienteRepository.findAll().stream()
+                .filter(e -> ("|" + e.getUsuariosEmisores() + "|").contains(target) ||
+                        ("|" + e.getUsuariosDestinatarios() + "|").contains(target))
+                .toList();
+    }
 
     @Override
     public ExpedienteDetalleResponseDTO obtenerDetalleExpediente(Long id) {
@@ -90,6 +103,7 @@ public class ExpedienteServiceImpl implements ExpedienteService {
     }
     @Transactional
     public Expediente registrarExpediente(Expediente expediente) {
+        expediente.setEstado("PENDIENTE");
         // Primero guardar sin código
         expediente = expedienteRepository.save(expediente);
 

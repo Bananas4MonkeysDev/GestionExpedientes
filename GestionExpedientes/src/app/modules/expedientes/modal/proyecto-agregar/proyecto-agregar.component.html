@@ -1,0 +1,62 @@
+<div class="h-full flex flex-col overflow-hidden px-6 py-6 text-[13px] leading-tight">
+    <div [formGroup]="formularioProyecto">
+
+        <!-- Título -->
+        <h2 class="text-lg font-bold text-[#004C77] flex items-center justify-center gap-2 mb-4">
+            <mat-icon fontIcon="bookmark" class="text-[#004C77] text-xl">bookmark</mat-icon>
+            Agregar Nuevo Proyecto
+        </h2>
+
+        <!-- Cuerpo -->
+        <div class="flex-1 overflow-y-auto pr-1 ">
+
+            <!-- Nombre -->
+            <div class="mb-4">
+                <label class="block text-xs font-medium text-gray-700 mb-1">Nombre</label>
+                <mat-form-field appearance="outline" class="w-full !m-0">
+                    <input matInput formControlName="nombre" placeholder="Ej. Proyecto SIGE" />
+                    <mat-error *ngIf="formularioProyecto.get('nombre')?.hasError('required')">Este campo es
+                        obligatorio.</mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Descripción -->
+            <div >
+                <label class="block text-xs font-medium text-gray-700 mb-1">Descripción</label>
+                <mat-form-field appearance="outline" class="w-full !m-0">
+                    <textarea matInput formControlName="descripcion" rows="3"
+                        placeholder="Breve descripción..."></textarea>
+                </mat-form-field>
+            </div>
+
+            <!-- Fechas -->
+            <div class="flex px-1 py-1 gap-4 ">
+                <div class="flex-1">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Fecha de inicio</label>
+                    <input type="date" formControlName="fechaInicio"
+                        class="cursor-pointer w-full px-3 py-2 border border-gray-400 rounded bg-white focus:ring-2 focus:ring-[#004C77] focus:outline-none transition" />
+                </div>
+                <div class="flex-1">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Fecha de fin</label>
+                    <input type="date" formControlName="fechaFin"
+                        class="cursor-pointer w-full px-3 py-2 border border-gray-400 rounded bg-white focus:ring-2 focus:ring-[#004C77] focus:outline-none transition" />
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Botones -->
+        <div class="pt-4 flex justify-end gap-3 border-t border-gray-200 mt-4">
+            <button mat-stroked-button type="button"
+                class="rounded-full px-6 text-xs border-[#004C77] text-[#004C77] hover:bg-[#004C77]/10"
+                (click)="cancelar()">
+                Cancelar
+            </button>
+            <button mat-flat-button type="button"
+                class="rounded-full px-8 text-xs bg-[#F36C21] hover:bg-[#d4570f] text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
+                (click)="guardarProyecto()" [disabled]="formularioProyecto.invalid">
+                Agregar
+            </button>
+        </div>
+    </div>
+</div>
