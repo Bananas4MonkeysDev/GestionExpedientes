@@ -10,6 +10,7 @@ import java.util.Optional;
 public interface ExpedienteService {
     Expediente registrarExpediente(Expediente expediente);
     Optional<Expediente> obtenerPorId(Long id);
+    void cambiarEstado(Long id, String nuevoEstado);
 
     ExpedienteDetalleResponseDTO obtenerDetalleExpediente(Long id);
     void actualizar(Long id, ExpedienteDTO datosActualizados);

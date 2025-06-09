@@ -94,6 +94,11 @@ export class ExpedienteService {
       headers: this.getHeaders()
     });
   }
+  cambiarEstadoExpediente(id: number, nuevoEstado: string): Observable<any> {
+    return this.http.put(`${this.baseUrl}/${id}/estado?estado=${nuevoEstado}`, {}, {
+      headers: this.getHeaders()
+    });
+  }
 
   obtenerExpedientesPorUsuario(usuarioId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/por-usuario/${usuarioId}`, {

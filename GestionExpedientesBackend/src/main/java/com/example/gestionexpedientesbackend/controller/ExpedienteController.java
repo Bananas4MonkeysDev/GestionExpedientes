@@ -76,6 +76,26 @@ public class ExpedienteController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Documento no encontrado");
         }
     }
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<?> cambiarEstadoExpediente(
+            @PathVariable Long id,
+            @RequestParam("estado") String estado) {
+        try {
+            // Validación opcional de estado permitido
+            List<String> estadosValidos = List.of("PENDIENTE", "APROBADO", "RECHAZADO", "ANULADO");
+            if (!estadosValidos.contains(estado.toUpperCase())) {
+                return ResponseEntity.badRequest().body("Estado no válido: " + estado);
+            }
+
+            expedienteService.cambiarEstado(id, estado.toUpperCase());
+            return ResponseEntity.ok(Map.of("mensaje", "Estado actualizado a " + estado));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Expediente no encontrado");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al cambiar el estado");
+        }
+    }
+
 
 
     @PostMapping("/registrar")

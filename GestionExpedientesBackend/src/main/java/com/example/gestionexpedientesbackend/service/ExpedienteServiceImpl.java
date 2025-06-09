@@ -121,6 +121,16 @@ public class ExpedienteServiceImpl implements ExpedienteService {
         // Volver a guardar con el código actualizado, sin cambiar el ID
         return expedienteRepository.save(expediente);
     }
+    @Override
+    public void cambiarEstado(Long id, String nuevoEstado) {
+        Expediente expediente = expedienteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
+
+        expediente.setEstado(nuevoEstado);
+        expedienteRepository.save(expediente);
+    }
+
+
     public void notificarRegistroExpediente(Long expedienteId, boolean conDocumentos) {
         Expediente expediente = expedienteRepository.findById(expedienteId).orElseThrow();
         List<Usuario> destinatarios = usuarioService.obtenerPorIdsSeparados(expediente.getUsuariosDestinatarios());

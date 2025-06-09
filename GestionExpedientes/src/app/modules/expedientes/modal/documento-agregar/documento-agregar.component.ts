@@ -71,13 +71,20 @@ export class DocumentoAgregarComponent {
           ruc: [''],
           rol: ['', Validators.required],
           tipoIdentidad: ['', Validators.required],
-          tipoUsuario: ['', Validators.required]
+          tipoUsuario: ['', Validators.required],
+          firmante: [true], // por defecto no firmante
+          tipoFirma: ['']
         }
         : {
           serie: [data.serie || '', Validators.required],
           tipo: ['Carta', Validators.required]
         }
     );
+    this.form.get('firmante')?.valueChanges.subscribe((valor) => {
+      if (!valor) {
+        this.form.get('tipoFirma')?.reset();
+      }
+    });
 
     // Reaccionar a cambios en tipoIdentidad
     this.form.get('tipoIdentidad')?.valueChanges.subscribe((tipo: string) => {
@@ -87,8 +94,8 @@ export class DocumentoAgregarComponent {
       if (tipo === 'ENTIDAD') {
         dniControl?.clearValidators(); // quitar required
         rucControl?.setValidators([
-        Validators.required, Validators.pattern('^[0-9]{11}$'), Validators.minLength(11),
-        Validators.maxLength(11)]); // activar validaciones
+          Validators.required, Validators.pattern('^[0-9]{11}$'), Validators.minLength(11),
+          Validators.maxLength(11)]); // activar validaciones
       } else {
         dniControl?.setValidators([
           Validators.required,

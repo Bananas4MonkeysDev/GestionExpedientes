@@ -34,6 +34,25 @@ public class Usuario {
     private String rol;
     private String dni;
 
+    private Boolean firmante;
+
+    private String tipoFirma; // DIGITAL o CERTIFICADA
+
+    public Boolean getFirmante() {
+        return firmante;
+    }
+
+    public void setFirmante(Boolean firmante) {
+        this.firmante = firmante;
+    }
+
+    public String getTipoFirma() {
+        return tipoFirma;
+    }
+
+    public void setTipoFirma(String tipoFirma) {
+        this.tipoFirma = tipoFirma;
+    }
     public String getTokenRecuperacion() {
         return tokenRecuperacion;
     }

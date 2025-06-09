@@ -171,6 +171,7 @@ export class ExpedienteDetalleComponent implements OnInit {
           proyecto: data.expediente.proyecto,
           reservado: data.expediente.reservado,
           comentario: data.expediente.comentario,
+          estado:data.expediente.estado,
           documentos: data.documentos.map((doc: any) => ({
             id: doc.id,
             nombreArchivo: doc.nombreArchivo,
@@ -237,6 +238,31 @@ export class ExpedienteDetalleComponent implements OnInit {
     if (!path) return null;
     const fileName = path.split(/\\|\//).pop();
     return fileName ? `http://localhost:8080/expedientes/${fileName}` : null;
+  }
+  confirmarAnulacion() {
+    Swal.fire({
+      title: '¿Anular expediente?',
+      text: 'Esta acción no eliminará el expediente, solo cambiará su estado a "ANULADO".',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#004C77',
+      cancelButtonColor: '#F36C21',
+      confirmButtonText: 'Sí, anular',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.expedienteService.cambiarEstadoExpediente(this.expediente.id, 'ANULADO').subscribe({
+          next: () => {
+            this.expediente.estado = 'ANULADO';
+            Swal.fire('Anulado', 'El expediente fue marcado como ANULADO.', 'success');
+            this.cdr.markForCheck();
+          },
+          error: () => {
+            Swal.fire('Error', 'No se pudo anular el expediente', 'error');
+          }
+        });
+      }
+    });
   }
 
   scrollSlider(direction: 'left' | 'right') {
