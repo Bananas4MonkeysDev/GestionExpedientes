@@ -20,6 +20,7 @@ import { forkJoin } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { LoadingOverlayService } from '../../../../../core/services/loading-overlay.service';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { AuditoriaService } from '../../../../../core/services/auditoria.service';
 
 export interface Usuario {
   id: number; // ← Agregado
@@ -107,8 +108,10 @@ export class ExpedienteDetalleComponent implements OnInit {
   tiposDocumento = ['Anexos', 'Actas', 'Carta', 'Oficio', 'Contrato', 'Adenda', 'Solicitud de compra', 'Cotizaciones', 'Cuadro Comparativo', 'Orden de Compra', 'Guia', 'Factura', 'Informe', 'Anexo'];
   historialCargos: any[] = [];
   isLoading = false;
+  auditorias: any[] = [];
 
-  constructor(private authService: AuthService, private loadingService: LoadingOverlayService,
+
+  constructor(private auditoriaService: AuditoriaService, private authService: AuthService, private loadingService: LoadingOverlayService,
     private sanitizer: DomSanitizer, private zone: NgZone, private route: ActivatedRoute, private cdr: ChangeDetectorRef, private expedienteService: ExpedienteService, private dialog: MatDialog, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
   @ViewChild('slider', { static: false }) sliderRef!: ElementRef;
   reiniciarFiltroTipoReferencia() {
@@ -121,6 +124,9 @@ export class ExpedienteDetalleComponent implements OnInit {
   abrirEnNuevaVentana(url: string) {
     window.open(url, '_blank');
   }
+  // expediente-detalle.component.ts
+
+
 
   obtenerIdsPorNombres(nombresSeleccionados: string[]): string {
     const ids = this.todosUsuarios
@@ -215,13 +221,48 @@ export class ExpedienteDetalleComponent implements OnInit {
           };
           this.cdr.markForCheck();
         });
-
       },
       error: (err) => {
         console.error('Error al cargar expediente', err);
       }
     });
+    this.cargarAuditoria();
   }
+  onTabChange(tab: 'expediente' | 'documentos' | 'estado' | 'cargo' | 'auditoria'): void {
+    this.seccion = tab;
+    if (tab === 'auditoria') {
+      this.cargarAuditoria();
+    }
+  }
+
+  cargarAuditoria(): void {
+    console.log('[AUDITORÍA] Intentando cargar auditoría...');
+
+    if (!this.expediente) {
+      console.warn('[AUDITORÍA] El objeto expediente aún no está cargado.');
+      return;
+    }
+
+    console.log('[AUDITORÍA] Expediente cargado:', this.expediente);
+
+    if (!this.expediente.id) {
+      console.warn('[AUDITORÍA] El expediente no tiene un ID válido.');
+      return;
+    }
+
+    console.log('[AUDITORÍA] Usando expediente ID:', this.expediente.id);
+
+    this.auditoriaService.getAuditoriasPorExpediente(this.expediente.id).subscribe({
+      next: (data) => {
+        this.auditorias = data;
+        console.log('[AUDITORÍA] Auditoría cargada correctamente:', data);
+      },
+      error: (err) => {
+        console.error('[AUDITORÍA] Error al cargar auditoría:', err);
+      }
+    });
+  }
+
   transformarRutaCargo(path: string): string | null {
     console.log('[DEBUG] path recibido en transformarRutaCargo:', path);
     if (!path) return null;
@@ -257,6 +298,17 @@ export class ExpedienteDetalleComponent implements OnInit {
             this.expediente.estado = 'ANULADO';
             Swal.fire('Anulado', 'El expediente fue marcado como ANULADO.', 'success');
             this.cdr.markForCheck();
+
+            const usuario = this.authService.getUserFromToken();
+            this.auditoriaService.registrarAuditoria({
+              usuario: usuario?.id,
+              accion: 'EDICION',
+              expedienteId: this.expediente.id,
+              descripcion: 'El expediente fue anulado (cambio de estado a ANULADO)'
+            }).subscribe({
+              next: () => console.log('[AUDITORIA] Expediente anulado registrado'),
+              error: err => console.error('[AUDITORIA] Error al registrar auditoría de anulación', err)
+            });
           },
           error: () => {
             Swal.fire('Error', 'No se pudo anular el expediente', 'error');
@@ -265,6 +317,7 @@ export class ExpedienteDetalleComponent implements OnInit {
       }
     });
   }
+
 
   scrollSlider(direction: 'left' | 'right') {
     const slider = this.sliderRef.nativeElement as HTMLElement;
@@ -318,6 +371,16 @@ export class ExpedienteDetalleComponent implements OnInit {
     dialogRef.afterClosed().subscribe((result) => {
       if (!result) return; // Usuario canceló
       const usuario = this.authService.getUserFromToken();
+      this.auditoriaService.registrarAuditoria({
+        usuario: usuario?.id,
+        accion: 'CREACION',
+        expedienteId: this.expediente?.id,
+        cargoId: result.id,
+        descripcion: 'Registro de nuevo cargo desde detalle del expediente'
+      }).subscribe({
+        next: () => console.log('[AUDITORIA] Cargo registrado'),
+        error: err => console.error('[AUDITORIA] Error al registrar auditoría de cargo', err)
+      });
 
       const formData = new FormData();
       const now = new Date();
@@ -417,6 +480,17 @@ export class ExpedienteDetalleComponent implements OnInit {
 
     this.expedienteService.actualizarExpediente(this.expediente.id, datosActualizar).subscribe({
       next: (resp) => {
+        const usuario = this.authService.getUserFromToken();
+        this.auditoriaService.registrarAuditoria({
+          usuario: usuario?.id,
+          accion: 'EDICION',
+          expedienteId: this.expediente?.id,
+          descripcion: 'Edición de expediente desde vista de detalle'
+        }).subscribe({
+          next: () => console.log('[AUDITORIA] Edición registrada'),
+          error: err => console.error('[AUDITORIA] Error al registrar auditoría de edición', err)
+        });
+
         Swal.fire({
           title: 'Expediente actualizado',
           icon: 'success',
@@ -623,6 +697,19 @@ export class ExpedienteDetalleComponent implements OnInit {
         doc.visibleParaExternos = !doc.visibleParaExternos;
 
         this.actualizarDocumento(doc);
+        const usuario = this.authService.getUserFromToken();
+        const visibilidad = doc.visibleParaExternos ? 'visible' : 'no visible';
+        this.auditoriaService.registrarAuditoria({
+          usuario: usuario?.id,
+          accion: 'EDICION',
+          expedienteId: this.expediente?.id,
+          documentoId: doc.id,
+          descripcion: `Cambio de visibilidad del documento: ahora ${visibilidad} para externos`
+        }).subscribe({
+          next: () => console.log('[AUDITORIA] Cambio de visibilidad registrado'),
+          error: err => console.error('[AUDITORIA] Error al registrar visibilidad', err)
+        });
+
       }
     });
   }
@@ -652,8 +739,21 @@ export class ExpedienteDetalleComponent implements OnInit {
 
         this.expedienteService.eliminarDocumento(doc.id!).subscribe({
           next: () => {
+
             console.log('Eliminación exitosa del documento en backend');
             // Actualizar los documentos locales en el frontend para reflejar la eliminación
+            const usuario = this.authService.getUserFromToken();
+            this.auditoriaService.registrarAuditoria({
+              usuario: usuario?.id,
+              accion: 'ELIMINACION',
+              expedienteId: this.expediente?.id,
+              documentoId: doc.id,
+              descripcion: `Eliminación de documento "${doc.nombreArchivo}"`
+            }).subscribe({
+              next: () => console.log('[AUDITORIA] Documento eliminado'),
+              error: err => console.error('[AUDITORIA] Error al registrar eliminación', err)
+            });
+
             this.documentosExistentes = this.documentosExistentes.filter(d => d.id !== doc.id);
             console.log('Documentos restantes después de la eliminación:', this.documentosExistentes);
 
@@ -694,7 +794,21 @@ export class ExpedienteDetalleComponent implements OnInit {
       });
 
     forkJoin(uploads).subscribe({
-      next: () => {
+      next: (docsSubidos: any[]) => {
+        const usuario = this.authService.getUserFromToken();
+        docsSubidos.forEach(doc => {
+          this.auditoriaService.registrarAuditoria({
+            usuario: usuario?.id,
+            accion: 'CREACION',
+            expedienteId: expedienteId,
+            documentoId: doc.id,
+            descripcion: `Carga adicional del documento "${doc.nombreArchivo}"`
+          }).subscribe({
+            next: () => console.log('[AUDITORIA] Documento adicional registrado'),
+            error: err => console.error('[AUDITORIA] Error en auditoría de documento adicional', err)
+          });
+        });
+
         Swal.fire({
           title: 'Documentos añadidos',
           text: 'Se cargaron correctamente los documentos adicionales.',
@@ -702,13 +816,13 @@ export class ExpedienteDetalleComponent implements OnInit {
           confirmButtonColor: '#004C77'
         });
         this.documentosNuevos = [];
-        console.log('Datos recibidos del backend:', this.documentosExistentes);
         this.recargarDocumentosExistentes();
       },
       error: () => {
         Swal.fire('Error', 'No se pudieron subir todos los documentos.', 'error');
       }
     });
+
   }
 
   recargarDocumentosExistentes(): void {
@@ -756,6 +870,18 @@ export class ExpedienteDetalleComponent implements OnInit {
       if (result.isConfirmed) {
         // Llamar al método para actualizar el tipo de documento en el backend
         this.actualizarDocumento(doc);
+        const usuario = this.authService.getUserFromToken();
+        this.auditoriaService.registrarAuditoria({
+          usuario: usuario?.id,
+          accion: 'EDICION',
+          expedienteId: this.expediente?.id,
+          documentoId: doc.id,
+          descripcion: `Cambio de tipo de documento a "${doc.tipoDocumento}"`
+        }).subscribe({
+          next: () => console.log('[AUDITORIA] Cambio de tipo registrado'),
+          error: err => console.error('[AUDITORIA] Error en auditoría de tipo de documento', err)
+        });
+
       } else {
         // Si no se confirma, revertimos el cambio
         doc.tipoDocumento = '';  // O el valor anterior, si es necesario

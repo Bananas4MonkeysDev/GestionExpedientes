@@ -35,7 +35,7 @@
                     [ngClass]="seccion === 'estado' ? 'border-b-2 border-[#004C77] text-[#004C77]' : 'text-gray-500 hover:text-[#004C77]'"
                     class="cursor-pointer pb-2">Estado del Proceso</button>
 
-                <button (click)="seccion = 'auditoria'"
+                <button (click)="onTabChange('auditoria')"
                     [ngClass]="seccion === 'auditoria' ? 'border-b-2 border-[#004C77] text-[#004C77]' : 'text-gray-500 hover:text-[#004C77]'"
                     class="cursor-pointer pb-2">Auditoría / Trazabilidad</button>
             </div>
@@ -523,7 +523,7 @@
                     <div class="flex justify-end mt-4">
                         <button (click)="subirDocumentosAdicionales()"
                             [disabled]="documentosNuevos.length === 0 || !todosLosDocumentosTienenTipo()"
-                            class="bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            class="cursor-pointer bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed">
                             Subir documentos adicionales
                         </button>
                     </div>
@@ -666,29 +666,34 @@
                     </div>
                 </div>
 
-                <!-- Auditoría -->
-                <div *ngSwitchCase="'auditoria'" class="p-4">
-                    <h3 class="font-semibold text-[#004C77] mb-4 text-lg">Registro de Auditoría</h3>
-                    <table class="w-full text-sm table-auto border-collapse">
-                        <thead class="bg-[#004C77] text-white">
-                            <tr>
-                                <th class="p-2 text-left">Usuario</th>
-                                <th class="p-2 text-left">Acción</th>
-                                <th class="p-2 text-left">Fecha</th>
-                                <th class="p-2 text-left">Instancia</th>
-                                <th class="p-2 text-left">Documentos</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let log of expediente.auditoria" class="border-b">
-                                <td class="p-2">{{ log.usuario }}</td>
-                                <td class="p-2">{{ log.accion }}</td>
-                                <td class="p-2">{{ log.fecha }}</td>
-                                <td class="p-2">{{ log.instancia }}</td>
-                                <td class="p-2">{{ log.documentos?.join(', ') }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- Sección Auditoría -->
+                <div *ngIf="seccion === 'auditoria'" class="space-y-6 mt-8">
+                    <h2 class="text-2xl font-bold text-[#004C77]">Historial de Auditoría</h2>
+
+                    <div *ngIf="auditorias.length === 0" class="text-gray-500 italic">
+                        No hay registros de auditoría disponibles para este expediente.
+                    </div>
+
+                    <div *ngFor="let entry of auditorias"
+                        class="border border-gray-300 bg-white shadow-sm rounded-lg p-6 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">{{ entry.fechaHora | date:'medium' }}</span>
+                            <span class="text-sm font-semibold text-white px-3 py-1 rounded-full" [ngClass]="{
+              'bg-green-600': entry.accion === 'CREACION',
+              'bg-yellow-600': entry.accion === 'EDICION',
+              'bg-red-600': entry.accion === 'ELIMINACION'
+            }">
+                                {{ entry.accion }}
+                            </span>
+                        </div>
+
+                        <div class="text-sm text-gray-800">
+                            <p><strong>Usuario ID:</strong> {{ entry.usuario }}</p>
+                            <p *ngIf="entry.descripcion"><strong>Descripción:</strong> {{ entry.descripcion }}</p>
+                            <p *ngIf="entry.documentoId"><strong>Documento ID:</strong> {{ entry.documentoId }}</p>
+                            <p *ngIf="entry.cargoId"><strong>Cargo ID:</strong> {{ entry.cargoId }}</p>
+                        </div>
+                    </div>
                 </div>
 
             </ng-container>

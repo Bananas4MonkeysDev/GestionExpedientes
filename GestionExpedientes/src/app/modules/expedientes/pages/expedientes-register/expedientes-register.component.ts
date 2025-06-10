@@ -23,6 +23,7 @@ import { ProyectoService } from '../../../../core/services/proyecto.service';
 import { Proyecto } from '../../../../core/models/proyecto.model';
 import { ProyectoAgregarComponent } from '../../modal/proyecto-agregar/proyecto-agregar.component';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AuditoriaService } from '../../../../core/services/auditoria.service';
 
 interface ReferenciaCompleta {
   serie: string;
@@ -120,7 +121,8 @@ export class ExpedientesRegisterComponent implements OnInit {
   arrastrando = false;
   seccionActiva: 'registro' | 'estado' | 'auditoria' = 'registro';
 
-  constructor(private authService: AuthService, private proyectoService: ProyectoService, private loadingService: LoadingOverlayService, private fb: FormBuilder, private dialog: MatDialog, private router: Router, private expedienteService: ExpedienteService, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
+  constructor(private auditoriaService: AuditoriaService
+    , private authService: AuthService, private proyectoService: ProyectoService, private loadingService: LoadingOverlayService, private fb: FormBuilder, private dialog: MatDialog, private router: Router, private expedienteService: ExpedienteService, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
 
   ngOnInit(): void {
     this.formularioPaso1 = this.fb.group({
@@ -503,6 +505,15 @@ export class ExpedientesRegisterComponent implements OnInit {
 
     this.expedienteService.registrarExpediente(expedienteData).subscribe({
       next: (expediente) => {
+        this.auditoriaService.registrarAuditoria({
+          usuario: usuarioActual?.id,
+          accion: 'CREACION',
+          expedienteId: expediente.id,
+          descripcion: 'Registro de nuevo expediente con documentos'
+        }).subscribe({
+          next: () => console.log('[AUDITORIA] Registrada'),
+          error: err => console.error('[AUDITORIA] Error al registrar', err)
+        });
         const expedienteId = expediente.id;
         this.expedienteIdRegistrado = expediente.id;
         console.log(this.expedienteIdRegistrado);
@@ -520,10 +531,26 @@ export class ExpedientesRegisterComponent implements OnInit {
         this.loadingService.show();
 
         // enviar todos los documentos
-        Promise.all(uploads.map(u => u.toPromise())).then(() => {
+        Promise.all(uploads.map(u => u.toPromise())).then((respuestas) => {
+          // respuestas contiene cada documento registrado
+          respuestas.forEach((documentoRegistrado, index) => {
+            this.auditoriaService.registrarAuditoria({
+              usuario: usuarioActual?.id,
+              accion: 'CREACION',
+              expedienteId: this.expedienteIdRegistrado,
+              documentoId: documentoRegistrado.id,
+              descripcion: `Registro de documento: ${documentoRegistrado.nombreArchivo}`
+            }).subscribe({
+              next: () => console.log(`[AUDITORIA] Documento ${index + 1} registrado`),
+              error: err => console.error('[AUDITORIA] Error al registrar auditoría de documento', err)
+            });
+          });
+
+          // Luego de auditar todos, notificar expediente
           this.expedienteService.notificarExpediente(this.expedienteIdRegistrado!).subscribe({
             next: () => {
-              this.loadingService.hide(); Swal.fire({
+              this.loadingService.hide();
+              Swal.fire({
                 title: 'Expediente registrado',
                 text: 'Los documentos fueron cargados exitosamente.',
                 icon: 'success',
@@ -531,11 +558,16 @@ export class ExpedientesRegisterComponent implements OnInit {
               }).then(() => {
                 this.pasoActual = 4;
                 this.exito = true;
-              }); console.log('[✔] Notificación enviada correctamente');
+              });
+              console.log('[✔] Notificación enviada correctamente');
             },
-            error: (err) => { this.loadingService.hide(); console.error('[✖] Error al enviar notificación:', err); }
+            error: (err) => {
+              this.loadingService.hide();
+              console.error('[✖] Error al enviar notificación:', err);
+            }
           });
         });
+
 
 
       },
@@ -594,6 +626,15 @@ export class ExpedientesRegisterComponent implements OnInit {
     this.loadingService.show();
     this.expedienteService.registrarExpediente(expedienteData).subscribe({
       next: (expediente) => {
+        this.auditoriaService.registrarAuditoria({
+          usuario: usuarioActual?.id,
+          accion: 'CREACION',
+          expedienteId: expediente.id,
+          descripcion: 'Registro de nuevo expediente sin documentos'
+        }).subscribe({
+          next: () => console.log('[AUDITORIA] Registrada'),
+          error: err => console.error('[AUDITORIA] Error al registrar', err)
+        });
         this.expedienteIdRegistrado = expediente.id;
         console.log(this.expedienteIdRegistrado);
         this.expedienteService.notificarExpediente(this.expedienteIdRegistrado!).subscribe({
@@ -731,9 +772,18 @@ export class ExpedientesRegisterComponent implements OnInit {
     }
 
     this.expedienteService.registrarCargo(formData).subscribe({
-      next: () => {
+      next: (cargo) => {
         this.loadingService.hide();
-
+        this.auditoriaService.registrarAuditoria({
+          usuario: usuario?.id,
+          accion: 'CREACION',
+          expedienteId: expedienteId,
+          cargoId: cargo.id, // ← asumimos que el backend retorna el cargo creado con ID
+          descripcion: 'Registro de nuevo cargo' + (this.cargo ? ' con documento' : ' sin documento')
+        }).subscribe({
+          next: () => console.log('[AUDITORIA] Cargo registrado'),
+          error: err => console.error('[AUDITORIA] Error al registrar auditoría de cargo', err)
+        });
         Swal.fire({
           title: 'Cargo registrado',
           text: this.cargo
