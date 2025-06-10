@@ -27,6 +27,7 @@ public class Expediente {
     private Long creadoPor;
     @Column(length = 1000)
     private String usuariosEmisores;
+
     public Long getId() {
         return id;
     }

@@ -1,9 +1,6 @@
 package com.example.gestionexpedientesbackend.service;
 
-import com.example.gestionexpedientesbackend.model.Cargo;
-import com.example.gestionexpedientesbackend.model.Documento;
-import com.example.gestionexpedientesbackend.model.Expediente;
-import com.example.gestionexpedientesbackend.model.Usuario;
+import com.example.gestionexpedientesbackend.model.*;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +15,8 @@ import java.util.List;
 
 @Service
 public class EmailServiceImpl implements EmailService {
+    @Autowired
+    private ProyectoService proyectoService;
 
     @Autowired
     private JavaMailSender mailSender;
@@ -43,37 +42,64 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public String generarMensajeExpediente(Expediente expediente, List<Documento> documentos, String nombreRemitente) {
         StringBuilder sb = new StringBuilder();
-        System.out.println(nombreRemitente);
-        sb.append("Estimado usuario,\n\n");
-        sb.append("Se le informa que se ha registrado un nuevo expediente en el sistema.\n\n");
 
-        sb.append("Detalles del expediente:\n");
-        sb.append("Código: ").append(expediente.getCodigo()).append("\n");
-        sb.append("Asunto: ").append(expediente.getAsunto()).append("\n");
-        sb.append("Fecha: ").append(expediente.getFecha()).append("\n");
-        sb.append("Proyecto: ").append(expediente.getProyecto()).append("\n\n");
+        sb.append("<html><body style='font-family: Arial, sans-serif; color: #333;'>");
 
-        if (!documentos.isEmpty()) {
-            sb.append("Documentos asociados:\n");
-            for (Documento doc : documentos) {
-                sb.append("- ").append(doc.getCodigo()).append(": ").append(doc.getNombreArchivo()).append("\n");
-            }
-        } else {
-            sb.append("Este expediente no contiene documentos adjuntos.\n");
+        sb.append("<p>Estimado usuario,</p>");
+
+        sb.append("<p>Se le informa que se ha registrado un nuevo <strong>expediente</strong> en el sistema.</p>");
+        Long proyectoId = null;
+        try {
+            proyectoId = Long.parseLong(expediente.getProyecto());
+        } catch (NumberFormatException e) {
+            // manejar error si no es un número válido
         }
 
-        sb.append("\nPor favor, revise y apruebe el expediente:\n");
-        sb.append("<a href=\"http://localhost:4200/revision-expediente/")
-                .append(expediente.getId())
-                .append("\" style=\"display:inline-block;padding:10px 20px;font-size:16px;color:white;background-color:#004C77;text-decoration:none;border-radius:5px;margin-top:10px;\">Ver expediente</a></p>");
+        String nombreProyecto = "Sin proyecto";
+        if (proyectoId != null) {
+            Proyecto proyecto = proyectoService.obtenerPorId(proyectoId);
+            if (proyecto != null) {
+                nombreProyecto = proyecto.getNombre();
+            }
+        }
 
-        sb.append("Gracias por su atención.\n\n");
-        sb.append("Atentamente,\n");
-        sb.append(nombreRemitente).append("\n");
-        sb.append("[Área o institución]\n");
+        sb.append("<ul>");
+        sb.append("<li><strong>Código:</strong> ").append(expediente.getCodigo()).append("</li>");
+        sb.append("<li><strong>Asunto:</strong> ").append(expediente.getAsunto()).append("</li>");
+        sb.append("<li><strong>Fecha:</strong> ").append(expediente.getFecha()).append("</li>");
+        sb.append("<li><strong>Proyecto:</strong> ").append(nombreProyecto).append("</li>");
+        sb.append("</ul>");
+
+        if (!documentos.isEmpty()) {
+            sb.append("<p><strong>Documentos asociados:</strong></p>");
+            sb.append("<ul>");
+            for (Documento doc : documentos) {
+                sb.append("<li>").append(doc.getCodigo()).append(": ").append(doc.getNombreArchivo()).append("</li>");
+            }
+            sb.append("</ul>");
+        } else {
+            sb.append("<p><em>Este expediente no contiene documentos adjuntos.</em></p>");
+        }
+
+        // Botón visual
+        sb.append("<p style='margin-top: 20px;'>");
+        sb.append("<a href='http://localhost:4200/revision-expediente/").append(expediente.getId()).append("' ")
+                .append("style='display: inline-block; padding: 10px 20px; font-size: 16px; color: white; background-color: #004C77; text-decoration: none; border-radius: 5px;'>")
+                .append("Ver expediente")
+                .append("</a>");
+        sb.append("</p>");
+
+        sb.append("<p style='margin-top: 30px; font-size: 14px;'>Gracias por su atención.</p>");
+
+        sb.append("<p>Atentamente,<br>");
+        sb.append(nombreRemitente).append("<br>");
+        sb.append("<em>[Área o institución]</em></p>");
+
+        sb.append("</body></html>");
 
         return sb.toString();
     }
+
     @Override
     public String generarMensajeCargo(Cargo cargo, List<Documento> documentos, Expediente expediente, String nombreRemitente) {
         StringBuilder sb = new StringBuilder();
