@@ -19,6 +19,7 @@ import { UsuarioService } from '../../../../../core/services/usuario.service';
 import { forkJoin } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { LoadingOverlayService } from '../../../../../core/services/loading-overlay.service';
+import { AuthService } from '../../../../../core/services/auth.service';
 
 export interface Usuario {
   id: number; // ← Agregado
@@ -107,7 +108,7 @@ export class ExpedienteDetalleComponent implements OnInit {
   historialCargos: any[] = [];
   isLoading = false;
 
-  constructor(private loadingService: LoadingOverlayService,
+  constructor(private authService: AuthService, private loadingService: LoadingOverlayService,
     private sanitizer: DomSanitizer, private zone: NgZone, private route: ActivatedRoute, private cdr: ChangeDetectorRef, private expedienteService: ExpedienteService, private dialog: MatDialog, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
   @ViewChild('slider', { static: false }) sliderRef!: ElementRef;
   reiniciarFiltroTipoReferencia() {
@@ -171,7 +172,7 @@ export class ExpedienteDetalleComponent implements OnInit {
           proyecto: data.expediente.proyecto,
           reservado: data.expediente.reservado,
           comentario: data.expediente.comentario,
-          estado:data.expediente.estado,
+          estado: data.expediente.estado,
           documentos: data.documentos.map((doc: any) => ({
             id: doc.id,
             nombreArchivo: doc.nombreArchivo,
@@ -316,10 +317,15 @@ export class ExpedienteDetalleComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (!result) return; // Usuario canceló
+      const usuario = this.authService.getUserFromToken();
 
       const formData = new FormData();
       const now = new Date();
-
+      if (usuario?.id != null) {
+        formData.append('usuarioCreadorId', usuario.id.toString());
+      } else {
+        console.warn('Usuario no disponible o no tiene ID');
+      }
       formData.append('expedienteId', expedienteId.toString());
       formData.append('fecha', result.fecha || now.toISOString().split('T')[0]);
       formData.append('hora', result.hora || now.toTimeString().split(' ')[0]);

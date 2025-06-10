@@ -27,17 +27,20 @@ public class CargoController {
             @RequestParam("fecha") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
             @RequestParam("hora") @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime hora,
             @RequestParam("expedienteId") Long expedienteId,
+            @RequestParam("usuarioCreadorId") Long usuarioCreadorId,
             @RequestParam(value = "archivo", required = false) MultipartFile archivo) throws IOException {
 
         CargoRequestDTO dto = new CargoRequestDTO();
         dto.setFecha(fecha);
         dto.setHora(hora);
         dto.setExpedienteId(expedienteId);
+        dto.setUsuarioCreadorId(usuarioCreadorId);
 
         Cargo cargoCreado = cargoService.crearCargo(dto, archivo);
 
         return ResponseEntity.ok(cargoCreado);
     }
+
     @GetMapping("/expediente/{id}/historial")
     public ResponseEntity<List<Cargo>> obtenerHistorial(@PathVariable Long id) {
         return ResponseEntity.ok(cargoService.obtenerHistorialPorExpediente(id));

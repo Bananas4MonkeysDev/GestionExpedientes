@@ -26,6 +26,16 @@ public class Cargo {
     private Long expedienteId;
     @Column(unique = true, nullable = false)
     private String uuid = UUID.randomUUID().toString();
+    @Column(name = "generado_por")
+    private Long usuarioCreadorId;
+
+    public Long getUsuarioCreadorId() {
+        return usuarioCreadorId;
+    }
+
+    public void setUsuarioCreadorId(Long usuarioCreadorId) {
+        this.usuarioCreadorId = usuarioCreadorId;
+    }
 
     public String getUuid() {
         return uuid;

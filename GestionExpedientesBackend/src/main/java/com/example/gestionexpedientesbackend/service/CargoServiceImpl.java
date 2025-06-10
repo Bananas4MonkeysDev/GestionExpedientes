@@ -80,6 +80,7 @@ public class CargoServiceImpl implements CargoService {
             throw new IllegalArgumentException("El expedienteId es obligatorio");
 
         Cargo cargo = new Cargo();
+        cargo.setUsuarioCreadorId(cargoRequest.getUsuarioCreadorId());
         cargo.setFecha(cargoRequest.getFecha());
         cargo.setHora(cargoRequest.getHora());
         cargo.setExpedienteId(cargoRequest.getExpedienteId());
@@ -100,23 +101,22 @@ public class CargoServiceImpl implements CargoService {
             archivo.transferTo(destino);
             cargo.setArchivoPath(destino.getAbsolutePath());
         }
+        String nombreRemitente = "Sistema";
+        if (cargo.getUsuarioCreadorId() != null) {
+            Usuario creador = usuarioService.obtenerPorId(cargo.getUsuarioCreadorId()).orElse(null);
+            if (creador != null) {
+                nombreRemitente = creador.getNombre();
+            }
+        }
 
-        // Generar mensaje automático con datos ya completos
-        String mensajeGenerado = generarMensaje(cargo);
-        cargo.setMensaje(mensajeGenerado);
-        // Obtener destinatarios desde el expediente
-        // Obtener emisor(es)
         Expediente exp = expedienteService.obtenerPorId(cargoRequest.getExpedienteId()).orElseThrow();
         List<Usuario> emisores = usuarioService.obtenerPorIdsSeparados(exp.getUsuariosEmisores());
         List<String> correos = emisores.stream().map(Usuario::getCorreo).toList();
 
-// Obtener documentos del expediente
         List<Documento> documentos = documentoService.obtenerPorExpedienteId(exp.getId());
 
-// Generar mensaje
-        String mensaje = emailService.generarMensajeCargo(cargo, documentos, exp);
+        String mensaje = emailService.generarMensajeCargo(cargo, documentos, exp, nombreRemitente);
 
-// Enviar correo
         File adjunto = cargo.getArchivoPath() != null ? new File(cargo.getArchivoPath()) : null;
         emailService.enviarCorreoConAdjunto(correos, "Cargo generado – " + cargo.getCodigo(), mensaje, adjunto);
 

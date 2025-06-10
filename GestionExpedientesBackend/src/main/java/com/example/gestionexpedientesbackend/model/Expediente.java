@@ -8,16 +8,13 @@ public class Expediente {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String tipoExpediente;
     private String asunto;
     @Column(name = "codigo")
     private String codigo;
-
     public String getCodigo() {
         return codigo;
     }
-
     public void setCodigo(String codigo) {
         this.codigo = codigo;
     }
@@ -26,22 +23,25 @@ public class Expediente {
     private String fecha;
     private String comentario;
     private boolean reservado;
-
+    @Column(name = "creado_por")
+    private Long creadoPor;
     @Column(length = 1000)
-    private String usuariosEmisores;     // Ejemplo: "1|2|3"
-
+    private String usuariosEmisores;
     public Long getId() {
         return id;
     }
-
     public String getEstado() {
         return estado;
     }
-
+    public Long getCreadoPor() {
+        return creadoPor;
+    }
+    public void setCreadoPor(Long creadoPor) {
+        this.creadoPor = creadoPor;
+    }
     public void setEstado(String estado) {
         this.estado = estado;
     }
-
     public void setId(Long id) {
         this.id = id;
     }

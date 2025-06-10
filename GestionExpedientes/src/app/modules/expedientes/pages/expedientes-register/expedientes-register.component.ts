@@ -22,6 +22,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { ProyectoService } from '../../../../core/services/proyecto.service';
 import { Proyecto } from '../../../../core/models/proyecto.model';
 import { ProyectoAgregarComponent } from '../../modal/proyecto-agregar/proyecto-agregar.component';
+import { AuthService } from '../../../../core/services/auth.service';
 
 interface ReferenciaCompleta {
   serie: string;
@@ -119,7 +120,7 @@ export class ExpedientesRegisterComponent implements OnInit {
   arrastrando = false;
   seccionActiva: 'registro' | 'estado' | 'auditoria' = 'registro';
 
-  constructor(private proyectoService: ProyectoService, private loadingService: LoadingOverlayService, private fb: FormBuilder, private dialog: MatDialog, private router: Router, private expedienteService: ExpedienteService, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
+  constructor(private authService: AuthService, private proyectoService: ProyectoService, private loadingService: LoadingOverlayService, private fb: FormBuilder, private dialog: MatDialog, private router: Router, private expedienteService: ExpedienteService, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
 
   ngOnInit(): void {
     this.formularioPaso1 = this.fb.group({
@@ -483,6 +484,8 @@ export class ExpedientesRegisterComponent implements OnInit {
 
   onSubmit() {
     if (this.documentos.length === 0 || !this.todosLosDocumentosTienenTipo()) return;
+    const usuarioActual = this.authService.getUserFromToken();
+    console.log('[DEBUG] Usuario actual extraído del token:', usuarioActual);
 
     const expedienteData = {
       tipoExpediente: this.tipoExpediente, // del paso 1
@@ -494,6 +497,7 @@ export class ExpedientesRegisterComponent implements OnInit {
       usuariosEmisores: this.obtenerIdsPorNombres(this.controlUsuario.value ?? []),
       usuariosDestinatarios: this.obtenerIdsPorNombres(this.controlUsuarioCc.value ?? []),
       referencias: this.obtenerReferenciasFinales(),
+      creadoPor: usuarioActual?.id,
       documentos: [] // no incluir aún, se enviarán luego
     };
 
@@ -571,6 +575,9 @@ export class ExpedientesRegisterComponent implements OnInit {
 
 
   omitirCargaDocumentos() {
+    const usuarioActual = this.authService.getUserFromToken();
+    console.log('[DEBUG] Usuario actual extraído del token:', usuarioActual);
+
     const expedienteData = {
       tipoExpediente: this.tipoExpediente,
       asunto: this.formularioPaso1.value.asunto,
@@ -581,6 +588,7 @@ export class ExpedientesRegisterComponent implements OnInit {
       usuariosEmisores: this.obtenerIdsPorNombres(this.controlUsuario.value ?? []),
       usuariosDestinatarios: this.obtenerIdsPorNombres(this.controlUsuarioCc.value ?? []),
       referencias: this.obtenerReferenciasFinales(),
+      creadoPor: usuarioActual?.id,
       documentos: [] // explícitamente vacío
     };
     this.loadingService.show();
@@ -708,13 +716,17 @@ export class ExpedientesRegisterComponent implements OnInit {
 
     // Aquí debes usar el ID real del expediente creado
     const expedienteId = this.expedienteIdRegistrado || 0; // reemplaza por el ID correcto desde tu flujo
+    const usuario = this.authService.getUserFromToken();
 
     const formData = new FormData();
     formData.append('fecha', this.fechaCargo);
     formData.append('hora', this.horaCargo);
     formData.append('expedienteId', expedienteId.toString());
-
-    if (this.cargo) {
+    if (usuario?.id != null) {
+      formData.append('usuarioCreadorId', usuario.id.toString());
+    } else {
+      console.warn('Usuario no disponible o no tiene ID');
+    } if (this.cargo) {
       formData.append('archivo', this.cargo, this.cargo.name);
     }
 

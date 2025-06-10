@@ -114,7 +114,7 @@ public class ExpedienteServiceImpl implements ExpedienteService {
         List<Usuario> destinatarios = usuarioService.obtenerPorIdsSeparados(expediente.getUsuariosDestinatarios());
         List<String> correos = destinatarios.stream().map(Usuario::getCorreo).toList();
 
-// Obtener documentos
+    // Obtener documentos
         List<Documento> documentos = documentoService.obtenerPorExpedienteId(expediente.getId());
 
 
@@ -139,9 +139,12 @@ public class ExpedienteServiceImpl implements ExpedienteService {
         List<Documento> documentos = conDocumentos
                 ? documentoService.obtenerPorExpedienteId(expedienteId)
                 : List.of(); // lista vacía
-
-        String mensaje = emailService.generarMensajeExpediente(expediente, documentos);
+        String nombreRemitente = "Sistema";
+        if (expediente.getCreadoPor() != null) {
+            Optional<Usuario> creador = usuarioService.obtenerPorId(expediente.getCreadoPor());
+            nombreRemitente = creador.map(Usuario::getNombre).orElse("Sistema");
+        }
+        String mensaje = emailService.generarMensajeExpediente(expediente, documentos, nombreRemitente);
         emailService.enviarCorreoSimple(correos, "Nuevo expediente registrado – " + expediente.getCodigo(), mensaje);
     }
-
 }

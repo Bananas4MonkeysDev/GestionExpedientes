@@ -100,6 +100,8 @@ public class ExpedienteController {
 
     @PostMapping("/registrar")
     public ResponseEntity<Expediente> registrar(@RequestBody Expediente expediente) {
+        System.out.println("[DEBUG] usuarioCreadorId recibido: " + expediente.getCreadoPor());
+
         Expediente creado = expedienteService.registrarExpediente(expediente);
         return ResponseEntity.ok(creado);
     }

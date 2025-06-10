@@ -9,6 +9,15 @@ public class CargoRequestDTO {
     private Long expedienteId;
     private String mensaje; // Puede venir vacío o null si quieres que se genere en backend
     private String archivoPath; // Opcional
+    private Long usuarioCreadorId;
+
+    public Long getUsuarioCreadorId() {
+        return usuarioCreadorId;
+    }
+
+    public void setUsuarioCreadorId(Long usuarioCreadorId) {
+        this.usuarioCreadorId = usuarioCreadorId;
+    }
 
     public LocalDate getFecha() {
         return fecha;

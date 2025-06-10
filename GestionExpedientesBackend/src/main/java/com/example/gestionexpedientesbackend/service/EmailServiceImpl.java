@@ -49,10 +49,12 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public String generarMensajeExpediente(Expediente expediente, List<Documento> documentos) {
+    public String generarMensajeExpediente(Expediente expediente, List<Documento> documentos, String nombreRemitente) {
         StringBuilder sb = new StringBuilder();
+        System.out.println(nombreRemitente);
         sb.append("Estimado usuario,\n\n");
         sb.append("Se le informa que se ha registrado un nuevo expediente en el sistema.\n\n");
+
         sb.append("Detalles del expediente:\n");
         sb.append("Código: ").append(expediente.getCodigo()).append("\n");
         sb.append("Asunto: ").append(expediente.getAsunto()).append("\n");
@@ -70,17 +72,19 @@ public class EmailServiceImpl implements EmailService {
 
         sb.append("\nPor favor, revise y apruebe los documentos asociados en el siguiente enlace:\n");
         sb.append("http://localhost:4200/revision-expediente/").append(expediente.getId()).append("\n\n");
+
         sb.append("Gracias por su atención.\n\n");
         sb.append("Atentamente,\n");
-        sb.append("[Nombre del Remitente]\n");
+        sb.append(nombreRemitente).append("\n");
         sb.append("[Área o institución]\n");
 
         return sb.toString();
     }
 
 
+
     @Override
-    public String generarMensajeCargo(Cargo cargo, List<Documento> documentos, Expediente expediente) {
+    public String generarMensajeCargo(Cargo cargo, List<Documento> documentos, Expediente expediente, String nombreRemitente) {
         StringBuilder sb = new StringBuilder();
 
         sb.append("Estimado usuario,\n\n");
@@ -103,11 +107,12 @@ public class EmailServiceImpl implements EmailService {
 
         sb.append("Por favor, no responda a este mensaje. Si tiene consultas, comuníquese con el área correspondiente.\n\n");
         sb.append("Atentamente,\n");
-        sb.append("[Nombre del Remitente]\n");
+        sb.append(nombreRemitente).append("\n");
         sb.append("[Área o Institución]\n");
 
         return sb.toString();
     }
+
 
     @Override
     public void notificarDestinatariosExpediente(Expediente expediente, List<Usuario> destinatarios, List<Documento> documentos) {

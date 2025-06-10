@@ -2,11 +2,13 @@ package com.example.gestionexpedientesbackend.service;
 import com.example.gestionexpedientesbackend.model.Usuario;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UsuarioService {
     Usuario registrar(Usuario usuario);
     List<Usuario> obtenerTodos();
     void enviarCorreoRecuperacion(String correo, String token);
+    Optional<Usuario> obtenerPorId(Long id);
 
     Usuario findByTokenRecuperacion(String token);
     void guardarTokenRecuperacion(Long usuarioId, String token);

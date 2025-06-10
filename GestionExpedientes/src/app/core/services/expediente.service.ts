@@ -49,7 +49,6 @@ export class ExpedienteService {
 
   registrarExpediente(expediente: any): Observable<any> {
     console.log('[DEBUG] JWT token:', localStorage.getItem('jwt'));
-
     return this.http.post(`${this.baseUrl}/registrar`, expediente, {
       headers: this.getHeaders()
     });

@@ -37,6 +37,11 @@ public class UsuarioServiceImpl implements UsuarioService {
         return usuarioRepository.save(usuario);
     }
     @Override
+    public Optional<Usuario> obtenerPorId(Long id) {
+        return usuarioRepository.findById(id);
+    }
+
+    @Override
     public Usuario findByCorreo(String correo) {
         return usuarioRepository.findByCorreo(correo).orElse(null);
     }
