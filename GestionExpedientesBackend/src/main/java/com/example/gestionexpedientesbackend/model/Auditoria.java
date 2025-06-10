@@ -23,6 +23,16 @@ public class Auditoria {
     private Long cargoId;
 
     private String descripcion; // opcional, para texto libre
+    // Auditoria.java
+    private Long usuarioId;
+    private Long proyectoId;
+
+    public Long getProyectoId() { return proyectoId; }
+    public void setProyectoId(Long proyectoId) { this.proyectoId = proyectoId; }
+
+    public Long getUsuarioId() { return usuarioId; }
+    public void setUsuarioId(Long usuarioId) { this.usuarioId = usuarioId; }
+
 
     // Getters y setters
     public Long getId() { return id; }

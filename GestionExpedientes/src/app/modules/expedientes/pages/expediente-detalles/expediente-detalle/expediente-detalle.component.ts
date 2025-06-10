@@ -226,7 +226,6 @@ export class ExpedienteDetalleComponent implements OnInit {
         console.error('Error al cargar expediente', err);
       }
     });
-    this.cargarAuditoria();
   }
   onTabChange(tab: 'expediente' | 'documentos' | 'estado' | 'cargo' | 'auditoria'): void {
     this.seccion = tab;
@@ -298,7 +297,6 @@ export class ExpedienteDetalleComponent implements OnInit {
             this.expediente.estado = 'ANULADO';
             Swal.fire('Anulado', 'El expediente fue marcado como ANULADO.', 'success');
             this.cdr.markForCheck();
-
             const usuario = this.authService.getUserFromToken();
             this.auditoriaService.registrarAuditoria({
               usuario: usuario?.id,
@@ -309,6 +307,7 @@ export class ExpedienteDetalleComponent implements OnInit {
               next: () => console.log('[AUDITORIA] Expediente anulado registrado'),
               error: err => console.error('[AUDITORIA] Error al registrar auditoría de anulación', err)
             });
+            this.cargarAuditoria();
           },
           error: () => {
             Swal.fire('Error', 'No se pudo anular el expediente', 'error');
@@ -355,6 +354,7 @@ export class ExpedienteDetalleComponent implements OnInit {
         console.error('Error al cargar detalle del expediente:', err);
       },
     });
+    this.cargarAuditoria();
   }
   abrirDialogoCargo(): void {
     setTimeout(() => (document.activeElement as HTMLElement)?.blur(), 10);
@@ -371,17 +371,6 @@ export class ExpedienteDetalleComponent implements OnInit {
     dialogRef.afterClosed().subscribe((result) => {
       if (!result) return; // Usuario canceló
       const usuario = this.authService.getUserFromToken();
-      this.auditoriaService.registrarAuditoria({
-        usuario: usuario?.id,
-        accion: 'CREACION',
-        expedienteId: this.expediente?.id,
-        cargoId: result.id,
-        descripcion: 'Registro de nuevo cargo desde detalle del expediente'
-      }).subscribe({
-        next: () => console.log('[AUDITORIA] Cargo registrado'),
-        error: err => console.error('[AUDITORIA] Error al registrar auditoría de cargo', err)
-      });
-
       const formData = new FormData();
       const now = new Date();
       if (usuario?.id != null) {
@@ -409,7 +398,17 @@ export class ExpedienteDetalleComponent implements OnInit {
             this.historialCargos = hist;
             this.cdr.markForCheck();
           });
-
+          this.auditoriaService.registrarAuditoria({
+            usuario: usuario?.id,
+            accion: 'CREACION',
+            expedienteId: this.expediente?.id,
+            cargoId: result.id,
+            descripcion: 'Registro de nuevo cargo desde detalle del expediente'
+          }).subscribe({
+            next: () => console.log('[AUDITORIA] Cargo registrado'),
+            error: err => console.error('[AUDITORIA] Error al registrar auditoría de cargo', err)
+          });
+          this.cargarAuditoria();
           Swal.fire({
             icon: 'success',
             title: 'Cargo generado correctamente',
@@ -496,6 +495,7 @@ export class ExpedienteDetalleComponent implements OnInit {
           icon: 'success',
           confirmButtonColor: '#004C77'
         });
+        this.cargarAuditoria();
 
         // Actualizar localmente datos (opcional)
         Object.assign(this.expediente, datosActualizar);
@@ -672,6 +672,7 @@ export class ExpedienteDetalleComponent implements OnInit {
 
     this.expedienteService.actualizarDocumento(doc.id, payload).subscribe({
       next: () => {
+        this.cargarAuditoria();
         Swal.fire('Éxito', 'Documento actualizado correctamente', 'success');
       },
       error: () => {
@@ -753,6 +754,7 @@ export class ExpedienteDetalleComponent implements OnInit {
               next: () => console.log('[AUDITORIA] Documento eliminado'),
               error: err => console.error('[AUDITORIA] Error al registrar eliminación', err)
             });
+            this.cargarAuditoria();
 
             this.documentosExistentes = this.documentosExistentes.filter(d => d.id !== doc.id);
             console.log('Documentos restantes después de la eliminación:', this.documentosExistentes);
@@ -808,7 +810,7 @@ export class ExpedienteDetalleComponent implements OnInit {
             error: err => console.error('[AUDITORIA] Error en auditoría de documento adicional', err)
           });
         });
-
+        this.cargarAuditoria();
         Swal.fire({
           title: 'Documentos añadidos',
           text: 'Se cargaron correctamente los documentos adicionales.',

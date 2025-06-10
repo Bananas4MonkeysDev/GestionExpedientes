@@ -4,6 +4,7 @@ import { catchError, map, Observable, of } from 'rxjs';
 import { AuthService } from './auth.service';
 import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/forms';
 export interface Usuario {
+  id?: any;
   nombre: string;
   correo: string;
   contraseña: string;

@@ -9,6 +9,8 @@ import { MatIcon } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { AuditoriaService } from '../../../../core/services/auditoria.service';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-proyecto-agregar',
@@ -24,7 +26,9 @@ export class ProyectoAgregarComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<ProyectoAgregarComponent>,
-    private proyectoService: ProyectoService
+    private proyectoService: ProyectoService,
+    private auditoriaService: AuditoriaService,
+    private authService: AuthService
   ) { }
 
   ngOnInit(): void {
@@ -49,6 +53,17 @@ export class ProyectoAgregarComponent implements OnInit {
           text: 'El proyecto fue agregado correctamente.',
           icon: 'success',
           confirmButtonColor: '#004C77'
+        });
+        // Registrar en auditoría
+        const usuarioActual = this.authService.getUserFromToken();
+        this.auditoriaService.registrarAuditoria({
+          usuario: usuarioActual?.id,
+          accion: 'CREACION',
+          proyectoId: res.id, // ← ID del proyecto creado
+          descripcion: `Registro de nuevo proyecto: ${res.nombre}`
+        }).subscribe({
+          next: () => console.log('[AUDITORÍA] Registro de proyecto auditado'),
+          error: (err) => console.error('[AUDITORÍA] Error al registrar auditoría de proyecto', err)
         });
         this.dialogRef.close(true);
       },

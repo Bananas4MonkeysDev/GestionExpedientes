@@ -11,6 +11,7 @@ import { MatIcon } from '@angular/material/icon';
 import { UsuarioService, Usuario } from '../../../../core/services/usuario.service';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AuditoriaService } from '../../../../core/services/auditoria.service';
 
 type ModoDialogo = 'usuario' | 'referencia';
 
@@ -47,6 +48,7 @@ export class DocumentoAgregarComponent {
   tipoUsuarioActual: string = '';
 
   constructor(
+    private auditoriaService: AuditoriaService,
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<DocumentoAgregarComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DatosDialogo,
@@ -137,6 +139,17 @@ export class DocumentoAgregarComponent {
             text: 'El usuario fue registrado correctamente.',
             confirmButtonColor: '#004C77'
           });
+          const usuarioActual = this.authService.getUserFromToken();
+          this.auditoriaService.registrarAuditoria({
+            usuario: usuarioActual?.id,
+            accion: 'CREACION',
+            usuarioId: res.id, // ← ID del usuario recién creado
+            descripcion: `Registro de nuevo usuario: ${res.nombre} (${res.correo})`
+          }).subscribe({
+            next: () => console.log('[AUDITORÍA] Registro de usuario auditado'),
+            error: (err) => console.error('[AUDITORÍA] Error al registrar auditoría de usuario', err)
+          });
+
           this.dialogRef.close(true);
         },
         error: (err) => {
