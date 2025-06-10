@@ -9,11 +9,8 @@ import java.io.File;
 import java.util.List;
 
 public interface EmailService {
-    void enviarCorreoConAdjunto(List<String> destinatarios, String asunto, String cuerpo, File adjunto);
-    void notificarDestinatariosExpediente(Expediente expediente, List<Usuario> destinatarios, List<Documento> documentos);
-    void notificarEmisoresCargo(Cargo cargo, Expediente expediente, List<Usuario> emisores, List<Documento> documentos);
+    void enviarCorreoConAdjunto(List<String> destinatarios, String asunto, String cuerpo);
     String generarMensajeExpediente(Expediente expediente, List<Documento> documentos, String nombreRemitente);
-
     String generarMensajeCargo(Cargo cargo, List<Documento> documentos, Expediente expediente, String nombreRemitente);
     void enviarCorreoSimple(List<String> destinatarios, String asunto, String cuerpo);
 

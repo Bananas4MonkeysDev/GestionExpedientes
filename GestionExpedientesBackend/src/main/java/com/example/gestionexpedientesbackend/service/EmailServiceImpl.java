@@ -23,26 +23,18 @@ public class EmailServiceImpl implements EmailService {
     private JavaMailSender mailSender;
 
     @Override
-    public void enviarCorreoConAdjunto(List<String> destinatarios, String asunto, String cuerpo, File adjunto) {
+    public void enviarCorreoConAdjunto(List<String> destinatarios, String asunto, String cuerpo) {
         try {
             MimeMessage mensaje = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mensaje, true);
-
             for (String correo : destinatarios) {
                 helper.addTo(correo);
             }
-
             helper.setSubject(asunto);
-            helper.setText(cuerpo, false); // false = texto plano
+            helper.setText(cuerpo, true); // false = texto plano
             helper.setFrom("notificaciones@tudominio.com"); // <-- tu correo institucional
 
-            if (adjunto != null && adjunto.exists()) {
-                FileSystemResource file = new FileSystemResource(adjunto);
-                helper.addAttachment(adjunto.getName(), file);
-            }
-
             mailSender.send(mensaje);
-
         } catch (MessagingException e) {
             throw new RuntimeException("Error al enviar el correo: " + e.getMessage());
         }
@@ -70,8 +62,10 @@ public class EmailServiceImpl implements EmailService {
             sb.append("Este expediente no contiene documentos adjuntos.\n");
         }
 
-        sb.append("\nPor favor, revise y apruebe los documentos asociados en el siguiente enlace:\n");
-        sb.append("http://localhost:4200/revision-expediente/").append(expediente.getId()).append("\n\n");
+        sb.append("\nPor favor, revise y apruebe el expediente:\n");
+        sb.append("<a href=\"http://localhost:4200/revision-expediente/")
+                .append(expediente.getId())
+                .append("\" style=\"display:inline-block;padding:10px 20px;font-size:16px;color:white;background-color:#004C77;text-decoration:none;border-radius:5px;margin-top:10px;\">Ver expediente</a></p>");
 
         sb.append("Gracias por su atención.\n\n");
         sb.append("Atentamente,\n");
@@ -80,86 +74,52 @@ public class EmailServiceImpl implements EmailService {
 
         return sb.toString();
     }
-
-
-
     @Override
     public String generarMensajeCargo(Cargo cargo, List<Documento> documentos, Expediente expediente, String nombreRemitente) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("Estimado usuario,\n\n");
-        sb.append("Le informamos que se ha generado un nuevo cargo en relación al expediente:\n\n");
-        sb.append("Expediente: ").append(expediente.getCodigo()).append("\n");
-        sb.append("Código del cargo: ").append(cargo.getCodigo()).append("\n");
-        sb.append("Fecha de recepción: ").append(cargo.getFecha()).append(" a las ").append(cargo.getHora()).append("\n\n");
+        sb.append("<html><body style='font-family: Arial, sans-serif; color: #333;'>");
+
+        sb.append("<p>Estimado usuario,</p>");
+
+        sb.append("<p>Le informamos que se ha generado un nuevo <strong>cargo</strong> en relación al siguiente expediente:</p>");
+
+        sb.append("<ul>");
+        sb.append("<li><strong>Expediente:</strong> ").append(expediente.getCodigo()).append("</li>");
+        sb.append("<li><strong>Código del cargo:</strong> ").append(cargo.getCodigo()).append("</li>");
+        sb.append("<li><strong>Fecha de recepción:</strong> ").append(cargo.getFecha()).append(" a las ").append(cargo.getHora()).append("</li>");
+        sb.append("</ul>");
 
         if (!documentos.isEmpty()) {
-            sb.append("Documentos cargados:\n");
+            sb.append("<p><strong>Documentos cargados:</strong></p>");
+            sb.append("<ul>");
             for (Documento doc : documentos) {
-                sb.append("- ").append(doc.getCodigo()).append(": ").append(doc.getNombreArchivo()).append("\n");
+                sb.append("<li>").append(doc.getCodigo()).append(": ").append(doc.getNombreArchivo()).append("</li>");
             }
+            sb.append("</ul>");
         } else {
-            sb.append("No se registraron documentos adicionales en este cargo.\n");
+            sb.append("<p>No se registraron documentos adicionales en este cargo.</p>");
         }
 
-        sb.append("\nPuede revisar los detalles del cargo y visualizar el documento generado en el siguiente enlace:\n");
-        sb.append("http://localhost:4200/ver-cargo/").append(cargo.getUuid()).append("\n\n");
+        // Botón visual
+        sb.append("<p style='margin-top: 20px;'>");
+        sb.append("<a href='http://localhost:4200/ver-cargo/").append(cargo.getUuid()).append("' ")
+                .append("style='display: inline-block; padding: 10px 20px; font-size: 16px; color: white; background-color: #004C77; text-decoration: none; border-radius: 5px;'>")
+                .append("Ver documento de cargo")
+                .append("</a>");
+        sb.append("</p>");
 
-        sb.append("Por favor, no responda a este mensaje. Si tiene consultas, comuníquese con el área correspondiente.\n\n");
-        sb.append("Atentamente,\n");
-        sb.append(nombreRemitente).append("\n");
-        sb.append("[Área o Institución]\n");
+        sb.append("<p style='margin-top: 30px; font-size: 14px;'>Por favor, no responda a este mensaje. Si tiene consultas, comuníquese con el área correspondiente.</p>");
+
+        sb.append("<p>Atentamente,<br>");
+        sb.append(nombreRemitente).append("<br>");
+        sb.append("<em>[Área o Institución]</em></p>");
+
+        sb.append("</body></html>");
 
         return sb.toString();
     }
 
-
-    @Override
-    public void notificarDestinatariosExpediente(Expediente expediente, List<Usuario> destinatarios, List<Documento> documentos) {
-        List<String> correos = destinatarios.stream().map(Usuario::getCorreo).toList();
-
-        String asunto = "Nuevo expediente recibido – Código " + expediente.getCodigo();
-
-        StringBuilder mensaje = new StringBuilder();
-        mensaje.append("Ha recibido un nuevo expediente. Código: ").append(expediente.getCodigo()).append("\n");
-        mensaje.append("Asunto: ").append(expediente.getAsunto()).append("\n\n");
-
-        if (!documentos.isEmpty()) {
-            mensaje.append("Documentos adjuntos:\n");
-            for (Documento doc : documentos) {
-                mensaje.append("- ").append(doc.getCodigo()).append(": ").append(doc.getNombreArchivo()).append("\n");
-            }
-        }
-
-        mensaje.append("\nValide los documentos en la plataforma:\n");
-        mensaje.append("http://localhost:4200/validar-expediente/").append(expediente.getId());
-
-        enviarCorreo(correos, asunto, mensaje.toString());
-    }
-
-    @Override
-    public void notificarEmisoresCargo(Cargo cargo, Expediente expediente, List<Usuario> emisores, List<Documento> documentos) {
-        List<String> correos = emisores.stream().map(Usuario::getCorreo).toList();
-
-        String asunto = "Confirmación de cargo – " + expediente.getCodigo();
-
-        StringBuilder mensaje = new StringBuilder();
-        mensaje.append("Se generó un nuevo cargo para el expediente ").append(expediente.getCodigo()).append("\n");
-        mensaje.append("Código de cargo: ").append(cargo.getCodigo()).append("\n");
-        mensaje.append("Fecha: ").append(cargo.getFecha()).append(" ").append(cargo.getHora()).append("\n\n");
-
-        if (!documentos.isEmpty()) {
-            mensaje.append("Documentos cargados:\n");
-            for (Documento doc : documentos) {
-                mensaje.append("- ").append(doc.getCodigo()).append(": ").append(doc.getNombreArchivo()).append("\n");
-            }
-        }
-
-        mensaje.append("\nVer el documento de cargo en línea:\n");
-        mensaje.append("http://localhost:4200/visualizar-cargo/").append(cargo.getId());
-
-        enviarCorreo(correos, asunto, mensaje.toString());
-    }
     private void enviarCorreo(List<String> destinatarios, String asunto, String cuerpo) {
         try {
             MimeMessage mensaje = mailSender.createMimeMessage();

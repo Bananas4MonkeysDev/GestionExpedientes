@@ -118,29 +118,10 @@ public class CargoServiceImpl implements CargoService {
         String mensaje = emailService.generarMensajeCargo(cargo, documentos, exp, nombreRemitente);
 
         File adjunto = cargo.getArchivoPath() != null ? new File(cargo.getArchivoPath()) : null;
-        emailService.enviarCorreoConAdjunto(correos, "Cargo generado – " + cargo.getCodigo(), mensaje, adjunto);
+        emailService.enviarCorreoConAdjunto(correos, "Cargo generado – " + cargo.getCodigo(), mensaje);
 
         // Guardar nuevamente con código, ruta y mensaje actualizados
         return cargoRepository.save(cargo);
     }
 
-    private String generarMensaje(Cargo cargo) {
-        DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        DateTimeFormatter hf = DateTimeFormatter.ofPattern("HH:mm");
-
-        return String.format(
-                "Asunto: Confirmación de recepción de documentos – Expediente %s\n\n" +
-                        "Estimado(a),\n\n" +
-                        "Por medio de la presente, le informamos que hemos recibido con éxito la solicitud con documentos adjuntos correspondientes al expediente identificado con el código de cargo %s.\n\n" +
-                        "La recepción se realizó el día %s a las %s.\n\n" +
-                        "Le notificamos que su envío será revisado a la brevedad posible y que recibirá una respuesta tan pronto se haya completado la evaluación correspondiente.\n\n" +
-                        "Atentamente,\n\n" +
-                        "[Nombre de la Persona que Firma]\n" +
-                        "[Cargo]\n" +
-                        "[Nombre de la Institución o Área]",
-                cargo.getExpedienteId(),
-                cargo.getCodigo(),
-                cargo.getFecha().format(df),
-                cargo.getHora().format(hf));
-    }
 }

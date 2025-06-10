@@ -145,6 +145,6 @@ public class ExpedienteServiceImpl implements ExpedienteService {
             nombreRemitente = creador.map(Usuario::getNombre).orElse("Sistema");
         }
         String mensaje = emailService.generarMensajeExpediente(expediente, documentos, nombreRemitente);
-        emailService.enviarCorreoSimple(correos, "Nuevo expediente registrado – " + expediente.getCodigo(), mensaje);
+        emailService.enviarCorreoConAdjunto(correos, "Nuevo expediente registrado – " + expediente.getCodigo(), mensaje);
     }
 }
