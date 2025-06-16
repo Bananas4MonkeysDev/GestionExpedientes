@@ -1,7 +1,6 @@
 <aside class="h-screen bg-[#004C77] text-white fixed inset-y-0 left-0 w-64 z-50">
   <div class="flex flex-col h-full justify-between p-4">
 
-    <!-- Perfil + Logout -->
     <div>
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center space-x-3">
@@ -13,53 +12,34 @@
           </div>
         </div>
 
-        <!-- Icono de cerrar sesión -->
         <button (click)="logout()" class="text-white hover:text-[#F36C21] transition" title="Cerrar sesión">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M17 16l-4-4m0 0l4-4m-4 4H7m13 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v1" />
-          </svg>
+          <mat-icon class="mr-1 text-sm !cursor-pointer">exit_to_app</mat-icon>
         </button>
 
       </div>
-      <!-- Campo de búsqueda -->
       <div class="mb-4">
         <input type="text" [(ngModel)]="filtro" placeholder="Buscar..."
           class="w-full px-3 py-2 rounded bg-white/20 text-white text-sm placeholder-white/80 focus:outline-none focus:ring-2 focus:ring-[#F36C21]" />
       </div>
-      <!-- Opciones de navegación -->
-      <!-- Menú desplegable de Expedientes -->
       <div class="space-y-2">
-        <!-- Botón principal del módulo -->
-        <!-- Opción de INICIO -->
         <div *ngIf="coincideFiltro('inicio')">
           <a (click)="irAInicio()"
-            class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 22V12h6v10" />
-            </svg>
+            class="flex items-center px-1 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+            <mat-icon class="mr-2 text-base !cursor-pointer">home</mat-icon>
             Inicio
           </a>
         </div>
         <a (click)="irADashboard()"
-          class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
-          <!-- Icono de pizarra -->
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18M4 7h16v13H4z" />
-          </svg>
+          class="flex items-center px-1 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+          <mat-icon class="mr-2 text-base !cursor-pointer">dashboard</mat-icon>
           Dashboard
         </a>
 
-        <!-- Módulo de Expedientes -->
         <div *ngIf="coincideFiltro('expediente')" class="space-y-2">
           <button (click)="toggleSubmenuExpedientes()"
-            class="flex items-center justify-between w-full px-3 py-2 text-sm rounded hover:bg-[#F36C21] transition cursor-pointer">
+            class="flex items-center justify-between w-full px-1 py-2 text-sm rounded hover:bg-[#F36C21] transition cursor-pointer">
             <span class="flex items-center">
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M7 7h10M7 11h10M7 15h6M5 5v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2z" />
-              </svg>
+              <mat-icon class="mr-2 text-base !cursor-pointer">archive</mat-icon>
               Expedientes
             </span>
             <svg class="w-4 h-4 transform transition-transform" [ngClass]="{ 'rotate-90': submenuAbierto }" fill="none"
@@ -70,20 +50,13 @@
 
           <div *ngIf="submenuAbierto && coincideFiltro('adicionar')" class="ml-6 space-y-1">
             <a (click)="irARegistroExpediente()"
-              class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
+              class="flex items-center px-1 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+              <mat-icon class="mr-2 text-base !cursor-pointer">add</mat-icon>
               Adicionar expediente
             </a>
             <a (click)="irA('monitoreo-expediente')"
-              class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M1.5 12s4-7.5 10.5-7.5S22.5 12 22.5 12s-4 7.5-10.5 7.5S1.5 12 1.5 12z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-
+              class="flex items-center px-1 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+              <mat-icon class="mr-2 text-base !cursor-pointer">visibility</mat-icon>
               Monitoreo expedientes
             </a>
           </div>
@@ -91,12 +64,9 @@
         <div *ngIf="tipoUsuario === 'ADMIN'">
           <div *ngIf="coincideFiltro('maestras')" class="space-y-2">
             <button (click)="toggleSubmenuMaestras()"
-              class="flex items-center justify-between w-full px-3 py-2 text-sm rounded hover:bg-[#F36C21] transition cursor-pointer">
+              class="flex items-center justify-between w-full px-1 py-2 text-sm rounded hover:bg-[#F36C21] transition cursor-pointer">
               <span class="flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M3 7h18M6 7V5a2 2 0 012-2h8a2 2 0 012 2v2M6 7h12v12H6z" />
-                </svg>
+                <mat-icon class="mr-2 text-base !cursor-pointer">table_chart</mat-icon>
                 Maestras
               </span>
               <svg class="w-4 h-4 transform transition-transform" [ngClass]="{ 'rotate-90': submenuMaestras }"
@@ -107,45 +77,20 @@
 
             <div *ngIf="submenuMaestras" class="ml-6 space-y-1">
               <a (click)="irA('proyectos')"
-                class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M3 7V6a2 2 0 012-2h2l2-2h6l2 2h2a2 2 0 012 2v1M3 7h18v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-                </svg>
+                class="flex items-center px-1 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+                <mat-icon class="mr-2 text-base !cursor-pointer">work</mat-icon>
                 Proyectos
               </a>
 
               <a (click)="irA('usuarios-expedientes')"
-                class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M17 20h5v-2a4 4 0 00-3-3.87M9 20h6m-6 0a4 4 0 00-3-3.87m3 3.87v-1a4 4 0 013-3.87m0 0a4 4 0 013 3.87v1M12 12a4 4 0 110-8 4 4 0 010 8z" />
-                </svg>
-                Usuarios expedientes
-              </a>
-              <a (click)="irA('usuarios-emisores')"
-                class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M17 20h5v-2a4 4 0 00-3-3.87M9 20h6m-6 0a4 4 0 00-3-3.87m3 3.87v-1a4 4 0 013-3.87m0 0a4 4 0 013 3.87v1M12 12a4 4 0 110-8 4 4 0 010 8z" />
-                </svg>
-                Usuarios emisores
+                class="flex items-center px-1 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+                <mat-icon class="mr-2 text-base !cursor-pointer">supervised_user_circle</mat-icon>
+                Usuarios Expedientes
               </a>
 
-              <a (click)="irA('usuarios-empresa')"
-                class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M4 10h16v11H4zM9 3h6v7H9z" />
-                </svg>
-                Usuarios empresa
-              </a>
-
-              <a (click)="irA('grupos-areas')"
-                class="flex items-center px-3 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M17 20h5v-2a4 4 0 00-3-3.87M9 20h6m-6 0a4 4 0 00-3-3.87m3 3.87v-1a4 4 0 013-3.87m0 0a4 4 0 013 3.87v1M4 7h16M4 10h16M4 13h16" />
-                </svg>
+              <a (click)="irA('areas-grupos')"
+                class="flex items-center px-1 py-2 text-sm rounded hover:bg-[#F36C21] hover:text-white transition cursor-pointer">
+                <mat-icon class="mr-2 text-base !cursor-pointer">domain</mat-icon>
                 Grupos & Áreas
               </a>
             </div>
@@ -153,7 +98,6 @@
         </div>
       </div>
     </div>
-    <!-- Separador y Derechos reservados -->
     <div class="pt-4">
       <hr class="border-white/30 mb-2">
       <p class="text-[10px] leading-snug text-white/60 text-left">

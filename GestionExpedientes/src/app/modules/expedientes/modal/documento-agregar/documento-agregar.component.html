@@ -131,6 +131,33 @@
             </mat-select>
           </mat-form-field>
         </div>
+        <!-- Grupo / Área -->
+        <div class="md:col-span-2 grid grid-cols-2 gap-4 mt-2">
+
+          <!-- Select Tipo -->
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Tipo de Grupo/Área</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-select formControlName="grupoAreaTipo" placeholder="Seleccione tipo">
+                <mat-option value="Grupo">Grupo</mat-option>
+                <mat-option value="Área">Área</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Select de Grupos o Áreas según tipo -->
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Seleccione grupo o área</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-select formControlName="grupoAreaId" placeholder="Seleccione...">
+                <mat-option *ngFor="let item of opcionesGrupoArea" [value]="item.id">
+                  {{ item.nombre }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+        </div>
 
       </ng-container>
     </div>

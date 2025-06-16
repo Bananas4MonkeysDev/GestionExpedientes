@@ -9,14 +9,21 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class EmailServiceImpl implements EmailService {
+    private static final Logger logger = LoggerFactory.getLogger(EmailServiceImpl.class);
+
     @Autowired
     private ProyectoService proyectoService;
+    @Autowired
+    private GrupoAreaService grupoAreaService;
 
     @Autowired
     private JavaMailSender mailSender;
@@ -41,6 +48,26 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public String generarMensajeExpediente(Expediente expediente, List<Documento> documentos, String nombreRemitente) {
+        String nombreGrupoArea = "[Área o institución]";
+        if (expediente.getCreadoPor() != null) {
+            logger.info("ID del usuario creador del expediente: {}", expediente.getCreadoPor());
+
+            List<GrupoArea> grupos = grupoAreaService.buscarGruposAreasPorUsuarioId(expediente.getCreadoPor());
+
+            logger.info("Grupos encontrados para el usuario: {}", grupos.stream().map(GrupoArea::getNombre).toList());
+
+            if (!grupos.isEmpty()) {
+                nombreGrupoArea = grupos.stream()
+                        .map(GrupoArea::getNombre)
+                        .collect(Collectors.joining(", "));
+            } else {
+                logger.warn("No se encontraron grupos para el usuario con ID {}", expediente.getCreadoPor());
+            }
+        } else {
+            logger.warn("El expediente no tiene usuario creador asignado.");
+        }
+
+
         StringBuilder sb = new StringBuilder();
 
         sb.append("<html><body style='font-family: Arial, sans-serif; color: #333;'>");
@@ -81,19 +108,32 @@ public class EmailServiceImpl implements EmailService {
             sb.append("<p><em>Este expediente no contiene documentos adjuntos.</em></p>");
         }
 
-        // Botón visual
-        sb.append("<p style='margin-top: 20px;'>");
-        sb.append("<a href='http://localhost:4200/revision-expediente/").append(expediente.getId()).append("' ")
-                .append("style='display: inline-block; padding: 10px 20px; font-size: 16px; color: white; background-color: #004C77; text-decoration: none; border-radius: 5px;'>")
-                .append("Ver expediente")
+        // Botón visual (versión compatible con correo - sin hover dinámico)
+        sb.append("<table role='presentation' cellspacing='0' cellpadding='0'><tr><td align='center'>");
+        sb.append("<a href='http://localhost:4200/revision-expediente/")
+                .append(expediente.getId())
+                .append("' style='")
+                .append("display: inline-block; ")
+                .append("padding: 12px 24px; ")
+                .append("font-size: 16px; ")
+                .append("font-weight: bold; ")
+                .append("font-family: Arial, sans-serif; ")
+                .append("color: #ffffff; ")
+                .append("background-color: #F36C21; ")
+                .append("border-radius: 8px; ")
+                .append("text-decoration: none; ")
+                .append("box-shadow: 0 4px 12px rgba(243, 108, 33, 0.4); ")
+                .append("'>")
+                .append("Haz clic aquí para ver el expediente")
                 .append("</a>");
-        sb.append("</p>");
+        sb.append("</td></tr></table>");
+
 
         sb.append("<p style='margin-top: 30px; font-size: 14px;'>Gracias por su atención.</p>");
 
         sb.append("<p>Atentamente,<br>");
         sb.append(nombreRemitente).append("<br>");
-        sb.append("<em>[Área o institución]</em></p>");
+        sb.append("<em>").append(nombreGrupoArea).append("</em></p>");
 
         sb.append("</body></html>");
 
@@ -102,6 +142,26 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public String generarMensajeCargo(Cargo cargo, List<Documento> documentos, Expediente expediente, String nombreRemitente) {
+        String nombreGrupoArea = "[Área o institución]";
+        if (cargo.getUsuarioCreadorId() != null) {
+            logger.info("ID del usuario creador del cargo: {}", cargo.getUsuarioCreadorId());
+
+            List<GrupoArea> grupos = grupoAreaService.buscarGruposAreasPorUsuarioId(cargo.getUsuarioCreadorId());
+
+            logger.info("Grupos encontrados para el usuario: {}", grupos.stream().map(GrupoArea::getNombre).toList());
+
+            if (!grupos.isEmpty()) {
+                nombreGrupoArea = grupos.stream()
+                        .map(GrupoArea::getNombre)
+                        .collect(Collectors.joining(", "));
+            } else {
+                logger.warn("No se encontraron grupos para el usuario con ID {}", cargo.getUsuarioCreadorId());
+            }
+        } else {
+            logger.warn("El cargo no tiene usuario creador asignado.");
+        }
+
+
         StringBuilder sb = new StringBuilder();
 
         sb.append("<html><body style='font-family: Arial, sans-serif; color: #333;'>");
@@ -127,19 +187,30 @@ public class EmailServiceImpl implements EmailService {
             sb.append("<p>No se registraron documentos adicionales en este cargo.</p>");
         }
 
-        // Botón visual
-        sb.append("<p style='margin-top: 20px;'>");
-        sb.append("<a href='http://localhost:4200/ver-cargo/").append(cargo.getUuid()).append("' ")
-                .append("style='display: inline-block; padding: 10px 20px; font-size: 16px; color: white; background-color: #004C77; text-decoration: none; border-radius: 5px;'>")
-                .append("Ver documento de cargo")
+        sb.append("<table role='presentation' cellspacing='0' cellpadding='0'><tr><td align='center'>");
+        sb.append("<a href='http://localhost:4200/ver-cargo/")
+                .append(cargo.getUuid())
+                .append("' style='")
+                .append("display: inline-block; ")
+                .append("padding: 12px 24px; ")
+                .append("font-size: 16px; ")
+                .append("font-weight: bold; ")
+                .append("font-family: Arial, sans-serif; ")
+                .append("color: #ffffff; ")
+                .append("background-color: #F36C21; ")
+                .append("border-radius: 8px; ")
+                .append("text-decoration: none; ")
+                .append("box-shadow: 0 4px 12px rgba(243, 108, 33, 0.4); ")
+                .append("'>")
+                .append("Haz clic aquí para ver cargo")
                 .append("</a>");
-        sb.append("</p>");
+        sb.append("</td></tr></table>");
 
         sb.append("<p style='margin-top: 30px; font-size: 14px;'>Por favor, no responda a este mensaje. Si tiene consultas, comuníquese con el área correspondiente.</p>");
 
         sb.append("<p>Atentamente,<br>");
         sb.append(nombreRemitente).append("<br>");
-        sb.append("<em>[Área o Institución]</em></p>");
+        sb.append("<em>").append(nombreGrupoArea).append("</em></p>");
 
         sb.append("</body></html>");
 

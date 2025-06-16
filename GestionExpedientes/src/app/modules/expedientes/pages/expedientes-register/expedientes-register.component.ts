@@ -554,6 +554,8 @@ export class ExpedientesRegisterComponent implements OnInit {
                 title: 'Expediente registrado',
                 text: 'Los documentos fueron cargados exitosamente.',
                 icon: 'success',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
                 confirmButtonColor: '#004C77'
               }).then(() => {
                 this.pasoActual = 4;
@@ -575,6 +577,8 @@ export class ExpedientesRegisterComponent implements OnInit {
         Swal.fire({
           title: 'Error',
           text: 'No se pudo registrar el expediente.',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
           icon: 'error'
         });
       }
@@ -644,6 +648,8 @@ export class ExpedientesRegisterComponent implements OnInit {
               title: 'Expediente registrado',
               text: 'Aun no se cargo ningun documento',
               icon: 'success',
+              allowOutsideClick: false,
+              allowEscapeKey: false,
               confirmButtonColor: '#004C77'
             }).then(() => {
               this.pasoActual = 4;
@@ -663,6 +669,8 @@ export class ExpedientesRegisterComponent implements OnInit {
           title: 'Error',
           text: 'No se pudo registrar el expediente sin documentos.',
           icon: 'error',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
           confirmButtonColor: '#004C77'
         });
       }
@@ -748,6 +756,8 @@ export class ExpedientesRegisterComponent implements OnInit {
         title: 'Hora requerida',
         text: 'Debe seleccionar la hora del cargo.',
         icon: 'warning',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
         confirmButtonColor: '#004C77'
       });
       return;
@@ -790,6 +800,8 @@ export class ExpedientesRegisterComponent implements OnInit {
             ? 'El documento de cargo fue enviado con éxito.'
             : 'Se registró el cargo sin documento.',
           icon: 'success',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
           confirmButtonColor: '#004C77',
           timer: 2000,
           showConfirmButton: true
@@ -805,6 +817,8 @@ export class ExpedientesRegisterComponent implements OnInit {
           title: 'Error',
           text: 'No se pudo registrar el cargo.',
           icon: 'error',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
           confirmButtonColor: '#004C77'
         });
         console.error(err);
@@ -822,6 +836,8 @@ export class ExpedientesRegisterComponent implements OnInit {
       icon: 'warning',
       showCancelButton: false,
       confirmButtonText: 'OK',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
       confirmButtonColor: '#F36C21'
     }).then(() => {
       console.log(this.expedienteIdRegistrado);

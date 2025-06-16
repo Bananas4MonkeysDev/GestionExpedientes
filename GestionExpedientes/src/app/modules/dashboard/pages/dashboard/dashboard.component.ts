@@ -23,7 +23,7 @@ export class DashboardComponent implements AfterViewInit, OnInit {
   totalExpedientes = 0;
   displayedColumnsExpedientes = [
     'codigo', 'asunto', 'proyecto', 'fecha',
-    'tipoExpediente', 'comentario', 'referencias',
+    'tipoExpediente', 'estado', 'comentario', 'referencias',
     'reservado', 'emisoresNombres', 'destinatariosNombres', 'acciones'
   ];
 

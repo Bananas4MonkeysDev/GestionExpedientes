@@ -1,0 +1,105 @@
+<div class="p-6 space-y-6">
+
+    <!-- Breadcrumb -->
+    <div class="text-sm text-gray-600">
+        <span class="text-[#004C77] font-semibold">Inicio</span> &gt;
+        <span class="text-[#004C77] font-semibold">Maestras</span> &gt;
+        <span class="text-[#F36C21] font-semibold">Grupos & Áreas</span>
+    </div>
+
+    <!-- Título -->
+    <h1 class="text-2xl font-bold text-[#004C77]">Gestión de Grupos & Áreas</h1>
+    <hr class="border-t-2 border-[#004C77] rounded-full mb-6" />
+
+    <!-- Formulario -->
+    <form (ngSubmit)="guardar()" class="bg-white border border-gray-200 rounded shadow-sm p-6 space-y-4">
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+            <!-- Nombre -->
+            <div class="w-full">
+                <label class="text-sm font-medium text-gray-700 block mb-1">Nombre <span
+                        class="text-red-500">*</span></label>
+                <input [(ngModel)]="grupoActual.nombre" name="nombre" required
+                    class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#004C77]" />
+            </div>
+
+            <!-- Descripción -->
+            <div class="w-full">
+                <label class="text-sm font-medium text-gray-700 block mb-1">Descripción</label>
+                <input [(ngModel)]="grupoActual.descripcion" name="descripcion"
+                    class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#004C77]" />
+            </div>
+
+            <!-- Tipo -->
+            <div class="w-full">
+                <label class="text-sm font-medium text-gray-700 block mb-1">Tipo <span
+                        class="text-red-500">*</span></label>
+                <mat-form-field appearance="outline" class="w-full h-[2px] [&_.mat-mdc-select-trigger]:min-h-[2px]">
+                    <mat-select [(ngModel)]="grupoActual.tipo" name="tipo" required>
+                        <mat-option value="Grupo">Grupo</mat-option>
+                        <mat-option value="Área">Área</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <!-- Miembros -->
+            <div class="w-full">
+                <label class="text-sm font-medium text-gray-700 block mb-1">Miembros <span
+                        class="text-red-500">*</span></label>
+                <mat-form-field appearance="outline" class="w-full h-[2px] [&_.mat-mdc-select-trigger]:min-h-[2px]">
+                    <mat-select multiple [(ngModel)]="usuariosSeleccionados" name="usuariosSeleccionados">
+                        <mat-option *ngFor="let user of usuarios" [value]="user.id">
+                            {{ user.nombre }} - {{ user.correo }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+        </div>
+
+        <!-- Botón -->
+        <div class="flex justify-end">
+            <button type="submit"
+                class="cursor-pointer bg-[#004C77] text-white px-6 py-2 rounded-md hover:bg-[#003655] transition-all">
+                {{ modo === 'editar' ? 'Actualizar' : 'Registrar' }}
+            </button>
+        </div>
+    </form>
+
+    <!-- Tabla -->
+    <div class="overflow-x-auto bg-white rounded shadow-md">
+        <table class="w-full text-sm text-left">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                <tr>
+                    <th class="px-4 py-3">ID</th>
+                    <th class="px-4 py-3">Nombre</th>
+                    <th class="px-4 py-3">Descripción</th>
+                    <th class="px-4 py-3">Tipo</th>
+                    <th class="px-4 py-3">Usuarios</th>
+                    <th class="px-4 py-3">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let g of grupos" class="border-b hover:bg-gray-50 transition">
+                    <td class="px-4 py-2">{{ g.id }}</td>
+                    <td class="px-4 py-2">{{ g.nombre }}</td>
+                    <td class="px-4 py-2">{{ g.descripcion }}</td>
+                    <td class="px-4 py-2">{{ g.tipo }}</td>
+                    <td class="px-4 py-2">{{ g.usuariosIds }}</td>
+                    <td class="px-4 py-2">
+                        <div class="flex items-center space-x-2">
+                            <button (click)="editar(g)" matTooltip="Editar"
+                                class="text-[#004C77] hover:text-[#F36C21] cursor-pointer">
+                                <mat-icon>edit</mat-icon>
+                            </button>
+                            <button (click)="eliminar(g.id!)" matTooltip="Eliminar"
+                                class="text-red-600 hover:text-red-800 cursor-pointer">
+                                <mat-icon>delete</mat-icon>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

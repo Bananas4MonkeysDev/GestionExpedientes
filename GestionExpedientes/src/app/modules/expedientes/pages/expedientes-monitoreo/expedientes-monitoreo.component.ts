@@ -71,6 +71,8 @@ export class ExpedientesMonitoreoComponent implements OnInit {
       showCancelButton: true,
       confirmButtonColor: '#004C77',
       cancelButtonColor: '#F36C21',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
       confirmButtonText: 'Sí, responder',
       cancelButtonText: 'Cancelar'
     }).then(result => {
@@ -94,6 +96,8 @@ export class ExpedientesMonitoreoComponent implements OnInit {
       showCancelButton: true,
       confirmButtonColor: '#F36C21',
       cancelButtonColor: '#999999',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
       confirmButtonText: 'Sí, cancelar',
       cancelButtonText: 'Volver'
     }).then(result => {
@@ -103,6 +107,8 @@ export class ExpedientesMonitoreoComponent implements OnInit {
           title: 'Cancelado',
           text: 'El expediente fue marcado como rechazado.',
           icon: 'success',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
           confirmButtonColor: '#004C77'
         });
         this.expedienteSeleccionado = null;

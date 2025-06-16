@@ -12,6 +12,7 @@ import { UsuarioService, Usuario } from '../../../../core/services/usuario.servi
 import Swal from 'sweetalert2';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AuditoriaService } from '../../../../core/services/auditoria.service';
+import { GrupoArea, GrupoAreaService } from '../../../../core/services/grupo-area.service';
 
 type ModoDialogo = 'usuario' | 'referencia';
 
@@ -46,9 +47,12 @@ export class DocumentoAgregarComponent {
   form: FormGroup;
   modo: ModoDialogo;
   tipoUsuarioActual: string = '';
-
+  grupoAreaTipoSeleccionado: string = '';
+  opcionesGrupoArea: GrupoArea[] = [];
+  todasLasOpcionesGrupoArea: GrupoArea[] = [];
   constructor(
     private auditoriaService: AuditoriaService,
+    private grupoAreaService: GrupoAreaService,
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<DocumentoAgregarComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DatosDialogo,
@@ -58,7 +62,9 @@ export class DocumentoAgregarComponent {
     this.modo = data.modo;
     const user = this.authService.getUserFromToken();
     this.tipoUsuarioActual = user?.tipoUsuario || '';
-
+    this.grupoAreaService.listar().subscribe((todos) => {
+      this.todasLasOpcionesGrupoArea = todos;
+    });
     this.form = this.fb.group(
       data.modo === 'usuario'
         ? {
@@ -82,6 +88,18 @@ export class DocumentoAgregarComponent {
           tipo: ['Carta', Validators.required]
         }
     );
+    this.grupoAreaService.listar().subscribe((todos) => {
+      this.todasLasOpcionesGrupoArea = todos;
+    });
+
+    // reacción al cambio de tipo
+    this.form.addControl('grupoAreaTipo', this.fb.control(''));
+    this.form.addControl('grupoAreaId', this.fb.control(''));
+
+    this.form.get('grupoAreaTipo')?.valueChanges.subscribe((tipo: string) => {
+      this.opcionesGrupoArea = this.todasLasOpcionesGrupoArea.filter(g => g.tipo === tipo);
+      this.form.get('grupoAreaId')?.reset();
+    });
     this.form.get('firmante')?.valueChanges.subscribe((valor) => {
       if (!valor) {
         this.form.get('tipoFirma')?.reset();
@@ -126,6 +144,7 @@ export class DocumentoAgregarComponent {
         title: 'Registrando usuario...',
         text: 'Por favor, espera un momento',
         allowOutsideClick: false,
+        allowEscapeKey: false,
         didOpen: () => {
           Swal.showLoading();
         }
@@ -136,6 +155,8 @@ export class DocumentoAgregarComponent {
           Swal.fire({
             icon: 'success',
             title: 'Usuario registrado',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
             text: 'El usuario fue registrado correctamente.',
             confirmButtonColor: '#004C77'
           });
@@ -149,6 +170,23 @@ export class DocumentoAgregarComponent {
             next: () => console.log('[AUDITORÍA] Registro de usuario auditado'),
             error: (err) => console.error('[AUDITORÍA] Error al registrar auditoría de usuario', err)
           });
+          const grupoAreaId = this.form.value.grupoAreaId;
+          if (grupoAreaId) {
+            this.grupoAreaService.obtener(grupoAreaId).subscribe(grupo => {
+              const idsActuales = grupo.usuariosIds ? grupo.usuariosIds.split('|') : [];
+
+              // Verifica que no esté ya
+              if (!idsActuales.includes(res.id.toString())) {
+                idsActuales.push(res.id.toString());
+                grupo.usuariosIds = idsActuales.join('|');
+
+                this.grupoAreaService.actualizar(grupoAreaId, grupo).subscribe({
+                  next: () => console.log(`Usuario ${res.id} agregado al grupo/área ${grupo.nombre}`),
+                  error: (err) => console.error('Error al actualizar grupo/área con nuevo usuario:', err)
+                });
+              }
+            });
+          }
 
           this.dialogRef.close(true);
         },
@@ -160,6 +198,8 @@ export class DocumentoAgregarComponent {
           Swal.fire({
             icon: 'error',
             title: 'Error al registrar',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
             text: mensajeError,
             confirmButtonColor: '#F36C21'
           });
@@ -169,6 +209,8 @@ export class DocumentoAgregarComponent {
       Swal.fire({
         icon: 'warning',
         title: 'Formulario incompleto',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
         text: 'Por favor, completa todos los campos obligatorios antes de continuar.',
         confirmButtonColor: '#F36C21'
       });

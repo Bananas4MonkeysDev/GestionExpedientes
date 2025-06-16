@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, NgZone, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { DialogoCargoComponent } from '../../../modal/dialogo-cargo/dialogo-cargo.component'; // Ajusta si tu ruta es distinta
 import { CommonModule } from '@angular/common';
@@ -21,6 +21,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { LoadingOverlayService } from '../../../../../core/services/loading-overlay.service';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { AuditoriaService } from '../../../../../core/services/auditoria.service';
+import { ReferenciaAgregarComponent } from '../../../modal/referencia-agregar/referencia-agregar.component';
+import { Proyecto } from '../../../../../core/models/proyecto.model';
+import { ProyectoService } from '../../../../../core/services/proyecto.service';
 
 export interface Usuario {
   id: number; // ← Agregado
@@ -91,6 +94,7 @@ export class ExpedienteDetalleComponent implements OnInit {
   todosUsuarios: Usuario[] = [];
   searchCtrlUsuario = new FormControl('');
   searchCtrlCc = new FormControl('');
+  nombreProyectoSeleccionado: string = '';
   searchCtrlReferencia = new FormControl('');
   filtroTipoUsuarioTo = '';
   filtroTipoUsuarioCc = '';
@@ -101,7 +105,7 @@ export class ExpedienteDetalleComponent implements OnInit {
   referenciasOriginales: Referencia[] = [];
   tiposUsuario: Usuario['tipoIdentidad'][] = ['PERSONA', 'GRUPO', 'ENTIDAD'];
   tiposReferencia: Referencia['tipo'][] = ['Documento', 'Expediente'];
-  proyectos = ['Proyecto Alpha', 'Obra Central', 'Planta Nueva', 'Infraestructura Zonal'];
+  proyectos: Proyecto[] = [];
   documentosExistentes: DocumentoExpediente[] = [];
   documentosNuevos: DocumentoNuevo[] = [];
   arrastrando = false;
@@ -109,9 +113,9 @@ export class ExpedienteDetalleComponent implements OnInit {
   historialCargos: any[] = [];
   isLoading = false;
   auditorias: any[] = [];
+  referencias: Referencia[] = [];
 
-
-  constructor(private auditoriaService: AuditoriaService, private authService: AuthService, private loadingService: LoadingOverlayService,
+  constructor(private proyectoService: ProyectoService, private router: Router, private auditoriaService: AuditoriaService, private authService: AuthService, private loadingService: LoadingOverlayService,
     private sanitizer: DomSanitizer, private zone: NgZone, private route: ActivatedRoute, private cdr: ChangeDetectorRef, private expedienteService: ExpedienteService, private dialog: MatDialog, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
   @ViewChild('slider', { static: false }) sliderRef!: ElementRef;
   reiniciarFiltroTipoReferencia() {
@@ -126,6 +130,34 @@ export class ExpedienteDetalleComponent implements OnInit {
   }
   // expediente-detalle.component.ts
 
+  compararReferencias(a: any, b: any): boolean {
+    if (!a || !b) return false;
+    return a.serie === b.serie;
+  }
+  removerUsuario(nombre: string): void {
+    const actual = this.controlUsuario.value || [];
+    this.controlUsuario.setValue(actual.filter(u => u !== nombre));
+  }
+
+  removerUsuarioCc(nombre: string): void {
+    const actual = this.controlUsuarioCc.value || [];
+    this.controlUsuarioCc.setValue(actual.filter(u => u !== nombre));
+  }
+  desenfocarYabrir(boton: EventTarget | null, nombre: string, destino: 'to' | 'cc') {
+    const htmlBoton = boton as HTMLElement;
+    htmlBoton.blur();
+
+    setTimeout(() => {
+      this.abrirDialogoAgregarUsuario(nombre, destino);
+    }, 100);
+  }
+
+  referenciasLibresSeleccionadas(): Referencia[] {
+    const seleccionadasSeries = this.controlReferencia.value || [];
+    return this.referenciasOriginales.filter(ref =>
+      seleccionadasSeries.includes(ref.serie)
+    );
+  }
 
 
   obtenerIdsPorNombres(nombresSeleccionados: string[]): string {
@@ -210,8 +242,28 @@ export class ExpedienteDetalleComponent implements OnInit {
           })
 
         };
+        if (this.expediente.referencias && this.referencias?.length) {
+          const codigosSeleccionados = this.referencias
+            .filter(ref => this.expediente.referencias.includes(ref.serie))
+            .map(ref => ref.serie);
+          this.controlReferencia.setValue(codigosSeleccionados);
+        }
+        this.proyectoService.getAll().subscribe(data => {
+          this.proyectos = data;
+          console.log(this.proyectos);
+          if (this.expediente.proyecto) {
+            const proyectoEncontrado = this.proyectos.find(p => p.id === Number(this.expediente.proyecto));
+            if (proyectoEncontrado) {
+              this.nombreProyectoSeleccionado = proyectoEncontrado.nombre;
+            }
+            console.log(proyectoEncontrado);
+            console.log(this.expediente.proyecto);
+
+          }
+        });
         console.log('[DEBUG] Objeto expediente armado:', this.expediente);
         this.cdr.detectChanges();
+
         this.expedienteService.getHistorialCargos(id).subscribe(historial => {
           console.log('[DEBUG] Historial de cargos:', historial); // ← AÑADIDO
           this.historialCargos = historial;
@@ -223,7 +275,7 @@ export class ExpedienteDetalleComponent implements OnInit {
         });
       },
       error: (err) => {
-        console.error('Error al cargar expediente', err);
+        console.error('Error al car expediente', err);
       }
     });
   }
@@ -232,6 +284,21 @@ export class ExpedienteDetalleComponent implements OnInit {
     if (tab === 'auditoria') {
       this.cargarAuditoria();
     }
+  }
+  removerReferencia(ref: any): void {
+    const referenciasActuales = this.controlReferencia.value as any[];
+
+    // Filtrar y quitar la referencia
+    const nuevasReferencias = referenciasActuales.filter(r => {
+      // Si r es un string, se compara gardirectamente
+      if (typeof r === 'string') {
+        return r !== ref;
+      }
+      // Si r es un objeto (Referencia), comparamos por código (serie)
+      return r.serie !== ref.serie;
+    });
+
+    this.controlReferencia.setValue(nuevasReferencias);
   }
 
   cargarAuditoria(): void {
@@ -289,6 +356,8 @@ export class ExpedienteDetalleComponent implements OnInit {
       confirmButtonColor: '#004C77',
       cancelButtonColor: '#F36C21',
       confirmButtonText: 'Sí, anular',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
@@ -412,6 +481,8 @@ export class ExpedienteDetalleComponent implements OnInit {
           Swal.fire({
             icon: 'success',
             title: 'Cargo generado correctamente',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
             confirmButtonColor: '#004C77'
           });
         },
@@ -422,6 +493,8 @@ export class ExpedienteDetalleComponent implements OnInit {
             icon: 'error',
             title: 'No se pudo generar el cargo',
             text: 'Verifica los datos enviados.',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
             confirmButtonColor: '#F36C21'
           });
         }
@@ -493,6 +566,8 @@ export class ExpedienteDetalleComponent implements OnInit {
         Swal.fire({
           title: 'Expediente actualizado',
           icon: 'success',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
           confirmButtonColor: '#004C77'
         });
         this.cargarAuditoria();
@@ -507,6 +582,8 @@ export class ExpedienteDetalleComponent implements OnInit {
       error: (err) => {
         Swal.fire({
           title: 'Error',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
           text: 'No se pudo actualizar el expediente',
           icon: 'error'
         });
@@ -579,10 +656,9 @@ export class ExpedienteDetalleComponent implements OnInit {
   obtenerReferenciasPorTipo(tipo: Referencia['tipo']): Referencia[] {
     return this.referenciasFiltradas.filter(r => r.tipo === tipo);
   }
-  abrirDialogoAgregarReferencia(serie: string) {
-    const dialogRef = this.dialog.open(DocumentoAgregarComponent, {
+  abrirDialogoAgregarReferencia() {
+    const dialogRef = this.dialog.open(ReferenciaAgregarComponent, {
       width: '720px',
-      data: { modo: 'referencia', serie }
     });
 
     dialogRef.afterClosed().subscribe((nuevaReferencia: Referencia) => {
@@ -689,6 +765,8 @@ export class ExpedienteDetalleComponent implements OnInit {
       showCancelButton: true,
       confirmButtonText: 'Confirmar',
       cancelButtonText: 'Cancelar',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
       confirmButtonColor: '#004C77',  // Añadimos la paleta de color
       cancelButtonColor: '#F36C21'
     }).then((result) => {
@@ -732,6 +810,8 @@ export class ExpedienteDetalleComponent implements OnInit {
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
       confirmButtonColor: '#004C77',
       cancelButtonColor: '#F36C21'
     }).then((result) => {
@@ -815,6 +895,8 @@ export class ExpedienteDetalleComponent implements OnInit {
           title: 'Documentos añadidos',
           text: 'Se cargaron correctamente los documentos adicionales.',
           icon: 'success',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
           confirmButtonColor: '#004C77'
         });
         this.documentosNuevos = [];
@@ -857,6 +939,9 @@ export class ExpedienteDetalleComponent implements OnInit {
       }
     });
   }
+  irARegistroExpediente(): void {
+    this.router.navigate(['/registro-expediente']);
+  }
 
   confirmarCambioTipoDocumento(doc: DocumentoExpediente) {
     Swal.fire({
@@ -865,6 +950,8 @@ export class ExpedienteDetalleComponent implements OnInit {
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Confirmar',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#004C77',  // Añadimos la paleta de color
       cancelButtonColor: '#F36C21'   // Añadimos la paleta de color

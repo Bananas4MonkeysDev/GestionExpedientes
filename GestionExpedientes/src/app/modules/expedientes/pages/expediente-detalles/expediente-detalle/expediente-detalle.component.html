@@ -1,6 +1,5 @@
 <div class="bg-gray-100 p-8">
     <div>
-
         <!-- Breadcrumb -->
         <div class="text-sm text-gray-600 mb-4">
             <span class="text-[#004C77] font-semibold">Inicio</span> &gt;
@@ -8,8 +7,15 @@
             <span class="text-[#F36C21] font-semibold">Detalles</span>
         </div>
 
-        <!-- Título -->
-        <h1 class="text-2xl font-bold text-[#004C77]">Detalles del Expediente</h1>
+        <!-- Título con botón al lado derecho -->
+        <div class="flex justify-between items-center mb-2">
+            <h1 class="text-2xl font-bold text-[#004C77]">Detalles del Expediente</h1>
+            <button (click)="irARegistroExpediente()" matTooltip="Registrar nuevo expediente"
+                class="cursor-pointer flex items-center gap-2 px-4 py-1 text-sm rounded-md bg-[#004C77] text-white hover:bg-[#F36C21] transition-all">
+                <mat-icon class="!text-white">add</mat-icon>
+                Nuevo Expediente
+            </button>
+        </div>
 
         <!-- Línea divisora con margen inferior -->
         <hr class="border-t-2 border-[#004C77] rounded-full mb-6" />
@@ -51,25 +57,39 @@
                         class="bg-gray-50 border border-gray-200 rounded-md p-4 mb-6 flex flex-wrap justify-between items-center gap-4 shadow-sm">
 
                         <!-- Estado del expediente con ícono -->
-                        <div class="flex items-center gap-2">
-                            <mat-icon *ngIf="expediente?.estado === 'PENDIENTE'"
-                                class="text-yellow-600">hourglass_empty</mat-icon>
-                            <mat-icon *ngIf="expediente?.estado === 'APROBADO'"
-                                class="text-green-600">check_circle</mat-icon>
-                            <mat-icon *ngIf="expediente?.estado === 'RECHAZADO'" class="text-red-600">cancel</mat-icon>
-                            <mat-icon *ngIf="expediente?.estado === 'ANULADO'" class="text-gray-300">block</mat-icon>
-                            <mat-icon *ngIf="!expediente?.estado" class="text-gray-400">help_outline</mat-icon>
+                        <!-- Estado del expediente con ícono y estilo integrado -->
+                        <div *ngIf="expediente"
+                            class="inline-flex items-center px-4 py-1 rounded-full text-sm font-semibold uppercase gap-2"
+                            [ngClass]="{
+    'bg-yellow-100 text-yellow-800': expediente.estado === 'PENDIENTE',
+    'bg-green-100 text-green-800': expediente.estado === 'APROBADO',
+    'bg-red-100 text-red-800': expediente.estado === 'RECHAZADO',
+    'bg-gray-200 text-gray-600': expediente.estado === 'ANULADO',
+    'bg-gray-100 text-gray-500': !expediente.estado
+  }">
 
-                            <span [ngClass]="{
-        'text-yellow-800': expediente.estado === 'PENDIENTE',
-        'text-green-800': expediente.estado === 'APROBADO',
-        'text-red-800': expediente.estado === 'RECHAZADO',
-        'text-gray-500': expediente.estado === 'ANULADO',
-        'text-gray-600': !expediente.estado
-      }" class="px-3 py-1 rounded-full text-sm font-medium uppercase inline-block">
+                            <mat-icon [ngClass]="{
+    '!text-yellow-600': expediente.estado === 'PENDIENTE',
+    '!text-green-600': expediente.estado === 'APROBADO',
+    '!text-red-600': expediente.estado === 'RECHAZADO',
+    '!text-gray-400': expediente.estado === 'ANULADO' || !expediente.estado
+  }" class="text-base !m-0 !p-0 transition-none">
+                                {{
+                                expediente.estado === 'PENDIENTE' ? 'hourglass_empty' :
+                                expediente.estado === 'APROBADO' ? 'check_circle' :
+                                expediente.estado === 'RECHAZADO' ? 'cancel' :
+                                expediente.estado === 'ANULADO' ? 'block' :
+                                'help_outline'
+                                }}
+                            </mat-icon>
+
+
+                            <span>
                                 {{ expediente.estado || 'SIN ESTADO' }}
                             </span>
                         </div>
+
+
 
                         <!-- Acciones: toggle + botón -->
                         <div class="flex items-center gap-6">
@@ -91,10 +111,16 @@
 
                             <!-- Botón anular expediente -->
                             <button (click)="confirmarAnulacion()" matTooltip="Anular expediente"
-                                class="flex items-center gap-2 bg-red-50 text-red-700 hover:bg-red-100 px-4 py-2 rounded-md text-sm transition cursor-pointer">
-                                <mat-icon class="text-red-700">cancel</mat-icon>
+                                class="group flex items-center gap-2 bg-red-50 text-red-700 hover:bg-red-700 hover:text-white px-4 py-2 rounded-md text-sm transition cursor-pointer">
+
+                                <mat-icon
+                                    class="!text-red-700 group-hover:!text-white group-focus:!text-white transition-colors duration-300">
+                                    cancel
+                                </mat-icon>
+
                                 <span class="font-medium">ANULAR EXPEDIENTE</span>
                             </button>
+
                         </div>
                     </div>
 
@@ -121,7 +147,8 @@
 
                             <div>
                                 <p class="text-gray-500 font-medium">Proyecto</p>
-                                <p class="text-[#004C77] font-semibold">{{ expediente?.proyecto }}</p>
+                                <p class="text-[#004C77] font-semibold">{{ nombreProyectoSeleccionado || 'Sin asignar'
+                                    }}</p>
                             </div>
 
                             <!-- Usuarios Emisores -->
@@ -180,186 +207,278 @@
 
                     <!-- Formulario modo edición -->
                     <ng-template #formularioEdicion>
-                        <form *ngIf="formularioPaso1" [formGroup]="formularioPaso1" (ngSubmit)="guardarEdicion()"
-                            class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                        <div class="bg-white rounded-xl shadow p-8 space-y-6">
+                            <h2 class="text-xl font-semibold text-[#004C77] mb-4">Editar información del expediente</h2>
 
-                            <!-- Usuarios emisores -->
-                            <div class="md:col-span-2">
-                                <label class="text-sm font-medium text-gray-700 label-obligatorio">Usuario
-                                    emisor</label>
-                                <mat-form-field matTooltip="Ingresa el/los remitente(s) del expediente"
-                                    appearance="outline" class="w-full">
-                                    <mat-select [formControl]="controlUsuario" multiple class="max-w-full"
-                                        (closed)="reiniciarFiltroTipoTo()">
-                                        <mat-option class="!cursor-default" disabled>
-                                            <ngx-mat-select-search [formControl]="searchCtrlUsuario"
-                                                placeholderLabel="Buscar referencia..."
-                                                (keydown.enter)="abrirDialogoAgregarUsuario(searchCtrlUsuario.value || '','to')"
-                                                noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nueva referencia"></ngx-mat-select-search>
-                                        </mat-option>
-                                        <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
-                                            <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por
-                                                segmento:</label>
-                                            <select [(ngModel)]="filtroTipoUsuarioTo"
-                                                [ngModelOptions]="{ standalone: true }"
-                                                (ngModelChange)="filtrarUsuariosTo()"
-                                                class="cursor-pointer text-sm border border-gray-300 rounded px-2 py-1 bg-white focus-within:border-[#004C77] transition-colors duration-200 shadow-sm">
-                                                <option value="" class="cursor-pointer">Todos</option>
-                                                <option *ngFor="let tipo of tiposUsuario" [value]="tipo"
-                                                    class="cursor-pointer">{{ tipo }}</option>
-                                            </select>
-                                        </div>
-                                        <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo"
-                                            [hidden]="!mostrarGrupo(tipo)">
-                                            <mat-option
-                                                *ngFor="let user of obtenerUsuariosPorTipo(usuariosFiltradosTo, tipo)"
-                                                [value]="user.nombre">
-                                                {{ user.nombre }} - {{ user.correo }}
-                                            </mat-option>
-                                        </mat-optgroup>
-                                    </mat-select>
-                                </mat-form-field>
-                            </div>
+                            <form [formGroup]="formularioPaso1" (ngSubmit)="guardarEdicion()"
+                                class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
 
-                            <!-- Usuarios destinatarios -->
-                            <div class="md:col-span-2">
-                                <label class="text-sm font-medium text-gray-700 label-obligatorio">Usuario destinatario
-                                    (CC)</label>
-                                <mat-form-field matTooltip="Ingresa el/los destinatario(s) en copia"
-                                    appearance="outline" class="w-full">
-                                    <mat-select [formControl]="controlUsuarioCc" multiple class="max-w-full"
-                                        (closed)="reiniciarFiltroTipoCc()">
-                                        <mat-option class="!cursor-default" disabled>
-                                            <ngx-mat-select-search [formControl]="searchCtrlCc"
-                                                placeholderLabel="Buscar referencia..."
-                                                (keydown.enter)="abrirDialogoAgregarUsuario(searchCtrlCc.value || '','cc')"
-                                                noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nueva referencia"></ngx-mat-select-search>
-                                        </mat-option>
-                                        <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
-                                            <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por
-                                                segmento:</label>
-                                            <select [(ngModel)]="filtroTipoUsuarioCc"
-                                                [ngModelOptions]="{ standalone: true }"
-                                                (ngModelChange)="filtrarUsuariosCc()"
-                                                class="cursor-pointer text-sm border border-gray-300 rounded px-2 py-1 bg-white focus-within:border-[#004C77] transition-colors duration-200 shadow-sm">
-                                                <option value="" class="cursor-pointer">Todos</option>
-                                                <option *ngFor="let tipo of tiposUsuario" [value]="tipo"
-                                                    class="cursor-pointer">{{ tipo }}</option>
-                                            </select>
-                                        </div>
-                                        <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo"
-                                            [hidden]="!mostrarGrupo(tipo)">
-                                            <mat-option
-                                                *ngFor="let user of obtenerUsuariosPorTipo(usuariosFiltradosCc, tipo)"
-                                                [value]="user.nombre">
-                                                {{ user.nombre }} - {{ user.correo }}
-                                            </mat-option>
-                                        </mat-optgroup>
-                                    </mat-select>
-                                </mat-form-field>
-                            </div>
+                                <!-- USUARIO EMISOR -->
+                                <div class="md:col-span-2">
+                                    <label class="text-sm font-medium text-gray-700 label-obligatorio">Usuario
+                                        emisor</label>
 
-                            <!-- Referencias -->
-                            <div class="md:col-span-2">
-                                <label class="text-sm font-medium text-gray-700 label-obligatorio">Referencia(s)</label>
-                                <mat-form-field appearance="outline" class="w-full"
-                                    matTooltip="Relaciona el expediente con una carta, documento o expediente anterior">
-                                    <mat-select [formControl]="controlReferencia" multiple class="max-w-full"
-                                        (closed)="reiniciarFiltroTipoReferencia()">
-                                        <mat-option class="!cursor-default" disabled>
-                                            <ngx-mat-select-search [formControl]="searchCtrlReferencia"
-                                                placeholderLabel="Buscar referencia..."
-                                                (keydown.enter)="abrirDialogoAgregarReferencia(searchCtrlReferencia.value || '')"
-                                                noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nueva referencia"></ngx-mat-select-search>
-                                        </mat-option>
-                                        <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
-                                            <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por
-                                                tipo:</label>
-                                            <select [(ngModel)]="filtroTipoReferencia"
-                                                [ngModelOptions]="{ standalone: true }"
-                                                class="cursor-pointer text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:border-[#004C77] transition-colors duration-200 shadow-sm"
-                                                (ngModelChange)="filtrarReferencias()">
-                                                <option value="">Todos</option>
-                                                <option *ngFor="let tipo of tiposReferencia" [value]="tipo">{{ tipo }}
-                                                </option>
-                                            </select>
-                                        </div>
-                                        <mat-optgroup *ngFor="let tipo of tiposReferencia" [label]="tipo">
-                                            <mat-option *ngFor="let ref of obtenerReferenciasPorTipo(tipo)"
-                                                [value]="ref.serie">
-                                                {{ ref.serie }} - {{ ref.asunto }}
-                                            </mat-option>
-                                        </mat-optgroup>
-                                    </mat-select>
-                                </mat-form-field>
-                            </div>
+                                    <div
+                                        class="flex flex-wrap gap-2 mb-2 min-h-[56px] border border-gray-300 rounded px-3 py-1.5 bg-white items-center">
+                                        <ng-container *ngIf="controlUsuario.value?.length; else placeholderEmisor">
+                                            <div *ngFor="let user of controlUsuario.value"
+                                                class="flex items-center bg-[#E6F2F8] text-[#004C77] text-sm px-3 py-1 rounded-full">
+                                                {{ user }}
+                                                <button type="button" (click)="removerUsuario(user)"
+                                                    class="ml-2 hover:text-red-600 cursor-pointer">
+                                                    <mat-icon class="text-xs">cancel</mat-icon>
+                                                </button>
+                                            </div>
+                                        </ng-container>
+                                        <ng-template #placeholderEmisor>
+                                            <span class="text-sm text-gray-400">Ningún usuario seleccionado</span>
+                                        </ng-template>
+                                    </div>
 
-                            <!-- Asunto -->
-                            <div>
-                                <label class="text-sm font-medium text-gray-700 label-obligatorio">Asunto</label>
-                                <input matTooltip="Resumen del contenido del expediente" type="text"
-                                    formControlName="asunto" class="w-full px-3 py-2 border rounded" />
-                            </div>
+                                    <div class="flex gap-2 items-start">
+                                        <mat-form-field appearance="outline" class="w-full">
+                                            <mat-select [formControl]="controlUsuario" multiple class="max-w-full"
+                                                (closed)="reiniciarFiltroTipoTo()">
+                                                <mat-option class="!cursor-default" disabled>
+                                                    <ngx-mat-select-search [formControl]="searchCtrlUsuario"
+                                                        placeholderLabel="Buscar..."
+                                                        (keydown.enter)="abrirDialogoAgregarUsuario(searchCtrlUsuario.value || '', 'to')"
+                                                        noEntriesFoundLabel="No encontrado. ENTER para agregar.">
+                                                    </ngx-mat-select-search>
+                                                </mat-option>
+                                                <div class="flex items-center gap-2 py-2 px-3 bg-gray-50">
+                                                    <label class="text-xs text-gray-600">Filtrar por segmento:</label>
+                                                    <select [(ngModel)]="filtroTipoUsuarioTo"
+                                                        [ngModelOptions]="{ standalone: true }"
+                                                        (ngModelChange)="filtrarUsuariosTo()"
+                                                        class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus-within:border-[#004C77] shadow-sm cursor-pointer">
+                                                        <option value="">Todos</option>
+                                                        <option *ngFor="let tipo of tiposUsuario" [value]="tipo">{{ tipo
+                                                            }}</option>
+                                                    </select>
+                                                </div>
+                                                <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo"
+                                                    [hidden]="!mostrarGrupo(tipo)">
+                                                    <mat-option
+                                                        *ngFor="let user of obtenerUsuariosPorTipo(usuariosFiltradosTo, tipo)"
+                                                        [value]="user.nombre">
+                                                        {{ user.nombre }} - {{ user.correo }}
+                                                    </mat-option>
+                                                </mat-optgroup>
+                                            </mat-select>
+                                        </mat-form-field>
 
-                            <!-- Fecha -->
-                            <div>
-                                <label class="text-sm font-medium text-gray-700 label-obligatorio">Fecha</label>
-                                <input type="date" formControlName="fecha" class="w-full px-3 py-2 border rounded" />
-                            </div>
+                                        <button type="button" (click)="desenfocarYabrir($event.target, '', 'to')"
+                                            class="h-[56px] px-3 py-2 bg-[#004C77] text-white rounded-md hover:bg-[#003655] transition-colors duration-200"
+                                            matTooltip="Agregar nuevo usuario">
+                                            <mat-icon>person_add</mat-icon>
+                                        </button>
+                                    </div>
+                                </div>
 
-                            <!-- Proyecto -->
-                            <div class="md:col-span-2 flex flex-col md:flex-row gap-8">
-                                <div class="flex-1">
+                                <!-- USUARIO DESTINATARIO -->
+                                <div class="md:col-span-2">
+                                    <label class="text-sm font-medium text-gray-700 label-obligatorio">Usuario
+                                        destinatario (CC)</label>
+
+                                    <div
+                                        class="flex flex-wrap gap-2 mb-2 min-h-[56px] border border-gray-300 rounded px-3 py-1.5 bg-white items-center">
+                                        <ng-container *ngIf="controlUsuarioCc.value?.length; else placeholderCc">
+                                            <div *ngFor="let user of controlUsuarioCc.value"
+                                                class="flex items-center bg-[#E6F2F8] text-[#004C77] text-sm px-3 py-1 rounded-full">
+                                                {{ user }}
+                                                <button type="button" (click)="removerUsuarioCc(user)"
+                                                    class="ml-2 hover:text-red-600 cursor-pointer">
+                                                    <mat-icon class="text-xs">cancel</mat-icon>
+                                                </button>
+                                            </div>
+                                        </ng-container>
+                                        <ng-template #placeholderCc>
+                                            <span class="text-sm text-gray-400">Ningún usuario seleccionado</span>
+                                        </ng-template>
+                                    </div>
+
+                                    <div class="flex gap-2 items-start">
+                                        <mat-form-field appearance="outline" class="w-full">
+                                            <mat-select [formControl]="controlUsuarioCc" multiple class="max-w-full"
+                                                (closed)="reiniciarFiltroTipoCc()">
+                                                <mat-option class="!cursor-default" disabled>
+                                                    <ngx-mat-select-search [formControl]="searchCtrlCc"
+                                                        placeholderLabel="Buscar..."
+                                                        (keydown.enter)="abrirDialogoAgregarUsuario(searchCtrlCc.value || '', 'cc')"
+                                                        noEntriesFoundLabel="No encontrado. ENTER para agregar.">
+                                                    </ngx-mat-select-search>
+                                                </mat-option>
+                                                <div class="flex items-center gap-2 py-2 px-3 bg-gray-50">
+                                                    <label class="text-xs text-gray-600">Filtrar por segmento:</label>
+                                                    <select [(ngModel)]="filtroTipoUsuarioCc"
+                                                        [ngModelOptions]="{ standalone: true }"
+                                                        (ngModelChange)="filtrarUsuariosCc()"
+                                                        class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus-within:border-[#004C77] shadow-sm cursor-pointer">
+                                                        <option value="">Todos</option>
+                                                        <option *ngFor="let tipo of tiposUsuario" [value]="tipo">{{ tipo
+                                                            }}</option>
+                                                    </select>
+                                                </div>
+                                                <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo"
+                                                    [hidden]="!mostrarGrupo(tipo)">
+                                                    <mat-option
+                                                        *ngFor="let user of obtenerUsuariosPorTipo(usuariosFiltradosCc, tipo)"
+                                                        [value]="user.nombre">
+                                                        {{ user.nombre }} - {{ user.correo }}
+                                                    </mat-option>
+                                                </mat-optgroup>
+                                            </mat-select>
+                                        </mat-form-field>
+
+                                        <button type="button" (click)="desenfocarYabrir($event.target, '', 'cc')"
+                                            class="h-[56px] px-3 py-2 bg-[#004C77] text-white rounded-md hover:bg-[#003655] transition-colors duration-200"
+                                            matTooltip="Agregar nuevo usuario">
+                                            <mat-icon>person_add</mat-icon>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- REFERENCIA(S) -->
+                                <div class="md:col-span-2">
+                                    <label
+                                        class="text-sm font-medium text-gray-700 label-obligatorio">Referencia(s)</label>
+
+                                    <!-- Chips seleccionados -->
+                                    <div
+                                        class="flex flex-wrap gap-2 mb-2 min-h-[56px] border border-gray-300 rounded px-3 py-1.5 bg-white items-center">
+                                        <ng-container
+                                            *ngIf="controlReferencia.value?.length; else placeholderReferencia">
+                                            <div *ngFor="let ref of controlReferencia.value"
+                                                class="flex items-center bg-[#E6F2F8] text-[#004C77] text-sm px-3 py-1 rounded-full">
+                                                {{ ref }}
+                                                <button type="button" (click)="removerReferencia(ref)"
+                                                    class="ml-2 text-[#004C77] hover:text-red-600 cursor-pointer transition">
+                                                    <mat-icon class="text-xs">cancel</mat-icon>
+                                                </button>
+                                            </div>
+                                        </ng-container>
+                                        <ng-template #placeholderReferencia>
+                                            <span class="text-sm text-gray-400">Ninguna referencia seleccionada</span>
+                                        </ng-template>
+                                    </div>
+
+                                    <!-- Select + botón en la misma fila -->
+                                    <div class="flex gap-2">
+                                        <!-- Select de referencias -->
+                                        <mat-form-field appearance="outline" class="flex-1"
+                                            matTooltip="Relaciona el expediente con una carta, documento o expediente anterior">
+                                            <mat-select [formControl]="controlReferencia" multiple class="max-w-full"
+                                                (closed)="reiniciarFiltroTipoReferencia()">
+
+                                                <!-- Búsqueda -->
+                                                <mat-option class="!cursor-default" disabled>
+                                                    <ngx-mat-select-search [formControl]="searchCtrlReferencia"
+                                                        placeholderLabel="Buscar o escribir referencia libre"
+                                                        noEntriesFoundLabel="No hay coincidencias, puedes agregarla manualmente">
+                                                    </ngx-mat-select-search>
+                                                </mat-option>
+
+                                                <!-- Filtro por tipo -->
+                                                <div class="flex items-center gap-2 py-2 px-3 bg-gray-50">
+                                                    <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por
+                                                        tipo:</label>
+                                                    <select [(ngModel)]="filtroTipoReferencia"
+                                                        [ngModelOptions]="{ standalone: true }"
+                                                        (ngModelChange)="filtrarReferencias()"
+                                                        class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:border-[#004C77] shadow-sm cursor-pointer">
+                                                        <option value="">Todos</option>
+                                                        <option *ngFor="let tipo of tiposReferencia" [value]="tipo">{{
+                                                            tipo }}</option>
+                                                    </select>
+                                                </div>
+
+                                                <!-- Opciones agrupadas -->
+                                                <mat-optgroup *ngFor="let tipo of tiposReferencia" [label]="tipo">
+                                                    <mat-option *ngFor="let ref of obtenerReferenciasPorTipo(tipo)"
+                                                        [value]="ref.serie">
+                                                        {{ ref.serie }} - {{ ref.asunto }}
+                                                    </mat-option>
+                                                </mat-optgroup>
+                                            </mat-select>
+                                        </mat-form-field>
+
+                                        <!-- Botón agregar en línea -->
+                                        <button type="button" (click)="abrirDialogoAgregarReferencia()"
+                                            class="h-[56px] px-4 bg-[#004C77] text-white rounded-md flex items-center justify-center hover:bg-[#003655] transition-colors duration-200"
+                                            matTooltip="Agregar referencia manual">
+                                            <mat-icon fontIcon="note_add" class="text-base">note_add</mat-icon>
+                                        </button>
+                                    </div>
+                                </div>
+
+
+
+                                <!-- ASUNTO -->
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700 label-obligatorio">Asunto</label>
+                                    <input type="text" formControlName="asunto"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#004C77] outline-none" />
+                                </div>
+
+                                <!-- FECHA -->
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700 label-obligatorio">Fecha</label>
+                                    <input type="date" formControlName="fecha"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#004C77] outline-none" />
+                                </div>
+
+                                <!-- PROYECTO -->
+                                <div class="md:col-span-2">
                                     <label class="text-sm font-medium text-gray-700 label-obligatorio">Proyecto</label>
-                                    <select formControlName="proyecto" class="w-full px-3 py-2 border rounded">
-                                        <option value="" disabled selected>Seleccione</option>
-                                        <option *ngFor="let proyecto of proyectos" [value]="proyecto">{{ proyecto }}
-                                        </option>
+                                    <select formControlName="proyecto"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#004C77] outline-none">
+                                        <option value="" disabled>Seleccione</option>
+                                        <option *ngFor="let proyecto of proyectos" [value]="proyecto.id">{{
+                                            proyecto.nombre }}</option>
                                     </select>
                                 </div>
-                            </div>
 
-                            <!-- Reservado -->
-                            <div class="md:col-span-2">
-                                <label class="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F36C21]" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M12 11c0 1.104-.896 2-2 2s-2-.896-2-2 .896-2 2-2 2 .896 2 2z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4h16v16H4z" />
-                                    </svg>
-                                    Reservado
-                                </label>
-                                <div class="flex gap-6 mt-2">
-                                    <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" formControlName="reservado" value="si"
-                                            class="accent-[#004C77]" />
-                                        <span class="text-sm">Sí</span>
-                                    </label>
-                                    <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" formControlName="reservado" value="no"
-                                            class="accent-[#004C77]" />
-                                        <span class="text-sm">No</span>
-                                    </label>
+                                <!-- RESERVADO -->
+                                <div class="md:col-span-2">
+                                    <label class="text-sm font-medium text-gray-700">Reservado</label>
+                                    <div class="flex gap-6 mt-2">
+                                        <label class="flex items-center gap-2">
+                                            <input type="radio" formControlName="reservado" value="si"
+                                                class="accent-[#004C77]" />
+                                            <span>Sí</span>
+                                        </label>
+                                        <label class="flex items-center gap-2">
+                                            <input type="radio" formControlName="reservado" value="no"
+                                                class="accent-[#004C77]" />
+                                            <span>No</span>
+                                        </label>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <!-- Observaciones -->
-                            <div class="md:col-span-2">
-                                <label class="text-sm font-medium text-gray-700">Observaciones</label>
-                                <textarea formControlName="comentario" rows="3"
-                                    class="w-full px-3 py-2 border rounded resize-none"></textarea>
-                            </div>
+                                <!-- OBSERVACIONES -->
+                                <div class="md:col-span-2">
+                                    <label class="text-sm font-medium text-gray-700">Observaciones</label>
+                                    <textarea formControlName="comentario" rows="3"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded resize-none focus:ring-2 focus:ring-[#004C77] outline-none">
+        </textarea>
+                                </div>
 
-                            <!-- Botones -->
-                            <div class="md:col-span-2 flex justify-end items-center mt-4 gap-4">
-                                <button type="button" (click)="cancelarEdicion()"
-                                    class="cursor-pointer text-[#F36C21] border border-[#F36C21] px-6 py-2 rounded hover:bg-[#F36C21] hover:text-white transition">Cancelar</button>
-                                <button type="submit" [disabled]="formularioPaso1.invalid"
-                                    class="bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 disabled:bg-gray-300 cursor-pointer">Guardar</button>
-                            </div>
-                        </form>
+                                <!-- BOTONES -->
+                                <div class="md:col-span-2 flex justify-end gap-4 mt-4">
+                                    <button type="button" (click)="cancelarEdicion()"
+                                        class="cursor-pointer text-[#F36C21] border border-[#F36C21] px-6 py-2 rounded hover:bg-[#F36C21] hover:text-white transition">
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" [disabled]="formularioPaso1.invalid"
+                                        class="cursor-pointer bg-[#004C77] text-white px-6 py-2 rounded hover:opacity-90 disabled:bg-gray-300">
+                                        Guardar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </ng-template>
+
 
                 </div>
 

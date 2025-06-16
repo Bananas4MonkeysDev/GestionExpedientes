@@ -3,11 +3,12 @@ import { Component, Input } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService, UsuarioSesion } from '../../../core/services/auth.service';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, MatIcon, FormsModule, ReactiveFormsModule],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.css']
 })
@@ -15,8 +16,8 @@ export class SidebarComponent {
   @Input() isOpen: boolean = true;
 
   filtro: string = '';
-  submenuAbierto: boolean = false;
-  submenuMaestras: boolean = false;
+  submenuAbierto: boolean = true;
+  submenuMaestras: boolean = true;
 
   nombreUsuario = '';
   tipoUsuario = '';
@@ -34,7 +35,7 @@ export class SidebarComponent {
   constructor(private router: Router, private authService: AuthService) { }
 
   logout(): void {
-     this.authService.logout();
+    this.authService.logout();
     this.router.navigate(['/login']);
   }
 

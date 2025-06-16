@@ -105,6 +105,8 @@ export class ProyectoComponent implements OnInit {
       showCancelButton: true,
       confirmButtonColor: '#004C77',
       cancelButtonColor: '#d33',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
       confirmButtonText: 'Sí, eliminar'
     }).then(result => {
       if (result.isConfirmed) {

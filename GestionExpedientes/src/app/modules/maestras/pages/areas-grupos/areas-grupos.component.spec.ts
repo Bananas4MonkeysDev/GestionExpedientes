@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ExpedientesListComponent } from './expedientes-list.component';
+import { AreasGruposComponent } from './areas-grupos.component';
 
-describe('ExpedientesListComponent', () => {
-  let component: ExpedientesListComponent;
-  let fixture: ComponentFixture<ExpedientesListComponent>;
+describe('AreasGruposComponent', () => {
+  let component: AreasGruposComponent;
+  let fixture: ComponentFixture<AreasGruposComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ExpedientesListComponent]
+      imports: [AreasGruposComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(ExpedientesListComponent);
+    fixture = TestBed.createComponent(AreasGruposComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

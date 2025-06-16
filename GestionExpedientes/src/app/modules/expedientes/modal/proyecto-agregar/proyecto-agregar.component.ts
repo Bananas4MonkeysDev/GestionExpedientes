@@ -52,6 +52,8 @@ export class ProyectoAgregarComponent implements OnInit {
           title: 'Proyecto registrado',
           text: 'El proyecto fue agregado correctamente.',
           icon: 'success',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
           confirmButtonColor: '#004C77'
         });
         // Registrar en auditoría
@@ -72,6 +74,8 @@ export class ProyectoAgregarComponent implements OnInit {
           title: 'Error',
           text: 'Hubo un error al registrar el proyecto.',
           icon: 'error',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
           confirmButtonColor: '#F36C21'
         });
       }
