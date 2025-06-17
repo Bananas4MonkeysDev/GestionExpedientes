@@ -50,3 +50,12 @@ body {
 ::ng-deep .mat-form-field-appearance-outline.mat-focused .mat-form-field-outline {
   box-shadow: none;
 }
+::ng-deep .custom-dialog-container .mat-dialog-container {
+  padding: 0 !important;
+  border-radius: 1rem;
+  overflow: hidden;
+  max-height: 95vh;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+}

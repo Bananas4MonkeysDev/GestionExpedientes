@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { DocumentoAgregarComponent } from '../../modal/documento-agregar/documento-agregar.component';
@@ -24,6 +24,8 @@ import { Proyecto } from '../../../../core/models/proyecto.model';
 import { ProyectoAgregarComponent } from '../../modal/proyecto-agregar/proyecto-agregar.component';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AuditoriaService } from '../../../../core/services/auditoria.service';
+import { OcrService } from '../../../../core/services/ocr-service.service';
+import { ScanCartaComponent } from '../scan-carta/scan-carta.component';
 
 interface ReferenciaCompleta {
   serie: string;
@@ -73,6 +75,8 @@ export interface Usuario {
   ]
 })
 export class ExpedientesRegisterComponent implements OnInit {
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
   cargo?: File;
   fechaCargo: string = '';
   arrastrandoCargo = false;
@@ -121,7 +125,7 @@ export class ExpedientesRegisterComponent implements OnInit {
   arrastrando = false;
   seccionActiva: 'registro' | 'estado' | 'auditoria' = 'registro';
 
-  constructor(private auditoriaService: AuditoriaService
+  constructor(private ocrService: OcrService, private auditoriaService: AuditoriaService
     , private authService: AuthService, private proyectoService: ProyectoService, private loadingService: LoadingOverlayService, private fb: FormBuilder, private dialog: MatDialog, private router: Router, private expedienteService: ExpedienteService, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
 
   ngOnInit(): void {
@@ -703,26 +707,37 @@ export class ExpedientesRegisterComponent implements OnInit {
       : (bytes / 1024).toFixed(0) + ' KB';
   }
 
-  onScanUpload(event: Event) {
-  /*  const archivo = (event.target as HTMLInputElement).files?.[0];
+  onScanUpload(event: Event): void {
+    const archivo = (event.target as HTMLInputElement).files?.[0];
     if (!archivo) return;
-    const simulado = {
-      usuario: 'Juan Pérez',
-      correo: 'juan.perez@example.com',
-      asunto: 'Solicitud de apoyo técnico',
-      fecha: new Date().toISOString().slice(0, 10)
-    };
-    if (!this.todosUsuarios.some(u => u.nombre === simulado.usuario)) {
-      this.todosUsuarios.push({ tipoIdentidad: 'PERSONA', nombre: simulado.usuario, correo: simulado.correo });
-      this.filtrarUsuariosTo();
-    }
-    this.controlUsuario.setValue([simulado.usuario]);
-    this.controlUsuarioCc.setValue([simulado.usuario]);
-    this.formularioPaso1.patchValue({ asunto: simulado.asunto, fecha: simulado.fecha });
-  */}
+    console.log('Subiendo archivo OCR:', archivo.name);
+    this.loadingService.show();
+    this.ocrService.escanearDocumento(archivo).subscribe({
+      next: (res) => {
+        this.loadingService.hide();
+        console.log('Texto extraído del documento:', res);
+      },
+      error: (err) => {
+        console.error('Error al escanear el documento:', err);
+      }
+    });
+  }
 
-  scanCarta() {
-    document.querySelector<HTMLInputElement>('input[type="file"]')?.click();
+  scanCarta(): void {
+    const dialogRef = this.dialog.open(ScanCartaComponent, {
+      width: '95vw',  // ✅ Ampliado
+      maxHeight: '95vh',
+      panelClass: 'custom-dialog-container',
+      autoFocus: false
+    });
+
+
+    dialogRef.afterClosed().subscribe(resultado => {
+      if (resultado) {
+        console.log('Resultado OCR:', resultado);
+        // Aquí puedes llenar tus campos del expediente con resultado.emisor, resultado.destinatario, etc.
+      }
+    });
   }
   onCargoSelected(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
