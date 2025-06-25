@@ -35,7 +35,7 @@ export class AuthService {
 
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      console.log('[JWT PAYLOAD DECODIFICADO]', payload); 
+      console.log('[JWT PAYLOAD DECODIFICADO]', payload);
 
       return {
         id: payload.id,
@@ -54,5 +54,18 @@ export class AuthService {
   }
   logout(): void {
     localStorage.removeItem('jwt');
+  }
+  tieneSesionActiva(): boolean {
+    const token = localStorage.getItem('jwt');
+    if (!token) return false;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const exp = payload.exp * 1000; // `exp` está en segundos, convertimos a milisegundos
+      return Date.now() < exp;
+    } catch (e) {
+      console.error('Token inválido o corrupto:', e);
+      return false;
+    }
   }
 }

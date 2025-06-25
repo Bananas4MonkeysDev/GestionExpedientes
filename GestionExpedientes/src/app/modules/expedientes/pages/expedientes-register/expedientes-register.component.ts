@@ -276,9 +276,6 @@ export class ExpedientesRegisterComponent implements OnInit {
     setTimeout(() => {
       const dialogRef = this.dialog.open(DocumentoAgregarComponent, {
         width: '800px',  // o incluso '90vw' si quieres algo más flexible
-        maxWidth: '95vw',
-        height: '585px',
-        maxHeight: '90vh',
         data: { modo: 'usuario', nombre, destino }
       });
 
@@ -347,6 +344,69 @@ export class ExpedientesRegisterComponent implements OnInit {
     const offset = hoy.getTimezoneOffset() * 60000;
     const fechaLocal = new Date(hoy.getTime() - offset).toISOString().slice(0, 10);
     this.formularioPaso1.patchValue({ fecha: fechaLocal });
+  }
+  irARegistroExpediente() {
+    Swal.fire({
+      title: '¿Iniciar nuevo expediente?',
+      text: 'En caso no haya guardado, se perderán todos los datos ingresados.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#004C77',
+      cancelButtonColor: '#aaa',
+      confirmButtonText: 'Sí, limpiar todo',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Paso 1 y tipo
+        this.pasoActual = 1;
+        this.tipoExpediente = null;
+
+        // Reset formulario principal
+        this.formularioPaso1.reset();
+
+        // Controles específicos
+        this.controlUsuario.setValue([]);
+        this.controlUsuarioCc.setValue([]);
+        this.controlReferencia.setValue([]);
+
+        // Parchar valores por defecto (evita que queden en null)
+        this.formularioPaso1.patchValue({
+          proyecto: '',
+          reservado: '',
+          fecha: '',
+          comentario: '',
+          asunto: ''
+        });
+
+        // Borrar documentos (paso 3)
+        this.documentos = [];
+
+        // Borrar archivo cargo (paso 4)
+        this.cargo = undefined;
+
+        // Reset de fecha/hora del cargo
+        this.fechaCargo = '';
+        this.horaCargo = '';
+        this.inicializarFechaYHoraCargo(); // si quieres dejar la fecha actual
+
+        // Reset de estado
+        this.expedienteIdRegistrado = undefined;
+        this.exito = false;
+
+        // Filtros de búsqueda (usuarios y referencias)
+        this.searchCtrlUsuario.setValue('');
+        this.searchCtrlCc.setValue('');
+        this.searchCtrlReferencia.setValue('');
+
+        this.filtroTipoUsuarioTo = '';
+        this.filtroTipoUsuarioCc = '';
+        this.filtroTipoReferencia = '';
+
+        this.usuariosFiltradosTo = [...this.todosUsuarios];
+        this.usuariosFiltradosCc = [...this.todosUsuarios];
+        this.referenciasFiltradas = [...this.referenciasOriginales];
+      }
+    });
   }
 
   siguientePaso() {
@@ -725,7 +785,7 @@ export class ExpedientesRegisterComponent implements OnInit {
 
   scanCarta(): void {
     const dialogRef = this.dialog.open(ScanCartaComponent, {
-      width: '95vw',  // ✅ Ampliado
+      width: '95vw',
       maxHeight: '95vh',
       panelClass: 'custom-dialog-container',
       autoFocus: false
@@ -733,11 +793,49 @@ export class ExpedientesRegisterComponent implements OnInit {
 
 
     dialogRef.afterClosed().subscribe(resultado => {
-      if (resultado) {
-        console.log('Resultado OCR:', resultado);
-        // Aquí puedes llenar tus campos del expediente con resultado.emisor, resultado.destinatario, etc.
+      if (!resultado || !resultado.texto || !resultado.destino) return;
+
+      const texto = resultado.texto.trim();
+      const destino = resultado.destino;
+
+      if (destino === 'asunto') {
+        this.formularioPaso1.patchValue({ asunto: texto });
+      }
+
+      if (destino === 'emisor' || destino === 'destinatario') {
+        const coincidencia = this.todosUsuarios.find(u =>
+          u.nombre.toLowerCase().includes(texto.toLowerCase())
+        );
+
+        if (coincidencia) {
+          if (destino === 'emisor') {
+            this.controlUsuario.setValue([coincidencia.nombre]);
+          } else {
+            this.controlUsuarioCc.setValue([coincidencia.nombre]);
+          }
+        } else {
+          this.abrirDialogoAgregarUsuario(texto, destino === 'emisor' ? 'to' : 'cc');
+        }
+      }
+
+      if (destino === 'referencia') {
+        const coincidencia = this.referenciasOriginales.find(r =>
+          r.serie.toLowerCase().includes(texto.toLowerCase())
+        );
+
+        if (coincidencia) {
+          this.controlReferencia.setValue([coincidencia]);
+        } else {
+          const nuevaRef = {
+            serie: texto,
+            asunto: '(Referencia manual)',
+            tipo: 'MANUAL' as const
+          };
+          this.controlReferencia.setValue([...(this.controlReferencia.value || []), nuevaRef]);
+        }
       }
     });
+
   }
   onCargoSelected(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];

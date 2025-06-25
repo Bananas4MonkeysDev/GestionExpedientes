@@ -12,6 +12,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { VerCargoComponent } from './modules/cargos/pages/ver-cargo/ver-cargo.component';
 import { ProyectoComponent } from './modules/maestras/pages/proyectos/proyecto/proyecto.component';
 import { AreasGruposComponent } from './modules/maestras/pages/areas-grupos/areas-grupos.component';
+import { ExpedientesBuzonComponent } from './modules/expedientes/pages/expedientes-buzon/expedientes-buzon.component';
 
 export const routes: Routes = [
   { path: 'ver-cargo/:uuid', component: VerCargoComponent },
@@ -25,6 +26,7 @@ export const routes: Routes = [
       { path: 'home', component: HomeComponent },
       { path: 'dashboard', component: DashboardComponent },
       { path: 'monitoreo-expediente', component: ExpedientesMonitoreoComponent },
+      { path: 'buzon-expedientes', component: ExpedientesBuzonComponent },
       { path: 'registro-expediente', component: ExpedientesRegisterComponent },
       { path: 'detalle-expediente/:id', component: ExpedienteDetalleComponent },
       { path: 'usuarios-expedientes', component: UsuariosExpedientesComponent },

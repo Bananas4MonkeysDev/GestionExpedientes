@@ -9,7 +9,8 @@ public interface UsuarioService {
     List<Usuario> obtenerTodos();
     void enviarCorreoRecuperacion(String correo, String token);
     Optional<Usuario> obtenerPorId(Long id);
-
+    Usuario actualizarUsuario(Long id, Usuario usuario);
+    void eliminarUsuario(Long id);
     Usuario findByTokenRecuperacion(String token);
     void guardarTokenRecuperacion(Long usuarioId, String token);
 

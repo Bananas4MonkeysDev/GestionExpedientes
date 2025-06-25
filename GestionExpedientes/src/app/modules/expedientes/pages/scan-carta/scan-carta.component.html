@@ -16,6 +16,18 @@
             <pre class="whitespace-pre-wrap text-sm bg-white rounded p-4 shadow-inner border border-gray-300">
 {{ ocrResult }}
             </pre>
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">¿A qué campo deseas asignar este
+                    texto?</label>
+                <select [(ngModel)]="campoSeleccionado" class="w-full border border-gray-300 rounded px-3 py-2">
+                    <option disabled [ngValue]="null">Seleccione una opción</option>
+                    <option value="asunto">Asunto</option>
+                    <option value="emisor">Usuario emisor</option>
+                    <option value="destinatario">Usuario destinatario (CC)</option>
+                    <option value="referencia">Referencia</option>
+                </select>
+            </div>
+
             <div class="text-center mt-6">
                 <button
                     class="bg-[#004C77] text-white px-6 py-2 rounded-lg hover:bg-[#003955] cursor-pointer transition"

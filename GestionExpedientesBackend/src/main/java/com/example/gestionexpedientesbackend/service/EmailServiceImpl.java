@@ -110,7 +110,7 @@ public class EmailServiceImpl implements EmailService {
 
         // Botón visual (versión compatible con correo - sin hover dinámico)
         sb.append("<table role='presentation' cellspacing='0' cellpadding='0'><tr><td align='center'>");
-        sb.append("<a href='http://localhost:4200/revision-expediente/")
+        sb.append("<a href='http://localhost:4200/login?redirect=buzon-expedientes&id=")
                 .append(expediente.getId())
                 .append("' style='")
                 .append("display: inline-block; ")

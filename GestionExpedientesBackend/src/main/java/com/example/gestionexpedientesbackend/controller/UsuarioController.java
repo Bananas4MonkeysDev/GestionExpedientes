@@ -106,7 +106,15 @@ public class UsuarioController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{id}")
+    public Usuario actualizar(@PathVariable Long id, @RequestBody Usuario usuario) {
+        return usuarioService.actualizarUsuario(id, usuario);
+    }
 
+    @DeleteMapping("/{id}")
+    public void eliminar(@PathVariable Long id) {
+        usuarioService.eliminarUsuario(id);
+    }
 
 
     @Autowired

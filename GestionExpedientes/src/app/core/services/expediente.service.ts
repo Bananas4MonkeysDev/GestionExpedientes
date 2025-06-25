@@ -94,14 +94,34 @@ export class ExpedienteService {
     });
   }
   cambiarEstadoExpediente(id: number, nuevoEstado: string): Observable<any> {
-    return this.http.put(`${this.baseUrl}/${id}/estado?estado=${nuevoEstado}`, {}, {
+    return this.http.put(`${this.baseUrl}/${id}/estado/simple?estado=${nuevoEstado}`, {}, {
       headers: this.getHeaders()
     });
   }
+  cambiarEstadoExpedienteConFecha(id: number, estado: string, fechaLimite?: string | null): Observable<any> {
+    const body: any = { estado };
+    if (fechaLimite) body.fechaLimite = fechaLimite;
+
+    return this.http.put(`${this.baseUrl}/${id}/estado`, body, {
+      headers: this.getHeaders()
+    });
+  }
+
 
   obtenerExpedientesPorUsuario(usuarioId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/por-usuario/${usuarioId}`, {
       headers: this.getHeaders()
     });
   }
+  marcarComoLeido(id: number) {
+    return this.http.put(`${this.baseUrl}/${id}/marcar-leido`, {});
+  }
+
+  archivarExpediente(id: number) {
+    return this.http.put(`${this.baseUrl}/${id}/archivar`, {});
+  }
+  marcarComoDesechado(id: number): Observable<any> {
+    return this.http.put(`${this.baseUrl}/expedientes/${id}/desechar`, null);
+  }
+
 }

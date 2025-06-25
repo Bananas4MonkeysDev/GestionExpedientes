@@ -92,7 +92,7 @@
 
 
                         <!-- Acciones: toggle + botón -->
-                        <div class="flex items-center gap-6">
+                        <div *ngIf="!esAnulado" class="flex items-center gap-6">
 
                             <!-- Toggle de edición -->
                             <label class="flex items-center gap-2 cursor-pointer">
@@ -121,6 +121,9 @@
                                 <span class="font-medium">ANULAR EXPEDIENTE</span>
                             </button>
 
+                        </div>
+                        <div *ngIf="esAnulado" class="text-gray-500 italic">
+                            Expediente anulado. No hay opciones disponibles.
                         </div>
                     </div>
 
@@ -438,7 +441,6 @@
                                             proyecto.nombre }}</option>
                                     </select>
                                 </div>
-
                                 <!-- RESERVADO -->
                                 <div class="md:col-span-2">
                                     <label class="text-sm font-medium text-gray-700">Reservado</label>
@@ -455,15 +457,13 @@
                                         </label>
                                     </div>
                                 </div>
-
                                 <!-- OBSERVACIONES -->
                                 <div class="md:col-span-2">
                                     <label class="text-sm font-medium text-gray-700">Observaciones</label>
                                     <textarea formControlName="comentario" rows="3"
                                         class="w-full px-3 py-2 border border-gray-300 rounded resize-none focus:ring-2 focus:ring-[#004C77] outline-none">
-        </textarea>
+                                    </textarea>
                                 </div>
-
                                 <!-- BOTONES -->
                                 <div class="md:col-span-2 flex justify-end gap-4 mt-4">
                                     <button type="button" (click)="cancelarEdicion()"
@@ -478,18 +478,15 @@
                             </form>
                         </div>
                     </ng-template>
-
-
                 </div>
 
                 <div *ngSwitchCase="'documentos'" class="p-4">
                     <h2 class="text-xl font-semibold text-[#004C77] mb-4">Documentos asociados</h2>
-
                     <!-- Documentos existentes: listado vertical con edición -->
                     <div class="space-y-4 mb-10">
-                        <div *ngFor="let doc of expediente?.documentos"
+                        <div [ngClass]="{ 'opacity-50 grayscale cursor-not-allowed': esAnulado }"
+                            *ngFor="let doc of expediente?.documentos"
                             class="flex items-center justify-between bg-white border border-gray-300 rounded-lg shadow-sm p-4 gap-6">
-
                             <!-- Columna: Icono + Datos -->
                             <div class="flex items-start gap-3 min-w-[384px] max-w-[420px]">
                                 <div class="flex flex-col overflow-hidden">
@@ -500,20 +497,19 @@
                                     <span class="text-xs text-gray-500 mt-1">{{ formatearPeso(doc['tamaño']) }}</span>
                                 </div>
                             </div>
-
                             <!-- Selector -->
                             <div class="flex flex-col w-[180px]">
                                 <label class="text-xs text-gray-600 mb-1 select-none">Tipo de documento</label>
-                                <select [(ngModel)]="doc.tipoDocumento" (change)="confirmarCambioTipoDocumento(doc)"
+                                <select [disabled]="esAnulado" [(ngModel)]="doc.tipoDocumento"
+                                    (change)="confirmarCambioTipoDocumento(doc)"
                                     class="border border-gray-300 rounded px-2 py-1 text-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#004C77]">
                                     <option value="" disabled>Seleccione tipo</option>
                                     <option *ngFor="let tipo of tiposDocumento" [value]="tipo">{{ tipo }}</option>
                                 </select>
                             </div>
-
                             <!-- Acciones -->
                             <div class="flex items-center gap-2 pr-1">
-                                <button (click)="toggleVisibilidadDocumento(doc)"
+                                <button [disabled]="esAnulado" (click)="toggleVisibilidadDocumento(doc)"
                                     matTooltip="{{ doc.visibleParaExternos ? 'Visible para externos' : 'Oculto para externos' }}"
                                     class="p-1 rounded hover:bg-gray-100 transition cursor-pointer">
                                     <mat-icon color="warn">
@@ -527,7 +523,8 @@
                                     <mat-icon>picture_as_pdf</mat-icon>
                                 </button>
 
-                                <button (click)="eliminarDocumentoExistente(doc)" matTooltip="Eliminar documento"
+                                <button [disabled]="esAnulado" (click)="eliminarDocumentoExistente(doc)"
+                                    matTooltip="Eliminar documento"
                                     class="text-red-600 cursor-pointer p-1 rounded hover:bg-gray-100 transition">
                                     <mat-icon>delete</mat-icon>
                                 </button>
@@ -539,8 +536,13 @@
 
                     <!-- Drag & Drop para subir archivos -->
                     <div class="border-2 border-dashed rounded-lg p-10 text-center transition-all duration-300"
-                        [ngClass]="{ 'border-[#004C77] bg-blue-50': arrastrando, 'border-gray-300 bg-gray-50': !arrastrando }"
-                        (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onFileDrop($event)">
+                        [ngClass]="{
+        'border-[#004C77] bg-blue-50': arrastrando && !esAnulado,
+        'border-gray-300 bg-gray-100 opacity-50 cursor-not-allowed': esAnulado,
+        'border-gray-300 bg-gray-50': !arrastrando && !esAnulado
+    }" (dragover)="esAnulado ? $event.preventDefault() : onDragOver($event)"
+                        (dragleave)="esAnulado ? $event.preventDefault() : onDragLeave($event)"
+                        (drop)="esAnulado ? $event.preventDefault() : onFileDrop($event)">
                         <label for="uploadInput" class="cursor-pointer flex flex-col items-center space-y-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#004C77]" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
@@ -551,7 +553,7 @@
                                 seleccionar</span>
                             <span class="text-xs text-gray-400">Solo PDFs</span>
                         </label>
-                        <input id="uploadInput" type="file" accept=".pdf" multiple class="hidden"
+                        <input [disabled]="esAnulado" id="uploadInput" type="file" accept=".pdf" multiple class="hidden"
                             (change)="onMultipleFilesSelected($event)" />
                     </div>
 
@@ -699,12 +701,17 @@
                         </div>
 
                         <!-- Botón -->
-                        <button
-                            class="bg-[#004C77] hover:bg-[#F36C21] text-white px-4 py-2 rounded-md shadow flex items-center gap-2 transition-all cursor-pointer w-full md:w-auto"
-                            matTooltip="Generar un nuevo cargo" (click)="abrirDialogoCargo()">
+                        <!-- Botón -->
+                        <button [disabled]="esAnulado"
+                            class="px-4 py-2 rounded-md shadow flex items-center gap-2 transition-all w-full md:w-auto"
+                            [ngClass]="{
+        'bg-[#004C77] hover:bg-[#F36C21] text-white cursor-pointer': !esAnulado,
+        'bg-gray-300 text-gray-500 cursor-not-allowed': esAnulado
+    }" matTooltip="Generar un nuevo cargo" (click)="!esAnulado && abrirDialogoCargo()">
                             <mat-icon class="!text-white">add_circle_outline</mat-icon>
                             <span>Generar nuevo Cargo</span>
                         </button>
+
 
                     </div>
 

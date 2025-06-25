@@ -19,7 +19,8 @@ type ModoDialogo = 'usuario' | 'referencia';
 interface DatosUsuario {
   modo: 'usuario';
   nombre: string;
-  destino: 'to' | 'cc';
+  destino?: 'to' | 'cc';
+  usuario?: Usuario;
 }
 
 interface DatosReferencia {
@@ -62,35 +63,50 @@ export class DocumentoAgregarComponent {
     this.modo = data.modo;
     const user = this.authService.getUserFromToken();
     this.tipoUsuarioActual = user?.tipoUsuario || '';
+    const usuarioEditando: Usuario | undefined = (data as any).usuario;
+
     this.grupoAreaService.listar().subscribe((todos) => {
       this.todasLasOpcionesGrupoArea = todos;
     });
     this.form = this.fb.group(
-      data.modo === 'usuario'
+      this.modo === 'usuario'
         ? {
-          nombre: ['', Validators.required],
-          correo: [
+          nombre: [usuarioEditando?.nombre || (data as DatosUsuario).nombre || '', Validators.required],
+          correo: [usuarioEditando?.correo ||
             '',
-            [Validators.required, Validators.email],
-            [this.usuarioService.validarCorreoAsync(usuarioService)]
+          [Validators.required, Validators.email],
+          [this.usuarioService.validarCorreoAsync(usuarioService)]
           ],
-          contraseña: ['', Validators.required],
-          dni: ['', [Validators.pattern('^[0-9]{8}$'), Validators.minLength(8), Validators.maxLength(8)]],
-          ruc: [''],
-          rol: ['', Validators.required],
-          tipoIdentidad: ['', Validators.required],
-          tipoUsuario: ['', Validators.required],
-          firmante: [true], // por defecto no firmante
-          tipoFirma: ['']
+          contraseña: [usuarioEditando ? '' : '', usuarioEditando ? [] : Validators.required],
+          dni: [usuarioEditando?.dni || '', [Validators.pattern('^[0-9]{8}$'), Validators.minLength(8), Validators.maxLength(8)]],
+          ruc: [usuarioEditando?.ruc || ''],
+          rol: [usuarioEditando?.rol || '', Validators.required],
+          tipoIdentidad: [usuarioEditando?.tipoIdentidad || '', Validators.required],
+          tipoUsuario: [usuarioEditando?.tipoUsuario || '', Validators.required],
+          firmante: [usuarioEditando?.firmante ?? false], // por defecto no firmante
+          tipoFirma: [usuarioEditando?.tipoFirma || '']
         }
         : {
-          serie: [data.serie || '', Validators.required],
-          tipo: ['Carta', Validators.required]
         }
     );
-    this.grupoAreaService.listar().subscribe((todos) => {
-      this.todasLasOpcionesGrupoArea = todos;
-    });
+    if (usuarioEditando?.id) {
+      const idUsuario = usuarioEditando.id.toString();
+      this.form.addControl('id', this.fb.control(usuarioEditando.id));
+      this.form.get('contraseña')?.disable();
+      this.grupoAreaService.listar().subscribe((todos) => {
+        this.todasLasOpcionesGrupoArea = todos;
+        const grupoDelUsuario = todos.find(grupo =>
+          grupo.usuariosIds?.split('|').includes(idUsuario)
+        );
+
+        if (grupoDelUsuario) {
+          this.form.get('grupoAreaTipo')?.setValue(grupoDelUsuario.tipo);
+          this.opcionesGrupoArea = todos.filter(g => g.tipo === grupoDelUsuario.tipo);
+          this.form.get('grupoAreaId')?.setValue(grupoDelUsuario.id);
+        }
+      });
+    }
+
 
     // reacción al cambio de tipo
     this.form.addControl('grupoAreaTipo', this.fb.control(''));
@@ -139,9 +155,12 @@ export class DocumentoAgregarComponent {
   guardar() {
     if (this.form.valid && this.modo === 'usuario') {
       const nuevoUsuario = this.form.value;
+      const esEdicion = !!this.form.get('id')?.value;
+      const usuarioActual = this.authService.getUserFromToken();
+      const grupoAreaId = this.form.value.grupoAreaId;
 
       Swal.fire({
-        title: 'Registrando usuario...',
+        title: esEdicion ? 'Actualizando usuario...' : 'Registrando usuario...',
         text: 'Por favor, espera un momento',
         allowOutsideClick: false,
         allowEscapeKey: false,
@@ -149,29 +168,36 @@ export class DocumentoAgregarComponent {
           Swal.showLoading();
         }
       });
+      const request = esEdicion
+        ? this.usuarioService.actualizarUsuario(this.form.get('id')!.value, nuevoUsuario)
+        : this.usuarioService.registrarUsuario(nuevoUsuario);
 
-      this.usuarioService.registrarUsuario(nuevoUsuario).subscribe({
+      request.subscribe({
         next: (res) => {
           Swal.fire({
             icon: 'success',
-            title: 'Usuario registrado',
+            title: esEdicion ? 'Usuario actualizado' : 'Usuario registrado',
+            text: esEdicion
+              ? 'Los datos del usuario fueron actualizados correctamente.'
+              : 'El usuario fue registrado correctamente.',
             allowOutsideClick: false,
             allowEscapeKey: false,
-            text: 'El usuario fue registrado correctamente.',
             confirmButtonColor: '#004C77'
           });
+          const accion = esEdicion ? 'EDICION' : 'CREACION';
+
           const usuarioActual = this.authService.getUserFromToken();
           this.auditoriaService.registrarAuditoria({
             usuario: usuarioActual?.id,
-            accion: 'CREACION',
+            accion,
             usuarioId: res.id, // ← ID del usuario recién creado
-            descripcion: `Registro de nuevo usuario: ${res.nombre} (${res.correo})`
+            descripcion: `${accion} de usuario: ${res.nombre} (${res.correo})`
           }).subscribe({
-            next: () => console.log('[AUDITORÍA] Registro de usuario auditado'),
+            next: () => console.log(`[AUDITORÍA] ${accion} registrada`),
             error: (err) => console.error('[AUDITORÍA] Error al registrar auditoría de usuario', err)
           });
           const grupoAreaId = this.form.value.grupoAreaId;
-          if (grupoAreaId) {
+          if (!esEdicion && grupoAreaId) {
             this.grupoAreaService.obtener(grupoAreaId).subscribe(grupo => {
               const idsActuales = grupo.usuariosIds ? grupo.usuariosIds.split('|') : [];
 

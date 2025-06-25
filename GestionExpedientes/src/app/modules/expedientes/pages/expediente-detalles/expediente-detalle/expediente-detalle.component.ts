@@ -114,7 +114,7 @@ export class ExpedienteDetalleComponent implements OnInit {
   isLoading = false;
   auditorias: any[] = [];
   referencias: Referencia[] = [];
-
+  esAnulado: boolean = false;
   constructor(private proyectoService: ProyectoService, private router: Router, private auditoriaService: AuditoriaService, private authService: AuthService, private loadingService: LoadingOverlayService,
     private sanitizer: DomSanitizer, private zone: NgZone, private route: ActivatedRoute, private cdr: ChangeDetectorRef, private expedienteService: ExpedienteService, private dialog: MatDialog, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
   @ViewChild('slider', { static: false }) sliderRef!: ElementRef;
@@ -192,6 +192,7 @@ export class ExpedienteDetalleComponent implements OnInit {
         console.log('[DEBUG] Datos recibidos del backend:', data);
         console.log('[DEBUG] Usuarios emisores raw:', data.usuariosEmisores);
         console.log('[DEBUG] Usuarios destinatarios raw:', data.usuariosDestinatarios);
+
         this.documentosExistentes = data.documentos.map((doc: any) => ({
           id: doc.id,
           nombreArchivo: doc.nombreArchivo,
@@ -240,8 +241,10 @@ export class ExpedienteDetalleComponent implements OnInit {
             console.log('[DEBUG] Usuario destinatario:', u);
             return { nombre: u.nombre, correo: u.correo };
           })
-
         };
+        if (this.expediente.estado == 'ANULADO') {
+          this.esAnulado = true;
+        }
         if (this.expediente.referencias && this.referencias?.length) {
           const codigosSeleccionados = this.referencias
             .filter(ref => this.expediente.referencias.includes(ref.serie))
@@ -269,7 +272,7 @@ export class ExpedienteDetalleComponent implements OnInit {
           this.historialCargos = historial;
           this.expediente.cargo = {
             ...historial[0],
-            archivo: historial[0].archivoPath
+            archivo: historial[0].archivoPath || ""
           };
           this.cdr.markForCheck();
         });
@@ -304,23 +307,15 @@ export class ExpedienteDetalleComponent implements OnInit {
   cargarAuditoria(): void {
     console.log('[AUDITORÍA] Intentando cargar auditoría...');
 
-    if (!this.expediente) {
-      console.warn('[AUDITORÍA] El objeto expediente aún no está cargado.');
+    if (!this.expediente || !this.expediente.id) {
+      console.warn('[AUDITORÍA] Expediente no válido.');
       return;
     }
-
-    console.log('[AUDITORÍA] Expediente cargado:', this.expediente);
-
-    if (!this.expediente.id) {
-      console.warn('[AUDITORÍA] El expediente no tiene un ID válido.');
-      return;
-    }
-
-    console.log('[AUDITORÍA] Usando expediente ID:', this.expediente.id);
 
     this.auditoriaService.getAuditoriasPorExpediente(this.expediente.id).subscribe({
       next: (data) => {
         this.auditorias = data;
+        this.cdr.markForCheck();
         console.log('[AUDITORÍA] Auditoría cargada correctamente:', data);
       },
       error: (err) => {
@@ -328,6 +323,7 @@ export class ExpedienteDetalleComponent implements OnInit {
       }
     });
   }
+
 
   transformarRutaCargo(path: string): string | null {
     console.log('[DEBUG] path recibido en transformarRutaCargo:', path);
@@ -377,6 +373,10 @@ export class ExpedienteDetalleComponent implements OnInit {
               error: err => console.error('[AUDITORIA] Error al registrar auditoría de anulación', err)
             });
             this.cargarAuditoria();
+            this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+              this.router.navigate(['/detalle-expediente', this.expediente.id]);
+            });
+
           },
           error: () => {
             Swal.fire('Error', 'No se pudo anular el expediente', 'error');
@@ -860,6 +860,7 @@ export class ExpedienteDetalleComponent implements OnInit {
       console.error('ID de expediente no definido');
       return;
     }
+    this.loadingService.show();
 
     const uploads = this.documentosNuevos.
       map(doc => {
@@ -899,10 +900,12 @@ export class ExpedienteDetalleComponent implements OnInit {
           allowEscapeKey: false,
           confirmButtonColor: '#004C77'
         });
+        this.loadingService.hide();
         this.documentosNuevos = [];
         this.recargarDocumentosExistentes();
       },
       error: () => {
+        this.loadingService.hide();
         Swal.fire('Error', 'No se pudieron subir todos los documentos.', 'error');
       }
     });

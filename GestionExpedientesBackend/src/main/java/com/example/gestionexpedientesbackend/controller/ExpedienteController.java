@@ -1,5 +1,6 @@
 package com.example.gestionexpedientesbackend.controller;
 
+import com.example.gestionexpedientesbackend.dto.EstadoExpedienteDTO;
 import com.example.gestionexpedientesbackend.dto.ExpedienteDTO;
 import com.example.gestionexpedientesbackend.dto.ExpedienteDetalleResponseDTO;
 import com.example.gestionexpedientesbackend.model.Documento;
@@ -76,7 +77,7 @@ public class ExpedienteController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Documento no encontrado");
         }
     }
-    @PutMapping("/{id}/estado")
+    @PutMapping("/{id}/estado/simple")
     public ResponseEntity<?> cambiarEstadoExpediente(
             @PathVariable Long id,
             @RequestParam("estado") String estado) {
@@ -95,8 +96,6 @@ public class ExpedienteController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al cambiar el estado");
         }
     }
-
-
 
     @PostMapping("/registrar")
     public ResponseEntity<Expediente> registrar(@RequestBody Expediente expediente) {
@@ -140,6 +139,35 @@ public class ExpedienteController {
     @GetMapping("/por-usuario/{id}")
     public ResponseEntity<List<Expediente>> obtenerPorUsuario(@PathVariable Long id) {
         return ResponseEntity.ok(expedienteService.obtenerPorUsuario(id));
+    }
+    @PutMapping("/{id}/marcar-leido")
+    public ResponseEntity<Void> marcarComoLeido(@PathVariable Long id) {
+        expedienteService.marcarComoLeido(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/archivar")
+    public ResponseEntity<Void> archivarExpediente(@PathVariable Long id) {
+        expedienteService.archivarExpediente(id);
+        return ResponseEntity.ok().build();
+    }
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<?> cambiarEstadoConFecha(
+            @PathVariable Long id,
+            @RequestBody EstadoExpedienteDTO dto
+    ) {
+        try {
+            expedienteService.cambiarEstadoConFecha(id, dto.getEstado(), dto.getFechaLimite());
+            return ResponseEntity.ok(Map.of("mensaje", "Estado actualizado"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/expedientes/{id}/desechar")
+    public ResponseEntity<?> marcarComoDesechado(@PathVariable Long id) {
+        expedienteService.marcarComoDesechado(id);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{id}/detalle")

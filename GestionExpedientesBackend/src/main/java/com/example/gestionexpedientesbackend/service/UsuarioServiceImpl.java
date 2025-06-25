@@ -40,6 +40,30 @@ public class UsuarioServiceImpl implements UsuarioService {
     public Optional<Usuario> obtenerPorId(Long id) {
         return usuarioRepository.findById(id);
     }
+    @Override
+    public Usuario actualizarUsuario(Long id, Usuario usuario) {
+        Optional<Usuario> existente = usuarioRepository.findById(id);
+        if (existente.isPresent()) {
+            Usuario actual = existente.get();
+            actual.setNombre(usuario.getNombre());
+            actual.setCorreo(usuario.getCorreo());
+            actual.setDni(usuario.getDni());
+            actual.setRuc(usuario.getRuc());
+            actual.setRol(usuario.getRol());
+            actual.setTipoIdentidad(usuario.getTipoIdentidad());
+            actual.setTipoUsuario(usuario.getTipoUsuario());
+            actual.setFirmante(usuario.getFirmante());
+            actual.setTipoFirma(usuario.getTipoFirma());
+            return usuarioRepository.save(actual);
+        } else {
+            throw new RuntimeException("Usuario no encontrado con ID: " + id);
+        }
+    }
+
+    @Override
+    public void eliminarUsuario(Long id) {
+        usuarioRepository.deleteById(id);
+    }
 
     @Override
     public Usuario findByCorreo(String correo) {

@@ -11,7 +11,7 @@ public class Documento {
     private String nombreArchivo;
     private String rutaArchivo;
     private String tipoDocumento;
-
+    private String estado;
     private Long tamaño;
     private boolean visibleParaExternos;
 
@@ -26,6 +26,14 @@ public class Documento {
     @ManyToOne
     @JoinColumn(name = "expediente_id")
     private Expediente expediente;
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
 
     public Long getId() {
         return id;

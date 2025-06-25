@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,10 +51,49 @@ public class ExpedienteServiceImpl implements ExpedienteService {
         String target = "|" + usuarioId + "|";
         return expedienteRepository.findAll().stream()
                 .filter(e -> ("|" + e.getUsuariosEmisores() + "|").contains(target) ||
-                        ("|" + e.getUsuariosDestinatarios() + "|").contains(target))
+                             ("|" + e.getUsuariosDestinatarios() + "|").contains(target))
                 .toList();
     }
+    @Override
+    public void marcarComoLeido(Long id) {
+        Expediente expediente = expedienteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
+        expediente.setLeido(true);
+        expedienteRepository.save(expediente);
+    }
+    @Override
+    public void cambiarEstadoConFecha(Long id, String estado, String fechaLimiteStr) throws Exception {
+        Optional<Expediente> optional = expedienteRepository.findById(id);
+        if (optional.isEmpty()) {
+            throw new Exception("Expediente no encontrado");
+        }
 
+        Expediente expediente = optional.get();
+        expediente.setEstado(estado);
+
+        if (fechaLimiteStr != null && !fechaLimiteStr.isEmpty()) {
+            LocalDate fechaLimite = LocalDate.parse(fechaLimiteStr);
+            expediente.setFechaLimiteRespuesta(fechaLimite); // Asegúrate de tener este campo
+        }
+
+        expedienteRepository.save(expediente);
+    }
+
+    @Override
+    public void marcarComoDesechado(Long id) {
+        Expediente expediente = expedienteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
+        expediente.setDesechado(true);
+        expedienteRepository.save(expediente);
+    }
+
+    @Override
+    public void archivarExpediente(Long id) {
+        Expediente expediente = expedienteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
+        expediente.setArchivado(true);
+        expedienteRepository.save(expediente);
+    }
     @Override
     public ExpedienteDetalleResponseDTO obtenerDetalleExpediente(Long id) {
         Optional<Expediente> optionalExp = expedienteRepository.findById(id);

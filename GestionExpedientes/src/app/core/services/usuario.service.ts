@@ -13,6 +13,8 @@ export interface Usuario {
   tipoIdentidad: 'PERSONA' | 'ENTIDAD';
   ruc?: string;
   dni: string;
+  firmante?: boolean;       // ← agrega esto
+  tipoFirma?: string;
 }
 @Injectable({
   providedIn: 'root'
@@ -81,30 +83,39 @@ export class UsuarioService {
       ) : null;
     };
   }
-validarDniAsync(): AsyncValidatorFn {
-  return (control: AbstractControl): Observable<ValidationErrors | null> => {
-    const dni = control.value;
-    if (!dni) return of(null);
+  validarDniAsync(): AsyncValidatorFn {
+    return (control: AbstractControl): Observable<ValidationErrors | null> => {
+      const dni = control.value;
+      if (!dni) return of(null);
 
-    return this.verificarDniExistente(dni).pipe(
-      map(existe => (existe ? { dniExistente: true } : null)),
-      catchError(() => of(null))
-    );
-  };
-}
+      return this.verificarDniExistente(dni).pipe(
+        map(existe => (existe ? { dniExistente: true } : null)),
+        catchError(() => of(null))
+      );
+    };
+  }
 
-verificarDniExistente(dni: string): Observable<boolean> {
-  const headers = this.getAuthHeaders();
-  return this.http.get<boolean>(`${this.apiUrl}/existe-dni`, {
-    headers,
-    params: { dni }
-  });
-}
+  verificarDniExistente(dni: string): Observable<boolean> {
+    const headers = this.getAuthHeaders();
+    return this.http.get<boolean>(`${this.apiUrl}/existe-dni`, {
+      headers,
+      params: { dni }
+    });
+  }
 
 
   obtenerUsuariosPorIds(ids: string[]): Observable<any[]> {
     const headers = this.getAuthHeaders();
     return this.http.post<any[]>(`${this.apiUrl}/por-ids`, ids, { headers });
+  }
+  actualizarUsuario(id: number, usuario: Usuario): Observable<Usuario> {
+    const headers = this.getAuthHeaders();
+    return this.http.put<Usuario>(`${this.apiUrl}/actualizar/${id}`, usuario, { headers });
+  }
+
+  eliminarUsuario(id: number): Observable<any> {
+    const headers = this.getAuthHeaders();
+    return this.http.delete(`${this.apiUrl}/eliminar/${id}`, { headers });
   }
 
 }

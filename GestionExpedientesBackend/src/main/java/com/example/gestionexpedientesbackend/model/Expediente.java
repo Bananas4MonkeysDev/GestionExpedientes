@@ -1,6 +1,8 @@
 package com.example.gestionexpedientesbackend.model;
 
 import jakarta.persistence.*;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @Entity
@@ -23,14 +25,56 @@ public class Expediente {
     private String fecha;
     private String comentario;
     private boolean reservado;
+    @Column(name = "fecha_limite_respuesta")
+    private LocalDate fechaLimiteRespuesta;
+
     @Column(name = "creado_por")
     private Long creadoPor;
     @Column(length = 1000)
     private String usuariosEmisores;
+    @Column(name = "leido")
+    private boolean leido = false;
+   @Column(name = "archivado")
+    private boolean archivado = false;
+    @Column(name="desechado")
+    private boolean desechado = false;
+
+    public LocalDate getFechaLimiteRespuesta() {
+        return fechaLimiteRespuesta;
+    }
+
+    public void setFechaLimiteRespuesta(LocalDate fechaLimiteRespuesta) {
+        this.fechaLimiteRespuesta = fechaLimiteRespuesta;
+    }
 
     public Long getId() {
         return id;
     }
+
+    public boolean isDesechado() {
+        return desechado;
+    }
+
+    public void setDesechado(boolean desechado) {
+        this.desechado = desechado;
+    }
+
+    public boolean isLeido() {
+        return leido;
+    }
+
+    public void setLeido(boolean leido) {
+        this.leido = leido;
+    }
+
+    public boolean isArchivado() {
+        return archivado;
+    }
+
+    public void setArchivado(boolean archivado) {
+        this.archivado = archivado;
+    }
+
     public String getEstado() {
         return estado;
     }

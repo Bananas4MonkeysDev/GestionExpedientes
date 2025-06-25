@@ -4,6 +4,8 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { UsuarioService } from '../../../../core/services/usuario.service';
+import { ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -13,17 +15,31 @@ import { UsuarioService } from '../../../../core/services/usuario.service';
   styleUrl: './login.component.css'
 })
 export class LoginComponent {
+
   formularioLogin: FormGroup;
   cargando = false;
   errorLogin = false;
   verPassword = false;
 
-  constructor(private fb: FormBuilder, private router: Router, private usuarioService: UsuarioService
+  constructor(private authService: AuthService, private route: ActivatedRoute, private fb: FormBuilder, private router: Router, private usuarioService: UsuarioService
   ) {
     this.formularioLogin = this.fb.group({
       usuario: ['', Validators.required],
       password: ['', Validators.required]
     });
+    if (this.authService.tieneSesionActiva()) {
+      const redirect = this.route.snapshot.queryParamMap.get('redirect');
+      const expedienteId = this.route.snapshot.queryParamMap.get('id');
+
+      if (redirect) {
+        this.router.navigate([`${redirect}`], {
+          queryParams: expedienteId ? { id: expedienteId } : {}
+        });
+      } else {
+        this.router.navigate(['home']);
+      }
+    }
+
   }
 
   onSubmit() {
@@ -41,7 +57,19 @@ export class LoginComponent {
       this.usuarioService.login(loginData).subscribe({
         next: (response) => {
           const token = response.token;
-          localStorage.setItem('jwt', token); this.router.navigate(['/home']);
+          localStorage.setItem('jwt', token);
+
+          // Lee los parámetros de redirección
+          const redirect = this.route.snapshot.queryParamMap.get('redirect');
+          const expedienteId = this.route.snapshot.queryParamMap.get('id');
+
+          if (redirect) {
+            this.router.navigate([`${redirect}`], {
+              queryParams: expedienteId ? { id: expedienteId } : {}
+            });
+          } else {
+            this.router.navigate(['home']);
+          }
         },
         error: (err) => {
           console.error('Error en login:', err);
@@ -53,5 +81,4 @@ export class LoginComponent {
       this.formularioLogin.markAllAsTouched();
     }
   }
-
 }

@@ -17,5 +17,9 @@ public interface ExpedienteService {
    void notificarRegistroExpediente(Long expedienteId, boolean conDocumentos);
     List<Expediente> obtenerTodos();
     List<Expediente> obtenerPorUsuario(Long usuarioId);
+    void marcarComoLeido(Long id);
+    void archivarExpediente(Long id);
+    void marcarComoDesechado(Long id);
+    void cambiarEstadoConFecha(Long id, String estado, String fechaLimite) throws Exception;
 
 }

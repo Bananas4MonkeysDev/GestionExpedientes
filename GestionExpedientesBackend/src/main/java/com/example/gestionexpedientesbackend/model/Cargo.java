@@ -15,6 +15,7 @@ public class Cargo {
 
     @Column(unique = true, nullable = true)
     private String codigo; // Ejemplo: CAR-000001
+    private String estado;
 
     @Column(nullable = false)
     private LocalDate fecha;
@@ -31,6 +32,14 @@ public class Cargo {
 
     public Long getUsuarioCreadorId() {
         return usuarioCreadorId;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 
     public void setUsuarioCreadorId(Long usuarioCreadorId) {

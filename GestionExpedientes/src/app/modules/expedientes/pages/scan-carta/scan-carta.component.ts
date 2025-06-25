@@ -4,11 +4,12 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-scan-carta',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './scan-carta.component.html',
   styleUrls: ['./scan-carta.component.css']
 })
@@ -20,6 +21,7 @@ export class ScanCartaComponent {
   selectedFile!: File;
   imagenSrc: string | null = null;
   mostrarResultado = false;
+  campoSeleccionado: 'asunto' | 'emisor' | 'destinatario' | 'referencia' | null = null;
 
   selection = {
     startX: 0, startY: 0, endX: 0, endY: 0,
@@ -31,11 +33,19 @@ export class ScanCartaComponent {
     private dialogRef: MatDialogRef<ScanCartaComponent>,
     private cd: ChangeDetectorRef
   ) {
-    dialogRef.disableClose = true; // ⛔️ no permitir cerrar clic fuera
+    dialogRef.disableClose = true; 
   }
 
   cerrar() {
-    this.dialogRef.close();
+    if (!this.ocrResult || !this.campoSeleccionado) {
+      this.dialogRef.close();
+      return;
+    }
+
+    this.dialogRef.close({
+      texto: this.ocrResult.trim(),
+      destino: this.campoSeleccionado
+    });
   }
 
   onFileSelected(event: Event) {

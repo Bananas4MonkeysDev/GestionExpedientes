@@ -24,10 +24,18 @@
     </div>
 
     <!-- Título actualizado -->
-    <h1 class="text-2xl font-bold text-[#004C77] mb-4">
-      Adicionar Expediente
-      <span *ngIf="tipoExpediente"> - {{ tipoExpediente | titlecase }}</span>
-    </h1>
+    <div class="flex justify-between items-center mb-2">
+
+      <h1 class="text-2xl font-bold text-[#004C77] mb-4">
+        Adicionar Expediente
+        <span *ngIf="tipoExpediente"> - {{ tipoExpediente | titlecase }}</span>
+      </h1>
+      <button *ngIf="pasoActual === 4" (click)="irARegistroExpediente()" matTooltip="Registrar nuevo expediente"
+        class="cursor-pointer flex items-center gap-2 px-4 py-1 text-sm rounded-md bg-[#004C77] text-white hover:bg-[#F36C21] transition-all">
+        <mat-icon class="!text-white">add</mat-icon>
+        Nuevo Expediente
+      </button>
+    </div>
 
 
     <!-- Barra de pasos -->
