@@ -14,5 +14,6 @@ public interface DocumentoService {
     Documento actualizarDocumento(Documento documento);
 
     void eliminarPorId(Long id);
+    List<Documento> obtenerPorIdsSeparados(String idsSeparadosPorPipe);
 
 }

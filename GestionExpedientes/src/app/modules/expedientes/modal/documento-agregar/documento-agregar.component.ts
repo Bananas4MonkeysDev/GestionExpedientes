@@ -158,16 +158,6 @@ export class DocumentoAgregarComponent {
       const esEdicion = !!this.form.get('id')?.value;
       const usuarioActual = this.authService.getUserFromToken();
       const grupoAreaId = this.form.value.grupoAreaId;
-
-      Swal.fire({
-        title: esEdicion ? 'Actualizando usuario...' : 'Registrando usuario...',
-        text: 'Por favor, espera un momento',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
-      });
       const request = esEdicion
         ? this.usuarioService.actualizarUsuario(this.form.get('id')!.value, nuevoUsuario)
         : this.usuarioService.registrarUsuario(nuevoUsuario);

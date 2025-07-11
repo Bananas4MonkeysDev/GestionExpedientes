@@ -15,100 +15,114 @@
     <!-- CONTENIDO PRINCIPAL -->
     <div class="flex w-full h-[750px] bg-white shadow rounded-lg overflow-hidden gap-4 p-4">
         <!-- LADO IZQUIERDO: BANDEJA -->
-        <div class="w-[35%] h-full bg-white border-r border-gray-200 flex flex-col">
-            <!-- Filtros con estilo formal -->
-            <div class="flex justify-around text-sm text-gray-700 py-2 bg-white shadow-sm rounded-t-md">
-                <button (click)="filtrar('recientes')" matTooltip="Ver recientes"
-                    class="px-4 py-1 rounded cursor-pointer transition font-medium" [ngClass]="{
-            'text-[#004C77] bg-[#F0F8FF]': filtroActivo === 'recientes',
-            'hover:bg-gray-100': filtroActivo !== 'recientes'
-          }">
-                    Recientes
+        <div class="w-[40%] h-full bg-white border-r border-gray-200 flex">
+            <!-- PESTAÑAS VERTICALES (TIPOS) -->
+            <div class="flex flex-col bg-gray-100 border-r border-gray-300">
+                <button (click)="filtroTipo = 'todos'; aplicarFiltros()"
+                    class="cursor-pointer w-[48px] h-[130px] flex items-center justify-center text-xs font-medium transition"
+                    [ngClass]="{
+        'bg-white border-r-4 border-[#004C77] text-[#004C77]': filtroTipo === 'todos',
+        'text-gray-600 hover:bg-gray-200': filtroTipo !== 'todos'
+      }">
+                    <span class="transform -rotate-90 whitespace-nowrap">Todos los tipos</span>
                 </button>
-                <button (click)="filtrar('todos')" matTooltip="Ver todos"
-                    class="px-4 py-1 rounded cursor-pointer transition font-medium" [ngClass]="{
-            'text-[#004C77] bg-[#F0F8FF]': filtroActivo === 'todos',
-            'hover:bg-gray-100': filtroActivo !== 'todos'
-          }">
-                    Todos
+                <button (click)="filtroTipo = 'Receptor'; aplicarFiltros()"
+                    class="cursor-pointer w-[48px] h-[130px] flex items-center justify-center text-xs font-medium transition"
+                    [ngClass]="{
+        'bg-white border-r-4 border-[#004C77] text-[#004C77]': filtroTipo === 'Receptor',
+        'text-gray-600 hover:bg-gray-200': filtroTipo !== 'Receptor'
+      }">
+                    <span class="transform -rotate-90 whitespace-nowrap">Receptores</span>
                 </button>
-                <button (click)="filtrar('archivados')" matTooltip="Ver archivados"
-                    class="px-4 py-1 rounded cursor-pointer transition font-medium" [ngClass]="{
-            'text-[#004C77] bg-[#F0F8FF]': filtroActivo === 'archivados',
-            'hover:bg-gray-100': filtroActivo !== 'archivados'
-          }">
-                    Archivados
+                <button (click)="filtroTipo = 'Emisor'; aplicarFiltros()"
+                    class="cursor-pointer w-[48px] h-[130px] flex items-center justify-center text-xs font-medium transition"
+                    [ngClass]="{
+        'bg-white border-r-4 border-[#004C77] text-[#004C77]': filtroTipo === 'Emisor',
+        'text-gray-600 hover:bg-gray-200': filtroTipo !== 'Emisor'
+      }">
+                    <span class="transform -rotate-90 whitespace-nowrap">Emisores</span>
                 </button>
             </div>
-
-            <!-- Modo admin -->
-            <div *ngIf="esAdmin" class="text-xs text-green-700 px-4 pt-2">
-                Estás viendo todos los expedientes (modo administrador).
-            </div>
-
-            <!-- Lista de tarjetas -->
-            <div class="flex-1 overflow-auto scrollbar p-2 pr-3">
-                <div *ngFor="let exp of expedientesFiltrados"
-                    class="relative group hover:bg-[#EAF4FB] transition-colors border-b border-gray-100">
-
-                    <!-- Toda la tarjeta clickeable excepto acciones -->
-                    <div class="px-4 py-3 cursor-pointer" (click)="verDetalle(exp)">
-                        <div class="font-semibold text-[#004C77] text-sm">{{ exp.asunto }}</div>
-                        <div class="text-sm text-gray-500">{{ exp.fecha }}</div>
-                        <div class="text-xs text-gray-400">#{{ exp.codigo }}</div>
-                    </div>
-
-                    <div class="absolute right-3 top-1/2 -translate-y-1/2 flex gap-2 items-center z-10">
-                        <mat-icon matTooltip="Marcar como leído" (click)="marcarComoLeido($event, exp)"
-                            class="text-gray-400 hover:text-green-600 transition-colors duration-200 cursor-pointer">
-                            mark_email_read
-                        </mat-icon>
-
-                        <mat-icon matTooltip="Archivar" (click)="archivar($event, exp)"
-                            class="text-gray-400 hover:text-yellow-600 transition-colors duration-200 cursor-pointer">
-                            archive
-                        </mat-icon>
-
-                        <mat-icon matTooltip="Eliminar" (click)="eliminar($event, exp)"
-                            class="text-gray-400 hover:text-red-600 transition-colors duration-200 cursor-pointer">
-                            delete
-                        </mat-icon>
-                    </div>
-
-                    <!-- Punto rojo de no leído -->
-                    <div *ngIf="!exp.leido" class="absolute left-2 top-6 h-2 w-2 rounded-full bg-red-500"></div>
+            <!-- CONTENEDOR PRINCIPAL DE LISTA -->
+            <div class="flex flex-col flex-1">
+                <!-- Filtros superiores: Recientes / Todos / Archivados -->
+                <div class="flex justify-around text-sm text-gray-700 py-2 bg-white shadow-sm rounded-t-md">
+                    <button (click)="filtrar('recientes')" matTooltip="Ver recientes"
+                        class="px-4 py-1 rounded cursor-pointer transition font-medium" [ngClass]="{
+          'text-[#004C77] bg-[#F0F8FF]': filtroActivo === 'recientes',
+          'hover:bg-gray-100': filtroActivo !== 'recientes'
+        }">
+                        Recientes
+                    </button>
+                    <button (click)="filtrar('todos')" matTooltip="Ver todos"
+                        class="px-4 py-1 rounded cursor-pointer transition font-medium" [ngClass]="{
+          'text-[#004C77] bg-[#F0F8FF]': filtroActivo === 'todos',
+          'hover:bg-gray-100': filtroActivo !== 'todos'
+        }">
+                        Todos
+                    </button>
+                    <button (click)="filtrar('archivados')" matTooltip="Ver archivados"
+                        class="px-4 py-1 rounded cursor-pointer transition font-medium" [ngClass]="{
+          'text-[#004C77] bg-[#F0F8FF]': filtroActivo === 'archivados',
+          'hover:bg-gray-100': filtroActivo !== 'archivados'
+        }">
+                        Archivados
+                    </button>
                 </div>
+                <!-- Indicador de admin -->
+                <div *ngIf="esAdmin" class="text-xs text-green-700 px-4 pt-2">
+                    Estás viendo todos los expedientes (modo administrador).
+                </div>
+                <!-- Lista de expedientes -->
+                <div class="flex-1 overflow-auto scrollbar p-2 pr-3">
+                    <div *ngFor="let exp of expedientesFiltrados"
+                        class="relative group hover:bg-[#EAF4FB] transition-colors border-b border-gray-100">
+                        <div class="px-4 py-3 cursor-pointer" (click)="verDetalle(exp)">
+                            <div class="font-semibold text-[#004C77] text-sm">{{ exp.asunto }}</div>
+                            <div class="text-sm text-gray-500">{{ exp.fecha }}</div>
+                            <div class="text-xs text-gray-400">#{{ exp.codigo }}</div>
+                        </div>
+                        <div class="absolute right-3 top-1/2 -translate-y-1/2 flex gap-2 items-center z-10">
+                            <mat-icon matTooltip="Marcar como leído" (click)="marcarComoLeido($event, exp)"
+                                class="text-gray-400 hover:text-green-600 transition-colors duration-200 cursor-pointer">
+                                mark_email_read
+                            </mat-icon>
+                            <mat-icon matTooltip="Archivar" (click)="archivar($event, exp)"
+                                class="text-gray-400 hover:text-yellow-600 transition-colors duration-200 cursor-pointer">
+                                archive
+                            </mat-icon>
+                            <mat-icon matTooltip="Eliminar" (click)="eliminar($event, exp)"
+                                class="text-gray-400 hover:text-red-600 transition-colors duration-200 cursor-pointer">
+                                delete
+                            </mat-icon>
+                        </div>
+                        <div *ngIf="!exp.leido" class="absolute left-2 top-6 h-2 w-2 rounded-full bg-red-500"></div>
+                    </div>
 
-                <!-- Si no hay expedientes filtrados -->
-                <div *ngIf="expedientesFiltrados.length === 0" class="p-4 text-center text-gray-500">
-                    No hay expedientes para mostrar.
+                    <div *ngIf="expedientesFiltrados.length === 0" class="p-4 text-center text-gray-500">
+                        No hay expedientes para mostrar.
+                    </div>
                 </div>
             </div>
         </div>
-
         <!-- LADO DERECHO: DETALLE -->
-        <div class="w-[65%] p-6 relative overflow-y-auto">
-
+        <div class="w-[60%] p-6 relative overflow-y-auto">
             <!-- Si no hay expediente seleccionado -->
             <div *ngIf="!expedienteSeleccionado"
                 class="h-full flex flex-col justify-center items-center text-center text-gray-400">
                 <mat-icon class="text-7xl mb-3 text-[#004C77]">mail_outline</mat-icon>
                 <p class="text-lg">Selecciona un expediente para ver sus detalles</p>
             </div>
-
             <!-- DETALLE DE EXPEDIENTE -->
             <div *ngIf="expedienteSeleccionado" class="space-y-6">
-
                 <!-- Botón Volver -->
                 <button (click)="expedienteSeleccionado = null"
                     class="flex items-center gap-2 text-[#004C77] hover:text-[#F36C21] font-medium transition cursor-pointer">
                     <mat-icon>arrow_back</mat-icon>
                     <span>Volver</span>
                 </button>
-
                 <!-- Tarjeta principal -->
                 <div class="bg-white border border-gray-200 shadow rounded-xl p-6 space-y-5">
-
                     <!-- Título -->
                     <div class="flex items-center gap-2 text-2xl font-bold text-[#004C77]">
                         <mat-icon>description</mat-icon>
@@ -213,6 +227,31 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Documentos listos para firmar -->
+                    <div *ngIf="documentosFirmables?.length && documentosFirmables.length > 0">
+                        <h3 class="text-sm font-semibold text-[#004C77] mb-2 flex items-center gap-1">
+                            <mat-icon class="text-base">how_to_reg</mat-icon> Documentos listos para firmar
+                        </h3>
+                        <div class="space-y-2">
+                            <div *ngFor="let doc of documentosFirmables"
+                                class="bg-green-50 border border-green-200 rounded-md px-4 py-3 flex justify-between items-center hover:bg-green-100 transition">
+                                <div>
+                                    <p class="font-medium text-green-800 text-sm">{{ doc.nombreArchivo }}</p>
+                                    <p class="text-xs text-green-600 italic">
+                                        {{ doc.tipoDocumento || 'No especificado' }}
+                                        - {{
+                                        formatearPeso(doc['tamaño']) }}
+                                        bytes
+                                    </p>
+                                </div>
+                                <button matTooltip="Firmar documento"
+                                    class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition">
+                                    Firmar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <ng-template #sinDocumentos>
                         <p class="text-gray-500 italic">No hay documentos registrados.</p>
                     </ng-template>
@@ -220,7 +259,7 @@
 
                 <!-- Dentro del *ngFor="let expediente of expedientesFiltrados" -->
                 <!-- BLOQUE DE ACCIONES PARA EXPEDIENTE SELECCIONADO -->
-                <div class="bg-white rounded-lg shadow p-4 mb-4" *ngIf="expedienteSeleccionado">
+                <div  class="bg-white rounded-lg shadow p-4 mb-4" *ngIf="expedienteSeleccionado && expedienteSeleccionado?.tipo === 'Receptor'">
                     <div class="mt-4 border-t pt-2">
 
                         <!-- Si está pendiente -->
@@ -247,7 +286,8 @@
                         <ng-template #aprobado>
                             <div class="flex items-center justify-between">
                                 <span class="text-sm italic text-gray-600">
-                                    Fecha límite de respuesta: {{ expedienteSeleccionado.fechaLimiteRespuesta || 'No asignada' }}
+                                    Fecha límite de respuesta: {{ expedienteSeleccionado.fechaLimiteRespuesta || 'No
+                                    asignada' }}
                                 </span>
 
                                 <button class="bg-blue-700 text-white px-4 py-1 rounded hover:bg-blue-800 transition"

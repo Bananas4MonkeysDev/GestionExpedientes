@@ -21,5 +21,6 @@ public interface ExpedienteService {
     void archivarExpediente(Long id);
     void marcarComoDesechado(Long id);
     void cambiarEstadoConFecha(Long id, String estado, String fechaLimite) throws Exception;
+    List<Expediente> obtenerPorIds(List<Long> ids);
 
 }

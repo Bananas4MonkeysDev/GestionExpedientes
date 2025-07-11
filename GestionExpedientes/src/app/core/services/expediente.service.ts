@@ -106,10 +106,13 @@ export class ExpedienteService {
       headers: this.getHeaders()
     });
   }
-
-
   obtenerExpedientesPorUsuario(usuarioId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/por-usuario/${usuarioId}`, {
+      headers: this.getHeaders()
+    });
+  }
+  obtenerExpedientesPorFirma(usuarioId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/asignados-condicionados/${usuarioId}`, {
       headers: this.getHeaders()
     });
   }
@@ -123,5 +126,15 @@ export class ExpedienteService {
   marcarComoDesechado(id: number): Observable<any> {
     return this.http.put(`${this.baseUrl}/expedientes/${id}/desechar`, null);
   }
-
+  registrarFlujoProceso(data: any): Observable<any> {
+    console.log("Datos a enviar:", data);
+    return this.http.post(`http://localhost:8080/api/flujo-proceso/registrar`, data, {
+      headers: this.getHeaders()
+    });
+  }
+  obtenerDocumentosFirmables(expedienteId: number, usuarioId: number) {
+    return this.http.get<any[]>(`${this.baseUrl}/${expedienteId}/documentos-firmables`, {
+      params: { usuarioId }
+    });
+  }
 }

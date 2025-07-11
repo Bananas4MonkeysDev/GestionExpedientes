@@ -13,5 +13,6 @@ public interface EmailService {
     String generarMensajeExpediente(Expediente expediente, List<Documento> documentos, String nombreRemitente);
     String generarMensajeCargo(Cargo cargo, List<Documento> documentos, Expediente expediente, String nombreRemitente);
     void enviarCorreoSimple(List<String> destinatarios, String asunto, String cuerpo);
-
+    String generarMensajeFirma(String nombreUsuario, Expediente expediente, List<Documento> documentos, int nivel, String fechaLimite, String nombreRemitente);
+    String generarMensajeEspera(String nombreUsuario, Expediente expediente, int nivel, String nombreRemitente);
 }

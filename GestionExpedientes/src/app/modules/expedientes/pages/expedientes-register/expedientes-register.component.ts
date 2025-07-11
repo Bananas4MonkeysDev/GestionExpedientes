@@ -5,14 +5,14 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { DocumentoAgregarComponent } from '../../modal/documento-agregar/documento-agregar.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatOptionModule } from '@angular/material/core';
+import { MatNativeDateModule, MatOptionModule } from '@angular/material/core';
 import { MatInputModule } from '@angular/material/input';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { FormsModule } from '@angular/forms';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import Swal from 'sweetalert2';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ExpedienteService } from '../../../../core/services/expediente.service';
 import { UsuarioService } from '../../../../core/services/usuario.service';
 import { ReferenciaService, Referencia } from '../../../../core/services/referencia.service';
@@ -26,22 +26,40 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { AuditoriaService } from '../../../../core/services/auditoria.service';
 import { OcrService } from '../../../../core/services/ocr-service.service';
 import { ScanCartaComponent } from '../scan-carta/scan-carta.component';
+import { MatButton, MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+
+interface NivelFirma {
+  usuarios: string[];
+  usuarioSeleccionado?: string;
+}
 
 interface ReferenciaCompleta {
   serie: string;
   asunto: string;
   tipo: 'Documento' | 'Expediente' | 'MANUAL';
 }
+interface DocumentoNuevo {
+  nombre: string;
+  archivo: File;
+  cargado?: boolean;
+  progreso?: number;
+  visibleParaExternos?: boolean;
+  tipoDocumento?: string;
+  esExistente: false;
+}
 
 interface DocumentoExpediente {
   nombre: string;
   archivo: File;
-  flujo: string;
+  flujo: any[];
   areas: string[];
   cargado: boolean;
   progreso?: number;
   visibleParaExternos?: boolean;
   tipoDocumento?: string;
+  esExistente?: boolean;
 }
 export interface Usuario {
   id: number; // ← Agregado
@@ -62,6 +80,7 @@ export interface Usuario {
   imports: [
     MatChipsModule,
     ReactiveFormsModule,
+    MatButtonToggleModule,
     FormsModule,
     CommonModule,
     MatDialogModule,
@@ -71,12 +90,17 @@ export interface Usuario {
     MatInputModule,
     NgxMatSelectSearchModule,
     MatTooltipModule,
-    MatIcon
+    MatIcon,
+    MatDatepickerModule,
+    MatInputModule,
+    MatNativeDateModule,
   ]
 })
 export class ExpedientesRegisterComponent implements OnInit {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
-
+  documentosNuevos: DocumentoNuevo[] = [];
+  idExpedienteRespondido: number | null = null;
+  minDate = new Date();
   cargo?: File;
   fechaCargo: string = '';
   arrastrandoCargo = false;
@@ -86,15 +110,21 @@ export class ExpedientesRegisterComponent implements OnInit {
   tipoExpediente: 'Emisor' | 'Receptor' | null = null;
   correoEmisor = '';
   isLoading = false;
-
+  documentosExistentes: any[] = [];
+  modoFlujoFirma: 'individual' | 'general' = 'individual';
+  niveles: { nombre: string, usuarios: any[] }[] = [];
+  usuariosInternos: any[] = [];
+  expediente: any = null;
   formularioPaso1!: FormGroup;
   formularioDocumento!: FormGroup;
-
+  usuariosInternosFiltrados: Usuario[] = [];
   proyectos: Proyecto[] = [];
   tiposDocumento = ['Anexos', 'Actas', 'Carta', 'Oficio', 'Contrato', 'Adenda', 'Solicitud de compra', 'Cotizaciones', 'Cuadro Comparativo', 'Orden de Compra', 'Guia', 'Factura', 'Informe', 'Anexo'];
+  nivelesFirmaGenerales: any[] = [];
+  minDateString: string | undefined;
 
   tiposUsuario: Usuario['tipoIdentidad'][] = ['PERSONA', 'GRUPO', 'ENTIDAD'];
-  tiposReferencia: Referencia['tipo'][] = ['Documento', 'Expediente'];
+  tiposReferencia: Referencia['tipo'][] = [];
   referenciasOriginales: Referencia[] = [];
 
   todosUsuarios: Usuario[] = [];
@@ -125,10 +155,19 @@ export class ExpedientesRegisterComponent implements OnInit {
   arrastrando = false;
   seccionActiva: 'registro' | 'estado' | 'auditoria' = 'registro';
 
-  constructor(private ocrService: OcrService, private auditoriaService: AuditoriaService
+  constructor(private route: ActivatedRoute,
+    private ocrService: OcrService, private auditoriaService: AuditoriaService
     , private authService: AuthService, private proyectoService: ProyectoService, private loadingService: LoadingOverlayService, private fb: FormBuilder, private dialog: MatDialog, private router: Router, private expedienteService: ExpedienteService, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
 
   ngOnInit(): void {
+    this.tiposReferencia = this.tipoExpediente === 'Emisor'
+      ? ['Expediente']
+      : ['Documento', 'Expediente'];
+    const hoy = new Date();
+    const yyyy = hoy.getFullYear();
+    const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dd = String(hoy.getDate()).padStart(2, '0');
+    this.minDateString = `${yyyy}-${mm}-${dd}`;
     this.formularioPaso1 = this.fb.group({
       asunto: ['', Validators.required],
       referencia: this.controlReferencia,
@@ -139,6 +178,7 @@ export class ExpedientesRegisterComponent implements OnInit {
       proyecto: ['', Validators.required],
       reservado: ['']
     });
+
     this.setReferenciaValidator(false);  // Inicialmente, las referencias no son obligatorias
 
     this.usuarioService.obtenerUsuarios().subscribe({
@@ -150,6 +190,11 @@ export class ExpedientesRegisterComponent implements OnInit {
         }));
         this.usuariosFiltradosTo = [...this.todosUsuarios];
         this.usuariosFiltradosCc = [...this.todosUsuarios];
+        this.usuariosInternos = this.todosUsuarios.filter(u => u.tipoUsuario === 'INTERNO');
+        console.log("[DEBUG]: Usuariois Internos:", this.usuariosInternos);
+        this.usuariosInternosFiltrados = this.todosUsuarios.filter(u =>
+          u.tipoUsuario?.toUpperCase() === 'INTERNO'
+        );
       },
       error: err => {
         console.error('[ERROR] Error al cargar usuarios:', err);
@@ -179,7 +224,329 @@ export class ExpedientesRegisterComponent implements OnInit {
     this.searchCtrlUsuario.valueChanges.subscribe(() => this.filtrarUsuariosTo());
     this.searchCtrlCc.valueChanges.subscribe(() => this.filtrarUsuariosCc());
     this.searchCtrlReferencia.valueChanges.subscribe(() => this.filtrarReferencias());
+    this.controlReferencia.valueChanges.subscribe((referencias: ReferenciaCompleta[] | null) => {
+      if (!referencias || this.tipoExpediente !== 'Emisor') return;
+      console.log("Estoy inicializando un emisor.");
+      const expedienteRef = referencias.find(r => r.tipo === 'Expediente');
+      if (expedienteRef) {
+        const id = this.obtenerIdExpedienteDesdeSerie(expedienteRef.serie);
+        console.log("aqui la id:", id);
+        if (id) {
+          this.cargarExpedienteDesdeReferencia(id);
+        }
+      }
+    });
+
+
+    this.route.queryParams.subscribe(params => {
+      const tipoParam = params['tipo'];
+      const responderA = params['responderA'];
+      this.idExpedienteRespondido = +responderA || null;
+
+      if (tipoParam === 'Emisor') {
+        this.tipoExpediente = 'Emisor';
+        this.pasoActual = 2;
+
+        // Cargar datos del expediente original para precargar campos
+        if (responderA) {
+          this.expedienteService.getExpedienteDetalle(+responderA).subscribe({
+            next: (data) => {
+              this.documentosExistentes = data.documentos.map((doc: any) => ({
+                id: doc.id,
+                nombreArchivo: doc.nombreArchivo,
+                tipoDocumento: doc.tipoDocumento,
+                rutaArchivo: doc.rutaArchivo,
+                tamaño: doc.tamaño,
+                visibleParaExternos: doc.visibleParaExternos,
+                esExistente: true
+              }));
+
+              const exp = data.expediente;
+
+              // Asignar asunto como "Respuesta a ..."
+              const nuevoAsunto = `Respuesta a ${exp.asunto}`;
+
+              // Referencias → se selecciona el expediente original como referencia
+              const referenciaExpediente: ReferenciaCompleta = {
+                serie: exp.codigo,
+                asunto: exp.asunto,
+                tipo: 'Expediente' // ← tipo válido según tu lógica de referencias
+              };
+
+              this.controlReferencia.setValue([referenciaExpediente], { emitEvent: false });
+              // Usuario emisor ← los destinatarios del original
+              const receptores = data.usuariosDestinatarios.map((u: any) => u.nombre);
+              this.controlUsuario.setValue(receptores);
+              // Usuario destinatario ← los emisores del original
+              const emisores = data.usuariosEmisores.map((u: any) => u.nombre);
+              this.controlUsuarioCc.setValue(emisores);
+              // Proyecto
+              this.formularioPaso1.patchValue({ proyecto: exp.proyecto });
+              this.formularioPaso1.patchValue({ reservado: exp.reservado ? 'si' : 'no' })
+              // Asunto
+              this.formularioPaso1.patchValue({ asunto: nuevoAsunto });
+              // Fecha actual
+              const hoy = new Date();
+              const offset = hoy.getTimezoneOffset() * 60000;
+              const fechaLocal = new Date(hoy.getTime() - offset).toISOString().slice(0, 10);
+              this.formularioPaso1.patchValue({ fecha: fechaLocal });
+            },
+            error: (err) => {
+              console.error('[ERROR] No se pudo cargar expediente original para prellenar', err);
+            }
+          });
+        }
+      }
+    });
   }
+  obtenerIdExpedienteDesdeSerie(serie: string): number | null {
+    const ref = this.referenciasOriginales.find(r => r.serie === serie && r.tipo === 'Expediente');
+    return ref?.id ? Number(ref.id) : null;
+  }
+
+  filtrarUsuariosInternos(nivel: any) {
+    const searchTerm = nivel.searchControl.value?.toLowerCase() || '';
+    const tipoFiltro = nivel.filtroTipo;
+
+    nivel.usuariosFiltrados = this.usuariosInternos.filter(u => {
+      const coincideNombre = u.nombre.toLowerCase().includes(searchTerm);
+      const coincideTipo = !tipoFiltro || u.tipoIdentidad === tipoFiltro;
+      return coincideNombre && coincideTipo;
+    });
+  }
+  mostrarGrupoInternoTipo(tipo: string, nivel: { usuariosFiltrados: Usuario[] }): boolean {
+    return nivel.usuariosFiltrados.some((u: Usuario) => u.tipoIdentidad === tipo);
+  }
+  agregarNivelGeneral() {
+    this.nivelesFirmaGenerales.push({
+      controlUsuarios: new FormControl<string[]>([]),
+      searchControl: new FormControl(''),
+      filtroTipo: '',
+      usuariosFiltrados: [...this.usuariosInternos]
+    });
+  }
+
+  eliminarNivelGeneral(index: number) {
+    this.nivelesFirmaGenerales.splice(index, 1);
+  }
+
+  removerUsuarioNivelGeneral(usuario: string, nivel: any) {
+    nivel.controlUsuarios.setValue(nivel.controlUsuarios.value.filter((u: string) => u !== usuario));
+  }
+  inicializarNivelesFirma() {
+    this.documentosExistentes.forEach(doc => {
+      doc.nivelesFirma = []; // ← cada doc tendrá su array de niveles
+    });
+  }
+
+  agregarNivel(doc: any) {
+    const nivel = {
+      controlUsuarios: new FormControl([]),
+      searchControl: new FormControl(''),
+      filtroTipo: '',
+      usuariosFiltrados: [...this.usuariosInternos],
+      fechaLimite: ''
+    };
+
+    doc.nivelesFirma = doc.nivelesFirma || [];
+    doc.nivelesFirma.push(nivel);
+
+    nivel.searchControl.valueChanges.subscribe(() => this.filtrarUsuariosInternos(nivel));
+  }
+
+  removerUsuarioNivel(usuario: string, nivel: any) {
+    const actual = nivel.controlUsuarios.value as string[];
+    nivel.controlUsuarios.setValue(actual.filter(u => u !== usuario));
+  }
+  mostrarGrupoInterno(tipo: string): boolean {
+    return this.usuariosInternosFiltrados.some(user => user.tipoUsuario === tipo);
+  }
+
+  reiniciarFiltroInternos(nivel: any) {
+    nivel.searchControl.setValue('');
+  }
+
+  eliminarNivel(doc: any, index: number) {
+    doc.nivelesFirma.splice(index, 1);
+  }
+  verDocumentoExistente(index: number) {
+    const doc = this.documentosExistentes[index];
+    if (doc.rutaArchivo) {
+      window.open(doc.rutaArchivo, '_blank');
+    }
+  }
+  onMultipleFilesSelectedx(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      console.log('[DEBUG] Archivos seleccionados:', input.files);
+      this.cargarArchivosDocumentosNuevos(Array.from(input.files));
+    }
+  }
+  cargarExpedienteDesdeReferencia(id: number) {
+    this.expedienteService.getExpedienteDetalle(id).subscribe({
+      next: (data) => {
+        this.idExpedienteRespondido = id;
+
+        this.documentosExistentes = data.documentos.map((doc: any) => ({
+          id: doc.id,
+          nombreArchivo: doc.nombreArchivo,
+          tipoDocumento: doc.tipoDocumento,
+          rutaArchivo: doc.rutaArchivo,
+          tamaño: doc.tamaño,
+          visibleParaExternos: doc.visibleParaExternos,
+          esExistente: true
+        }));
+
+        const exp = data.expediente;
+
+        this.controlReferencia.setValue([{
+          serie: exp.codigo,
+          asunto: exp.asunto,
+          tipo: 'Expediente'
+        }], { emitEvent: false });
+
+        this.controlUsuario.setValue(data.usuariosDestinatarios.map((u: any) => u.nombre));
+        this.controlUsuarioCc.setValue(data.usuariosEmisores.map((u: any) => u.nombre));
+
+        this.formularioPaso1.patchValue({
+          proyecto: exp.proyecto,
+          reservado: exp.reservado ? 'si' : 'no',
+          asunto: `Respuesta a ${exp.asunto}`,
+          fecha: new Date().toISOString().slice(0, 10)
+        });
+
+        this.inicializarNivelesFirma();
+      },
+      error: err => console.error('Error al cargar expediente de referencia', err)
+    });
+  }
+
+  confirmarCambioTipoDocumento(index: number): void {
+    Swal.fire({
+      title: '¿Cambiar tipo de documento?',
+      text: 'Se actualizará el tipo de este documento.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#004C77',
+      cancelButtonColor: '#aaa',
+      confirmButtonText: 'Sí',
+      cancelButtonText: 'No'
+    }).then(result => {
+      if (!result.isConfirmed) {
+        // Revertir el cambio si es necesario
+        this.documentosExistentes[index].tipoDocumento = '';
+      }
+    });
+  }
+
+  toggleVisibilidadDocumento(index: number): void {
+    this.documentosExistentes[index].visibleParaExternos =
+      !this.documentosExistentes[index].visibleParaExternos;
+  }
+
+  eliminarDocumentoExistente(index: number): void {
+    Swal.fire({
+      title: '¿Eliminar documento?',
+      text: 'Esta acción eliminará el documento del expediente.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#aaa',
+      confirmButtonText: 'Eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(result => {
+      if (result.isConfirmed) {
+        this.documentosExistentes.splice(index, 1);
+      }
+    });
+  }
+
+  subirDocumentosAdicionales(): void {
+    // Aquí puedes usar this.documentosNuevos y llamar a tu backend como en onSubmit()
+    console.log('Subiendo documentos adicionales...');
+    // Ejemplo: recorrer documentos y subir por separado
+    for (const doc of this.documentosNuevos) {
+      const formData = new FormData();
+      formData.append('file', doc.archivo);
+      formData.append('nombreArchivo', doc.nombre);
+      formData.append('tipoDocumento', doc.tipoDocumento || '');
+      formData.append('visibleParaExternos', String(doc.visibleParaExternos ?? false));
+      formData.append('tamaño', doc.archivo.size.toString());
+
+      if (!this.expedienteIdRegistrado) {
+        console.error('No hay ID de expediente para subir documentos adicionales');
+        return;
+      }
+
+      this.expedienteService.registrarDocumento(this.expedienteIdRegistrado, formData).subscribe({
+        next: (res) => {
+          console.log('[✔] Documento adicional subido:', res);
+        },
+        error: (err) => {
+          console.error('[✖] Error al subir documento adicional:', err);
+        }
+      });
+    }
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Documentos adicionales subidos',
+      confirmButtonColor: '#004C77',
+      timer: 1500
+    });
+
+    this.documentosNuevos = [];
+  }
+
+  verDocumentoNuevo(index: number) {
+    const doc = this.documentosNuevos[index];
+    if (doc.archivo) {
+      const url = URL.createObjectURL(doc.archivo);
+      window.open(url, '_blank');
+    }
+  }
+
+  alternarVisibilidadNuevo(index: number) {
+    this.documentosNuevos[index].visibleParaExternos = !this.documentosNuevos[index].visibleParaExternos;
+  }
+
+  eliminarDocumentoNuevo(index: number) {
+    this.documentosNuevos.splice(index, 1);
+  }
+
+  todosLosDocumentosNuevosTienenTipo(): boolean {
+    return this.documentosNuevos.every(d => d.tipoDocumento && d.tipoDocumento.trim() !== '');
+  }
+  cargarArchivosDocumentosNuevos(files: File[]) {
+    console.log('[DEBUG] Archivos a procesar:', files);
+    for (const archivo of files) {
+      if (archivo.type !== 'application/pdf') {
+        console.warn('[AVISO] Archivo ignorado (no es PDF):', archivo.name);
+        continue;
+      }
+
+      const nuevo: DocumentoNuevo = {
+        nombre: archivo.name,
+        archivo,
+        cargado: false,
+        progreso: 0,
+        visibleParaExternos: false,
+        tipoDocumento: '',
+        esExistente: false
+      };
+      this.documentosNuevos.push(nuevo);
+
+      const interval = setInterval(() => {
+        if (nuevo.progreso! >= 100) {
+          nuevo.cargado = true;
+          clearInterval(interval);
+        } else {
+          nuevo.progreso! += 10;
+        }
+      }, 100);
+    }
+  }
+
   abrirDialogoProyecto(): void {
     const dialogRef = this.dialog.open(ProyectoAgregarComponent, {
       width: '1000px' // o incluso '90vw' si quieres algo más flexible
@@ -201,6 +568,35 @@ export class ExpedientesRegisterComponent implements OnInit {
     }
     this.controlReferencia.updateValueAndValidity();
   }
+  abrirEnNuevaVentana(url: string | null) {
+    if (!url) return;
+    window.open(url, '_blank');
+  }
+
+  transformarRutaDocumento(path: string | null): string | null {
+    if (!path) return null;
+    const fileName = path.split(/\\|\//).pop();
+    return fileName ? `http://localhost:8080/expedientes/${fileName}` : null;
+  }
+
+  onFileSelected(event: any) {
+    const files: FileList = event.target.files;
+
+    for (let i = 0; i < files.length; i++) {
+      const archivo = files[i];
+      this.documentos.push({
+        nombre: archivo.name,
+        archivo: archivo,
+        tipoDocumento: '',
+        visibleParaExternos: false,
+        flujo: [],
+        areas: [],
+        cargado: true,
+        esExistente: false
+      });
+    }
+  }
+
   inicializarFechaYHoraCargo() {
     const ahora = new Date();
 
@@ -244,7 +640,12 @@ export class ExpedientesRegisterComponent implements OnInit {
     const seleccionadas: ReferenciaCompleta[] = this.controlReferencia.value || [];
 
     const filtradas = this.referenciasOriginales.filter(ref => {
-      const coincideTipo = !this.filtroTipoReferencia || ref.tipo === this.filtroTipoReferencia;
+      const coincideTipo = (() => {
+        if (!this.filtroTipoReferencia) {
+          return this.tipoExpediente === 'Emisor' ? ref.tipo === 'Expediente' : true;
+        }
+        return ref.tipo === this.filtroTipoReferencia;
+      })();
       const coincideTexto =
         ref.serie?.toLowerCase().includes(texto) || ref.asunto?.toLowerCase().includes(texto);
       return coincideTipo && coincideTexto;
@@ -266,13 +667,13 @@ export class ExpedientesRegisterComponent implements OnInit {
     return this.referenciasFiltradas.filter(r => r.tipo === tipo);
   }
 
-  desenfocarYabrir(element: HTMLElement, valor: string, destino: 'to' | 'cc') {
+  desenfocarYabrir(element: HTMLElement, valor: string, destino: 'to' | 'cc' | 'nivel') {
     element.blur(); // Remueve el foco
     this.abrirDialogoAgregarUsuario(valor, destino);
   }
 
   // Diálogos
-  abrirDialogoAgregarUsuario(nombre: string, destino: 'to' | 'cc') {
+  abrirDialogoAgregarUsuario(nombre: string, destino: 'to' | 'cc' | 'nivel') {
     setTimeout(() => {
       const dialogRef = this.dialog.open(DocumentoAgregarComponent, {
         width: '800px',  // o incluso '90vw' si quieres algo más flexible
@@ -302,6 +703,7 @@ export class ExpedientesRegisterComponent implements OnInit {
         // Actualizar las listas de los selects filtrados
         this.usuariosFiltradosTo = [...this.todosUsuarios];
         this.usuariosFiltradosCc = [...this.todosUsuarios];
+        this.usuariosInternos = this.todosUsuarios.filter(u => u.tipoUsuario === 'INTERNO');
 
         // También actualizamos los valores seleccionados en los controles
         this.controlUsuario.setValue(this.controlUsuario.value || []);
@@ -340,11 +742,16 @@ export class ExpedientesRegisterComponent implements OnInit {
   seleccionarTipo(tipo: 'Emisor' | 'Receptor') {
     this.tipoExpediente = tipo;
     this.pasoActual = 2;
+    this.tiposReferencia = tipo === 'Emisor' ? ['Expediente'] : ['Documento', 'Expediente'];
+    this.filtrarReferencias();
+
+    // Fecha actual
     const hoy = new Date();
     const offset = hoy.getTimezoneOffset() * 60000;
     const fechaLocal = new Date(hoy.getTime() - offset).toISOString().slice(0, 10);
     this.formularioPaso1.patchValue({ fecha: fechaLocal });
   }
+
   irARegistroExpediente() {
     Swal.fire({
       title: '¿Iniciar nuevo expediente?',
@@ -423,8 +830,40 @@ export class ExpedientesRegisterComponent implements OnInit {
   }
 
   regresarPaso() {
-    if (this.pasoActual > 1) this.pasoActual--;
+    console.log("regresando al paso", this.pasoActual - 1);
+    if (this.pasoActual === 2) {
+      // Resetear formulario
+      this.formularioPaso1.reset();
+
+      // Limpiar el valor de tipoExpediente y actualizar el título
+      this.tipoExpediente = null;
+
+      // Restablecer controles relacionados
+      this.controlUsuario.setValue([]);
+      this.controlUsuarioCc.setValue([]);
+      this.controlReferencia.setValue([]);
+
+      // Restablecer el valor de los campos en el formulario
+      this.formularioPaso1.patchValue({
+        proyecto: '',
+        reservado: '',
+        fecha: '',
+        comentario: '',
+        asunto: ''
+      });
+
+      // Borrar documentos (si es necesario)
+      this.documentos = [];
+
+      // Resetear cargo (si es necesario)
+      this.cargo = undefined;
+      this.fechaCargo = '';
+      this.horaCargo = '';
+      this.inicializarFechaYHoraCargo();
+    }
+    this.pasoActual--;
   }
+
 
   // Documentos
   onDragOver(e: DragEvent) {
@@ -453,8 +892,8 @@ export class ExpedientesRegisterComponent implements OnInit {
       if (archivo.type !== 'application/pdf') continue;
       const nuevo: DocumentoExpediente = {
         nombre: archivo.name,
-        archivo,
-        flujo: '',
+        archivo: archivo,
+        flujo: [],
         areas: [],
         cargado: false,
         progreso: 0,
@@ -549,7 +988,6 @@ export class ExpedientesRegisterComponent implements OnInit {
 
 
   onSubmit() {
-    if (this.documentos.length === 0 || !this.todosLosDocumentosTienenTipo()) return;
     const usuarioActual = this.authService.getUserFromToken();
     console.log('[DEBUG] Usuario actual extraído del token:', usuarioActual);
 
@@ -566,6 +1004,100 @@ export class ExpedientesRegisterComponent implements OnInit {
       creadoPor: usuarioActual?.id,
       documentos: [] // no incluir aún, se enviarán luego
     };
+    console.log(this.tipoExpediente);
+    if (this.tipoExpediente === 'Emisor') {
+      console.log("Estoy por registrar un expediente emisor");
+      this.expedienteService.registrarExpediente(expedienteData).subscribe({
+        next: (expediente) => {
+          this.expedienteIdRegistrado = expediente.id;
+
+          // Registrar auditoría solo por expediente
+          this.auditoriaService.registrarAuditoria({
+            usuario: usuarioActual?.id,
+            accion: 'CREACION',
+            expedienteId: expediente.id,
+            descripcion: 'Registro de expediente tipo Emisor (sin documentos nuevos)'
+          }).subscribe({
+            next: () => console.log('[AUDITORIA] Registrada'),
+            error: err => console.error('[AUDITORIA] Error al registrar', err)
+          });
+
+          this.exito = true;
+          this.pasoActual = 4;
+
+          Swal.fire({
+            title: 'Expediente registrado',
+            text: 'El expediente fue creado correctamente.',
+            icon: 'success',
+            confirmButtonColor: '#004C77'
+          });
+
+          // Flujo General
+          if (this.modoFlujoFirma === 'general') {
+            for (let i = 0; i < this.nivelesFirmaGenerales.length; i++) {
+              const nivel = this.nivelesFirmaGenerales[i];
+              const usuarios = this.obtenerIdsPorNombres(nivel.controlUsuarios.value || []);
+              const fecha = nivel.fechaLimite;
+
+              const flujoData = {
+                tipo_nivel: 'General',
+                nivel: i + 1,
+                usuarios: usuarios,
+                expediente_id: this.expedienteIdRegistrado,
+                documentos_id: this.documentosExistentes.map(doc => doc.id).join('|'),
+                fecha_limite: fecha,
+                estado: 'PENDIENTE'
+              };
+
+              console.log('[DEBUG][POST flujo_proceso] Payload:', flujoData);
+              console.log('[DEBUG][POST flujo_proceso] Headers:', this.expedienteService['getHeaders']()?.get('Authorization'));
+              if (!validarFechasNiveles(this.nivelesFirmaGenerales)) {
+                Swal.fire('Error', 'Las fechas límite deben estar en orden ascendente por nivel.', 'error');
+                return;
+              }
+              this.expedienteService.registrarFlujoProceso(flujoData).subscribe({
+                next: () => console.log(`[✔] Nivel general ${i + 1} registrado`),
+                error: err => console.error(`[✖] Error registrando nivel general ${i + 1}:`, err)
+              });
+            }
+          }
+
+          // Flujo Individual
+          if (this.modoFlujoFirma === 'individual') {
+            for (const doc of this.documentosExistentes) {
+              const docId = doc.id;
+              for (let i = 0; i < (doc.nivelesFirma?.length || 0); i++) {
+                const nivel = doc.nivelesFirma[i];
+                const usuarios = this.obtenerIdsPorNombres(nivel.controlUsuarios.value || []);
+                const fecha = nivel.fechaLimite;
+
+                const flujoData = {
+                  tipo_nivel: 'Especifico',
+                  nivel: i + 1,
+                  usuarios: usuarios,
+                  expediente_id: this.expedienteIdRegistrado,
+                  documentos_id: doc.id.toString(),
+                  fecha_limite: fecha,
+                  estado: 'PENDIENTE'
+                };
+                console.log('[DEBUG][POST flujo_proceso] Payload:', flujoData);
+                this.expedienteService.registrarFlujoProceso(flujoData).subscribe({
+                  next: () => console.log(`[✔] Nivel específico ${i + 1} para doc ${doc.nombreArchivo} registrado`),
+                  error: err => console.error(`[✖] Error registrando nivel específico doc ${doc.nombreArchivo}:`, err)
+                });
+              }
+            }
+          }
+        },
+        error: (err) => {
+          console.error('[✖] Error al registrar expediente Emisor:', err);
+          Swal.fire('Error', 'No se pudo registrar el expediente.', 'error');
+        }
+      });
+
+      return;
+    }
+    if (this.documentos.length === 0 || !this.todosLosDocumentosTienenTipo()) return;
 
     this.expedienteService.registrarExpediente(expedienteData).subscribe({
       next: (expediente) => {
@@ -646,13 +1178,59 @@ export class ExpedientesRegisterComponent implements OnInit {
           icon: 'error'
         });
       }
+
     });
+    function validarFechasNiveles(niveles: any[]): boolean {
+      for (let i = 1; i < niveles.length; i++) {
+        const actual = new Date(niveles[i].fechaLimite);
+        const anterior = new Date(niveles[i - 1].fechaLimite);
+        if (actual < anterior) return false;
+      }
+      return true;
+    }
+
   }
   obtenerReferenciasFinales(): string | null {
     const referencias: ReferenciaCompleta[] = this.controlReferencia.value || [];
     if (!referencias.length) return null;
 
     return referencias.map(ref => ref.serie).join('|');
+  }
+  validarFechasEnCascada(niveles: any[]) {
+    for (let i = 1; i < niveles.length; i++) {
+      const fechaAnterior = new Date(niveles[i - 1].fechaLimite);
+      const fechaActual = new Date(niveles[i].fechaLimite);
+
+      if (niveles[i].fechaLimite && fechaActual < fechaAnterior) {
+        niveles[i].fechaLimite = null;
+      }
+    }
+  }
+
+  esFlujoValido(): boolean {
+    if (this.modoFlujoFirma === 'general') {
+      if (this.nivelesFirmaGenerales.length === 0) return false;
+
+      for (const nivel of this.nivelesFirmaGenerales) {
+        if (!nivel.fechaLimite || nivel.controlUsuarios.value?.length === 0) return false;
+      }
+
+      return true;
+    }
+
+    if (this.modoFlujoFirma === 'individual') {
+      for (const doc of this.documentosExistentes) {
+        if (!doc.nivelesFirma || doc.nivelesFirma.length === 0) return false;
+
+        for (const nivel of doc.nivelesFirma) {
+          if (!nivel.fechaLimite || nivel.controlUsuarios.value?.length === 0) return false;
+        }
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
   obtenerIdsPorNombres(nombresSeleccionados: string[]): string {

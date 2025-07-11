@@ -18,6 +18,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 })
 export class ExpedientesBuzonComponent implements OnInit {
   filtroActivo = 'recientes';
+  filtroTipo: 'todos' | 'Receptor' | 'Emisor' = 'todos';
+  documentosFirmables: any[] = [];
+
   esAdmin = false;
   expedienteSeleccionado: any = null;
   documentosExistentes: any[] = [];
@@ -37,9 +40,31 @@ export class ExpedientesBuzonComponent implements OnInit {
       this.expedienteService.obtenerTodosExpedientes().subscribe(data => {
         this.procesarExpedientes(data);
       });
-    } else if (usuario) {
-      this.expedienteService.obtenerExpedientesPorUsuario(usuario.id).subscribe(data => {
-        this.procesarExpedientes(data);
+    } else if (usuario?.tipoUsuario === 'INTERNO') {
+      const id = usuario.id;
+      // Paso 1: Obtener expedientes tipo Receptor (como antes)
+      this.expedienteService.obtenerExpedientesPorUsuario(id).subscribe(expedientesReceptor => {
+        const soloReceptores = expedientesReceptor.filter(e => e.tipoExpediente === 'Receptor');
+        const receptoresFiltrados = soloReceptores.filter(exp => {
+          const destinatariosStr = exp.usuariosDestinatarios;
+
+          if (!destinatariosStr || typeof destinatariosStr !== 'string') return false;
+
+          const destinatarioIds = destinatariosStr.split('|').map(id => String(id).trim());
+
+          return destinatarioIds.includes(String(id)); // id es el del usuario actual
+        });
+
+        console.log("Expedientes Receptores:", receptoresFiltrados);
+        // Paso 2: Obtener expedientes tipo Emisor donde debe firmar
+        this.expedienteService.obtenerExpedientesPorFirma(id).subscribe(expedientesEmisor => {
+          // Unificamos y eliminamos duplicados por id
+          console.log("Expedientes Emisores:", expedientesEmisor);
+
+          const combinados = [...receptoresFiltrados, ...expedientesEmisor];
+          const unicos = Array.from(new Map(combinados.map(e => [e.id, e])).values());
+          this.procesarExpedientes(unicos);
+        });
       });
     }
   }
@@ -48,15 +73,24 @@ export class ExpedientesBuzonComponent implements OnInit {
 
   filtrar(tipo: string) {
     this.filtroActivo = tipo;
-    const sinAnulados = this.expedientes.filter(e => e.estado !== 'ANULADO');
+    this.aplicarFiltros();
+  }
+  aplicarFiltros() {
+    let filtrados = this.expedientes.filter(e => e.estado !== 'ANULADO');
 
-    if (tipo === 'recientes') {
-      this.expedientesFiltrados = sinAnulados.filter(e => !e.archivado);
-    } else if (tipo === 'archivados') {
-      this.expedientesFiltrados = sinAnulados.filter(e => e.archivado);
-    } else {
-      this.expedientesFiltrados = [...sinAnulados];
+    // Filtro de archivado
+    if (this.filtroActivo === 'recientes') {
+      filtrados = filtrados.filter(e => !e.archivado);
+    } else if (this.filtroActivo === 'archivados') {
+      filtrados = filtrados.filter(e => e.archivado);
     }
+
+    // Filtro de tipo expediente
+    if (this.filtroTipo !== 'todos') {
+      filtrados = filtrados.filter(e => e.tipoExpediente === this.filtroTipo);
+    }
+
+    this.expedientesFiltrados = filtrados;
   }
 
   procesarExpedientes(data: any[]): void {
@@ -99,11 +133,16 @@ export class ExpedientesBuzonComponent implements OnInit {
 
   verDetalle(expediente: any) {
     const id = expediente.id;
-    console.log('🟦 Expediente seleccionado:', expediente.codigo);
-    this.expedienteSeleccionado = expediente;
+    console.log('Expediente seleccionado:', expediente.codigo);
     if (!expediente.leido) {
       this.marcarComoLeido(null, expediente);
     }
+    this.obtenerExpediente(expediente);
+    console.log('Historial de cargos:', this.historialCargos);
+  }
+  obtenerExpediente(expediente: any) {
+    const id = expediente.id;
+
     this.expedienteService.getExpedienteDetalle(id).subscribe({
       next: (data) => {
         console.log('📄 Detalle completo recibido del backend:', data);
@@ -124,6 +163,7 @@ export class ExpedientesBuzonComponent implements OnInit {
           tipo: data.expediente.tipoExpediente,
           asunto: data.expediente.asunto,
           fecha: data.expediente.fecha,
+          fechaLimiteRespuesta: data.expediente.fechaLimiteRespuesta,
           proyecto: data.expediente.proyecto,
           reservado: data.expediente.reservado,
           comentario: data.expediente.comentario,
@@ -157,7 +197,23 @@ export class ExpedientesBuzonComponent implements OnInit {
             correo: u.correo
           }))
         };
-        console.log('📌 ExpedienteSeleccionado procesado:', this.expedienteSeleccionado);
+        // Cargar documentos firmables solo si el expediente es de tipo Emisor
+        if (this.expedienteSeleccionado.tipo === 'Emisor') {
+          const usuario = this.authService.getUserFromToken();
+          if (usuario && usuario.id) {
+            this.expedienteService.obtenerDocumentosFirmables(this.expedienteSeleccionado.id, usuario.id).subscribe({
+              next: (docs) => {
+                this.documentosFirmables = docs;
+                console.log('📄 Documentos firmables:', docs);
+              },
+              error: (err) => {
+                console.error('Error al cargar documentos firmables', err);
+              }
+            });
+          }
+        }
+
+        console.log('ExpedienteSeleccionado procesado:', this.expedienteSeleccionado);
 
 
         // (Opcional) Lógica para nombre del proyecto
@@ -185,10 +241,7 @@ export class ExpedientesBuzonComponent implements OnInit {
         console.error('Error al cargar detalle de expediente', err);
       }
     });
-    console.log('Historial de cargos:', this.historialCargos);
-
   }
-
 
   marcarComoLeido(event: Event | null, exp: any) {
     if (event) event.stopPropagation();
@@ -257,7 +310,7 @@ export class ExpedientesBuzonComponent implements OnInit {
   }
   irARegistroExpedienteEmisor(expediente: any) {
     this.router.navigate(['registro-expediente'], {
-      queryParams: { responderA: expediente.id }
+      queryParams: { responderA: expediente.id, tipo: 'Emisor' }
     });
     console.log('Redirigir a registro emisor con ID:', expediente.id);
   }

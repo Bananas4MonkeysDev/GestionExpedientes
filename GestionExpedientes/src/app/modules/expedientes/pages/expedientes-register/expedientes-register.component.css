@@ -14,3 +14,22 @@
   color: #dc2626;
   /* rojo */
 }
+
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-suffix {
+  border-left: none !important;
+}
+
+::ng-deep .mat-form-field-appearance-fill .mat-form-field-flex {
+  border-radius: 6px !important;
+  background-color: #f9fafb !important;
+  /* o blanco puro */
+}
+
+::ng-deep .mat-form-field-appearance-fill .mat-form-field-outline {
+  border: 1px solid #cbd5e1 !important;
+}
+
+::ng-deep .mat-icon-button {
+  background-color: #f0f0f0 !important;
+  border-radius: 6px !important;
+}

@@ -3,10 +3,13 @@ package com.example.gestionexpedientesbackend.controller;
 import com.example.gestionexpedientesbackend.dto.EstadoExpedienteDTO;
 import com.example.gestionexpedientesbackend.dto.ExpedienteDTO;
 import com.example.gestionexpedientesbackend.dto.ExpedienteDetalleResponseDTO;
+import com.example.gestionexpedientesbackend.dto.FlujoProcesoRequest;
 import com.example.gestionexpedientesbackend.model.Documento;
 import com.example.gestionexpedientesbackend.model.Expediente;
+import com.example.gestionexpedientesbackend.model.FlujoProceso;
 import com.example.gestionexpedientesbackend.service.DocumentoService;
 import com.example.gestionexpedientesbackend.service.ExpedienteService;
+import com.example.gestionexpedientesbackend.service.FlujoProcesoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +30,30 @@ public class ExpedienteController {
     private ExpedienteService expedienteService;
     @Autowired
     private DocumentoService documentoService;
+    @Autowired
+    private FlujoProcesoService flujoProcesoService;
+    @GetMapping("/asignados-por-firma/{usuarioId}")
+    public ResponseEntity<List<Expediente>> obtenerExpedientesAsignadosPorFirma(@PathVariable Long usuarioId) {
+        List<Long> ids = flujoProcesoService.obtenerExpedientesIdPorUsuarioFirmante(usuarioId.toString());
+        List<Expediente> expedientes = expedienteService.obtenerPorIds(ids); // Este método lo agregamos a continuación
+        return ResponseEntity.ok(expedientes);
+    }
+    @GetMapping("/asignados-condicionados/{usuarioId}")
+    public ResponseEntity<List<Expediente>> obtenerExpedientesAsignadosCondicionados(@PathVariable Long usuarioId) {
+        List<Long> ids = flujoProcesoService.obtenerExpedientesIdPorUsuarioFirmanteCondicionado(usuarioId);
+        List<Expediente> expedientes = expedienteService.obtenerPorIds(ids);
+        return ResponseEntity.ok(expedientes);
+    }
+    @GetMapping("/{expedienteId}/documentos-firmables")
+    public ResponseEntity<List<Documento>> obtenerDocumentosFirmables(
+            @PathVariable Long expedienteId,
+            @RequestParam Long usuarioId) {
+        return ResponseEntity.ok(
+                flujoProcesoService.obtenerDocumentosPendientesParaFirmar(expedienteId, usuarioId)
+        );
+    }
+
+
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizarExpediente(
             @PathVariable Long id,

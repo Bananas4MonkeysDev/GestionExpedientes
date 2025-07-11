@@ -139,6 +139,79 @@ public class EmailServiceImpl implements EmailService {
 
         return sb.toString();
     }
+    @Override
+    public String generarMensajeFirma(String nombreUsuario, Expediente expediente, List<Documento> documentos, int nivel, String fechaLimite, String nombreRemitente) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("<html><body style='font-family: Arial, sans-serif; color: #333;'>");
+
+        sb.append("<p>Estimado(a) <strong>").append(nombreUsuario).append("</strong>,</p>");
+
+        sb.append("<p>Se le ha asignado la firma de documento(s) en el <strong>expediente</strong> recientemente registrado.</p>");
+
+        sb.append("<ul>");
+        sb.append("<li><strong>Código del expediente:</strong> ").append(expediente.getCodigo()).append("</li>");
+        sb.append("<li><strong>Asunto:</strong> ").append(expediente.getAsunto()).append("</li>");
+        sb.append("<li><strong>Nivel asignado:</strong> ").append(nivel).append("</li>");
+        sb.append("<li><strong>Fecha límite de firma:</strong> ").append(fechaLimite).append("</li>");
+        sb.append("</ul>");
+
+        if (!documentos.isEmpty()) {
+            sb.append("<p><strong>Documentos que debe firmar:</strong></p>");
+            sb.append("<ul>");
+            for (Documento doc : documentos) {
+                sb.append("<li>").append(doc.getCodigo()).append(": ").append(doc.getNombreArchivo()).append("</li>");
+            }
+            sb.append("</ul>");
+        } else {
+            sb.append("<p><em>No se asignaron documentos específicos para este flujo.</em></p>");
+        }
+
+
+        sb.append("<table role='presentation' cellspacing='0' cellpadding='0'><tr><td align='center'>");
+        sb.append("<a href='http://localhost:4200/login?redirect=buzon-expedientes&id=")
+                .append(expediente.getId())
+                .append("' style='")
+                .append("display: inline-block; padding: 12px 24px; font-size: 16px; font-weight: bold; ")
+                .append("font-family: Arial, sans-serif; color: #ffffff; background-color: #1E88E5; border-radius: 8px; ")
+                .append("text-decoration: none; box-shadow: 0 4px 12px rgba(30, 136, 229, 0.4);'>")
+                .append("Ver expediente en el sistema")
+                .append("</a>");
+        sb.append("</td></tr></table>");
+
+        sb.append("<p style='margin-top: 30px;'>Gracias por su atención.</p>");
+        sb.append("<p>Atentamente,<br>").append(nombreRemitente).append("</p>");
+
+        sb.append("</body></html>");
+
+        return sb.toString();
+    }
+    @Override
+    public String generarMensajeEspera(String nombreUsuario, Expediente expediente, int nivel, String nombreRemitente) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("<html><body style='font-family: Arial, sans-serif; color: #333;'>");
+
+        sb.append("<p>Estimado(a) <strong>").append(nombreUsuario).append("</strong>,</p>");
+
+        sb.append("<p>Se le ha asignado la firma de documento(s) en el <strong>expediente</strong> recientemente registrado.</p>");
+
+        sb.append("<ul>");
+        sb.append("<li><strong>Código del expediente:</strong> ").append(expediente.getCodigo()).append("</li>");
+        sb.append("<li><strong>Asunto:</strong> ").append(expediente.getAsunto()).append("</li>");
+        sb.append("<li><strong>Nivel asignado:</strong> ").append(nivel).append("</li>");
+        sb.append("</ul>");
+
+        sb.append("<p><strong>Actualmente el proceso se encuentra en el nivel 1.</strong></p>");
+        sb.append("<p>Se le notificará automáticamente cuando sea su turno para firmar.</p>");
+
+        sb.append("<p style='margin-top: 30px;'>Gracias por su atención.</p>");
+        sb.append("<p>Atentamente,<br>").append(nombreRemitente).append("</p>");
+
+        sb.append("</body></html>");
+
+        return sb.toString();
+    }
 
     @Override
     public String generarMensajeCargo(Cargo cargo, List<Documento> documentos, Expediente expediente, String nombreRemitente) {

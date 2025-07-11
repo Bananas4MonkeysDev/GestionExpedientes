@@ -341,9 +341,265 @@
         </div>
       </form>
     </div>
+    <!-- PASO 3 para tipo Emisor -->
+    <div *ngIf="pasoActual === 3 && tipoExpediente === 'Emisor'" class="bg-white rounded-xl shadow p-8 space-y-6">
+      <h2 class="text-xl font-semibold text-[#004C77]">Documentos heredados del expediente base</h2>
+      <!-- Selector de tipo de flujo de firma mejorado -->
+      <div class="bg-white border border-gray-300 shadow-sm rounded-xl px-6 py-5 mb-6">
+        <label class="text-sm font-semibold text-gray-700 block mb-3">Tipo de flujo de firma:</label>
 
+        <div class="flex gap-2 bg-gray-100 rounded-full w-fit p-1 shadow-inner">
+          <!-- Botón: Por documento -->
+          <button type="button" (click)="modoFlujoFirma = 'individual'" [ngClass]="{
+        'bg-white shadow text-[#004C77] font-semibold': modoFlujoFirma === 'individual',
+        'text-gray-600 hover:text-[#004C77]': modoFlujoFirma !== 'individual'
+      }" class="cursor-pointer px-4 py-1.5 text-sm rounded-full transition-all duration-200">
+            Niveles por documento
+          </button>
+
+          <!-- Botón: General -->
+          <button type="button" (click)="modoFlujoFirma = 'general'" [ngClass]="{
+        'bg-white shadow text-[#004C77] font-semibold': modoFlujoFirma === 'general',
+        'text-gray-600 hover:text-[#004C77]': modoFlujoFirma !== 'general'
+      }" class="cursor-pointer px-4 py-1.5 text-sm rounded-full transition-all duration-200">
+            Niveles generales
+          </button>
+        </div>
+
+        <!-- Línea divisora -->
+        <hr class="mt-6 border-t border-gray-300">
+      </div>
+
+      <!-- Documentos existentes -->
+      <div *ngFor="let doc of documentosExistentes; let i = index"
+        class="space-y-4 items-center bg-white border border-gray-200 shadow-sm rounded px-4 py-3">
+        <div class="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
+          <div class="flex items-center gap-3 w-full">
+            <svg class="w-5 h-5 text-[#004C77] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M7 7h10M7 11h10M7 15h10M5 5v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2 2H7a2 2 0 00-2 2z" />
+            </svg>
+            <span class="text-sm text-gray-700 w-[200px] truncate">
+              {{ doc.nombreArchivo }}
+            </span>
+            <span class="text-xs text-gray-500">{{ formatearPeso(doc['tamaño']) }}</span>
+          </div>
+          <!-- Tipo solo lectura -->
+          <div class="w-[180px]">
+            <label class="text-xs text-gray-500 block mb-1">Tipo de documento</label>
+            <input type="text" class="w-full px-2 py-1 text-sm border border-gray-300 rounded bg-gray-100"
+              [value]="doc.tipoDocumento" readonly />
+          </div>
+          <!-- Botón Ver -->
+          <div class="flex gap-3 text-sm">
+            <button (click)="abrirEnNuevaVentana(transformarRutaDocumento(doc.rutaArchivo)!)" matTooltip="Ver documento"
+              class="text-[#004C77] hover:underline cursor-pointer">Ver</button>
+          </div>
+        </div>
+        <div *ngIf="modoFlujoFirma === 'individual'">
+          <div class="items-center bg-white border border-gray-200 shadow-sm rounded px-4 py-3">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">Flujo de firma para {{ doc.nombreArchivo }} </h3>
+            <div *ngFor="let nivel of doc.nivelesFirma; let j = index" class="mb-3">
+              <!-- Fecha límite de firma -->
+              <div class="mb-3">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-sm font-medium text-[#004C77]">Nivel {{ j + 1 }}</span>
+                  <button type="button" (click)="eliminarNivel(doc, j)" matTooltip="Eliminar Nivel"
+                    class="cursor-pointer text-red-600 text-xs hover:underline">
+                    Eliminar nivel
+                  </button>
+                </div>
+                <div class="mt-4 pb-4 w-full">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Fecha límite de firma
+                  </label>
+                  <div class="relative">
+                    <input type="date" [(ngModel)]="nivel.fechaLimite"
+                      [min]="doc.nivelesFirma[j - 1]?.fechaLimite || minDateString"
+                      (ngModelChange)="validarFechasEnCascada(doc.nivelesFirma)" class="w-full ..."
+                      placeholder="dd/mm/aaaa" />
+
+                  </div>
+                </div>
+                <!-- Chips de usuarios seleccionados -->
+                <div
+                  class="flex flex-wrap gap-2 mb-2 min-h-[56px] border border-gray-300 rounded px-3 py-1.5 bg-white items-center">
+                  <ng-container *ngIf="nivel.controlUsuarios.value?.length; else placeholderNivel">
+                    <div *ngFor="let user of nivel.controlUsuarios.value"
+                      class="flex items-center bg-[#E6F2F8] text-[#004C77] text-sm px-3 py-1 rounded-full">
+                      {{ user }}
+                      <button type="button" (click)="removerUsuarioNivel(user, nivel)"
+                        class="ml-2 hover:text-red-600 cursor-pointer">
+                        <mat-icon class="text-xs">cancel</mat-icon>
+                      </button>
+                    </div>
+                  </ng-container>
+                  <ng-template #placeholderNivel>
+                    <span class="text-sm text-gray-400">Ningún usuario seleccionado</span>
+                  </ng-template>
+                </div>
+                <!-- Selector -->
+                <div class="flex gap-2 items-start">
+                  <mat-form-field appearance="outline" class="w-full"
+                    matTooltip="Selecciona usuarios internos para este nivel">
+                    <mat-select [formControl]="nivel.controlUsuarios" multiple class="max-w-full"
+                      (closed)="reiniciarFiltroInternos(nivel)">
+                      <mat-option class="!cursor-default" disabled>
+                        <ngx-mat-select-search [formControl]="nivel.searchControl" placeholderLabel="Buscar usuario..."
+                          (keydown.enter)="abrirDialogoAgregarUsuario(nivel.searchControl.value || '', 'nivel')"
+                          noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nuevo usuario interno">
+                        </ngx-mat-select-search>
+                      </mat-option>
+
+                      <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
+                        <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por tipo:</label>
+                        <select [(ngModel)]="nivel.filtroTipo" [ngModelOptions]="{ standalone: true }"
+                          (ngModelChange)="filtrarUsuariosInternos(nivel)"
+                          class="text-sm border border-gray-300 rounded px-2 py-1 bg-white shadow-sm cursor-pointer">
+                          <option value="">Todos</option>
+                          <option *ngFor="let tipo of tiposUsuario" [value]="tipo">{{ tipo }}</option>
+                        </select>
+                      </div>
+
+                      <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo"
+                        [hidden]="!mostrarGrupoInternoTipo(tipo, nivel)">
+                        <mat-option *ngFor="let user of obtenerUsuariosPorTipo(nivel.usuariosFiltrados, tipo)"
+                          [value]="user.nombre">
+                          {{ user.nombre }} - {{ user.correo }}
+                        </mat-option>
+                      </mat-optgroup>
+                    </mat-select>
+
+                  </mat-form-field>
+
+                  <button type="button" #btnAgregarUsuarioNivel
+                    (click)="desenfocarYabrir(btnAgregarUsuarioNivel, '', 'nivel')"
+                    class="cursor-pointer h-[56px] min-h-[56px] px-3 py-2 bg-[#004C77] text-white rounded-md hover:bg-[#003655] transition-colors duration-200"
+                    matTooltip="Agregar nuevo usuario interno">
+                    <mat-icon fontIcon="person_add" class="text-base">person_add</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button type="button" matTooltip="Agregar Nivel" (click)="agregarNivel(doc)"
+            class="cursor-pointer text-sm text-[#004C77] hover:underline px-4">
+            + Agregar nivel para {{ doc.nombreArchivo }}
+          </button>
+        </div>
+      </div>
+      <!-- NIVELES GENERALES DE FIRMA (si está seleccionado el modo general) -->
+      <div *ngIf="modoFlujoFirma === 'general'"
+        class="mt-6 items-center bg-white border border-gray-200 shadow-sm rounded px-4 py-3">
+        <h3 class="text-sm font-semibold text-gray-700 mb-2">Flujo de firma general para todos los documentos</h3>
+
+        <div *ngFor="let nivel of nivelesFirmaGenerales; let j = index" class="mb-3">
+          <div class="mb-3">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-sm font-medium text-[#004C77]">Nivel {{ j + 1 }}</span>
+              <button type="button" (click)="eliminarNivelGeneral(j)" matTooltip="Eliminar Nivel"
+                class="cursor-pointer text-red-600 text-xs hover:underline">
+                Eliminar nivel
+              </button>
+            </div>
+            <div class="mt-4 pb-4 w-full">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Fecha límite de firma
+              </label>
+
+              <div class="relative">
+                <input type="date" [(ngModel)]="nivel.fechaLimite"
+                  [min]="nivelesFirmaGenerales[j - 1]?.fechaLimite || minDateString"
+                  (ngModelChange)="validarFechasEnCascada(nivelesFirmaGenerales)" class="w-full ..."
+                  placeholder="dd/mm/aaaa" />
+
+              </div>
+            </div>
+            <!-- Chips de usuarios seleccionados -->
+            <div
+              class="flex flex-wrap gap-2 mb-2 min-h-[56px] border border-gray-300 rounded px-3 py-1.5 bg-white items-center">
+              <ng-container *ngIf="nivel.controlUsuarios.value?.length; else placeholderNivelGeneral">
+                <div *ngFor="let user of nivel.controlUsuarios.value"
+                  class="flex items-center bg-[#E6F2F8] text-[#004C77] text-sm px-3 py-1 rounded-full">
+                  {{ user }}
+                  <button type="button" (click)="removerUsuarioNivelGeneral(user, nivel)"
+                    class="ml-2 hover:text-red-600 cursor-pointer">
+                    <mat-icon class="text-xs">cancel</mat-icon>
+                  </button>
+                </div>
+              </ng-container>
+              <ng-template #placeholderNivelGeneral>
+                <span class="text-sm text-gray-400">Ningún usuario seleccionado</span>
+              </ng-template>
+            </div>
+
+            <!-- Selector -->
+            <div class="flex gap-2 items-start">
+              <mat-form-field appearance="outline" class="w-full"
+                matTooltip="Selecciona usuarios internos para este nivel">
+                <mat-select [formControl]="nivel.controlUsuarios" multiple class="max-w-full"
+                  (closed)="reiniciarFiltroInternos(nivel)">
+                  <mat-option class="!cursor-default" disabled>
+                    <ngx-mat-select-search [formControl]="nivel.searchControl" placeholderLabel="Buscar usuario..."
+                      (keydown.enter)="abrirDialogoAgregarUsuario(nivel.searchControl.value || '', 'nivel')"
+                      noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nuevo usuario interno">
+                    </ngx-mat-select-search>
+                  </mat-option>
+
+                  <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
+                    <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por tipo:</label>
+                    <select [(ngModel)]="nivel.filtroTipo" [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="filtrarUsuariosInternos(nivel)"
+                      class="text-sm border border-gray-300 rounded px-2 py-1 bg-white shadow-sm cursor-pointer">
+                      <option value="">Todos</option>
+                      <option *ngFor="let tipo of tiposUsuario" [value]="tipo">{{ tipo }}</option>
+                    </select>
+                  </div>
+
+                  <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo"
+                    [hidden]="!mostrarGrupoInternoTipo(tipo, nivel)">
+                    <mat-option *ngFor="let user of obtenerUsuariosPorTipo(nivel.usuariosFiltrados, tipo)"
+                      [value]="user.nombre">
+                      {{ user.nombre }} - {{ user.correo }}
+                    </mat-option>
+                  </mat-optgroup>
+                </mat-select>
+              </mat-form-field>
+
+              <button type="button" #btnAgregarUsuarioNivel
+                (click)="desenfocarYabrir(btnAgregarUsuarioNivel, '', 'nivel')"
+                class="cursor-pointer h-[56px] min-h-[56px] px-3 py-2 bg-[#004C77] text-white rounded-md hover:bg-[#003655] transition-colors duration-200"
+                matTooltip="Agregar nuevo usuario interno">
+                <mat-icon fontIcon="person_add" class="text-base">person_add</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" matTooltip="Agregar Nivel" (click)="agregarNivelGeneral()"
+          class="cursor-pointer text-sm text-[#004C77] hover:underline mt-2">
+          + Agregar nivel general
+        </button>
+      </div>
+
+      <!-- Divider -->
+      <hr class="my-6 border-gray-300" />
+
+
+      <!-- Botones -->
+      <div class="flex justify-between items-center mt-6">
+        <button type="button" (click)="regresarPaso()"
+          class="text-[#004C77] font-medium hover:underline cursor-pointer">←
+          Regresar</button>
+        <button [disabled]="!esFlujoValido()" (click)="onSubmit()"
+          class="cursor-pointer bg-[#004C77] text-white px-4 py-2 rounded disabled:bg-gray-300 disabled:cursor-not-allowed transition">
+          Registrar expediente
+        </button>
+      </div>
+    </div>
     <!-- PASO 3 -->
-    <div *ngIf="pasoActual === 3" class="bg-white rounded-xl shadow p-8 space-y-6">
+    <div *ngIf="pasoActual === 3 && tipoExpediente !== 'Emisor'" class="bg-white rounded-xl shadow p-8 space-y-6">
       <h2 class="text-xl font-semibold text-[#004C77]">Carga de documentos del expediente</h2>
 
       <!-- Drag & Drop -->

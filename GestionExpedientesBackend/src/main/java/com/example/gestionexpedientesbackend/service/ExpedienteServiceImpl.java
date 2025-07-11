@@ -170,6 +170,10 @@ public class ExpedienteServiceImpl implements ExpedienteService {
         expedienteRepository.save(expediente);
     }
 
+    @Override
+    public List<Expediente> obtenerPorIds(List<Long> ids) {
+        return expedienteRepository.findAllById(ids);
+    }
 
     public void notificarRegistroExpediente(Long expedienteId, boolean conDocumentos) {
         Expediente expediente = expedienteRepository.findById(expedienteId).orElseThrow();
