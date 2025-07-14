@@ -22,3 +22,9 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Configuración Spring Boot
+src/main/resources/application.properties
+src/main/resources/application.yml
+# Clases Java de configuración Spring
+src/main/java/com/example/gestionexpedientesbackend/config/*.java

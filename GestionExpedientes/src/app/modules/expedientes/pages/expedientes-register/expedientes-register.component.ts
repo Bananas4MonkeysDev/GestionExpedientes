@@ -29,6 +29,7 @@ import { ScanCartaComponent } from '../scan-carta/scan-carta.component';
 import { MatButton, MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { GrupoArea, GrupoAreaService } from '../../../../core/services/grupo-area.service';
 
 interface NivelFirma {
   usuarios: string[];
@@ -49,6 +50,15 @@ interface DocumentoNuevo {
   tipoDocumento?: string;
   esExistente: false;
 }
+interface GrupoVisual {
+  id: string;
+  nombre: string;
+  tipoUsuario: 'GRUPO';
+  correo: string;
+  idsUsuarios: number[];
+  tipoIdentidad?: 'GRUPO';
+}
+type UsuarioVisual = Usuario | GrupoVisual;
 
 interface DocumentoExpediente {
   nombre: string;
@@ -72,6 +82,7 @@ export interface Usuario {
   ruc?: string;
   dni: string;
 }
+
 @Component({
   selector: 'app-expedientes-register',
   templateUrl: './expedientes-register.component.html',
@@ -122,12 +133,13 @@ export class ExpedientesRegisterComponent implements OnInit {
   tiposDocumento = ['Anexos', 'Actas', 'Carta', 'Oficio', 'Contrato', 'Adenda', 'Solicitud de compra', 'Cotizaciones', 'Cuadro Comparativo', 'Orden de Compra', 'Guia', 'Factura', 'Informe', 'Anexo'];
   nivelesFirmaGenerales: any[] = [];
   minDateString: string | undefined;
-
   tiposUsuario: Usuario['tipoIdentidad'][] = ['PERSONA', 'GRUPO', 'ENTIDAD'];
   tiposReferencia: Referencia['tipo'][] = [];
   referenciasOriginales: Referencia[] = [];
+  usuariosFiltradosTo: UsuarioVisual[] = [];
+  usuariosFiltradosCc: UsuarioVisual[] = [];
 
-  todosUsuarios: Usuario[] = [];
+  todosUsuarios: UsuarioVisual[] = [];
 
   todasReferencias: Referencia[] = [];
 
@@ -143,8 +155,6 @@ export class ExpedientesRegisterComponent implements OnInit {
   filtroTipoUsuarioCc = '';
   filtroTipoReferencia = '';
 
-  usuariosFiltradosTo: Usuario[] = [];
-  usuariosFiltradosCc: Usuario[] = [];
   referenciasFiltradas: Referencia[] = [];
   compararReferencias = (a: any, b: any): boolean => {
     return a?.serie === b?.serie;
@@ -155,7 +165,7 @@ export class ExpedientesRegisterComponent implements OnInit {
   arrastrando = false;
   seccionActiva: 'registro' | 'estado' | 'auditoria' = 'registro';
 
-  constructor(private route: ActivatedRoute,
+  constructor(private grupoAreaService: GrupoAreaService, private route: ActivatedRoute,
     private ocrService: OcrService, private auditoriaService: AuditoriaService
     , private authService: AuthService, private proyectoService: ProyectoService, private loadingService: LoadingOverlayService, private fb: FormBuilder, private dialog: MatDialog, private router: Router, private expedienteService: ExpedienteService, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
 
@@ -183,23 +193,41 @@ export class ExpedientesRegisterComponent implements OnInit {
 
     this.usuarioService.obtenerUsuarios().subscribe({
       next: usuarios => {
-        console.log('[DEBUG] Usuarios obtenidos del backend:', usuarios);
-        this.todosUsuarios = usuarios.map(user => ({
+        const usuariosTransformados: Usuario[] = usuarios.map(user => ({
           ...user,
-          tipo: user.tipoIdentidad.charAt(0).toUpperCase() + user.tipoIdentidad.slice(1).toLowerCase()
+          tipoUsuario: user.tipoUsuario?.toUpperCase() || '',
+          tipoIdentidad: user.tipoIdentidad?.toUpperCase() || '',
         }));
-        this.usuariosFiltradosTo = [...this.todosUsuarios];
-        this.usuariosFiltradosCc = [...this.todosUsuarios];
-        this.usuariosInternos = this.todosUsuarios.filter(u => u.tipoUsuario === 'INTERNO');
-        console.log("[DEBUG]: Usuariois Internos:", this.usuariosInternos);
-        this.usuariosInternosFiltrados = this.todosUsuarios.filter(u =>
-          u.tipoUsuario?.toUpperCase() === 'INTERNO'
-        );
+
+        this.todosUsuarios = usuariosTransformados;
+
+        this.grupoAreaService.listar().subscribe(grupos => {
+          const gruposComoUsuarios: GrupoVisual[] = grupos.map(grupo => ({
+            id: `grupo-${grupo.id}`,
+            nombre: grupo.nombre,
+            tipoUsuario: 'GRUPO',
+            correo: 'Grupo de usuarios',
+            tipoIdentidad: 'GRUPO',
+            idsUsuarios: grupo.usuariosIds.split('|').map(id => parseInt(id, 10))
+          }));
+
+          // Mezclar
+          this.todosUsuarios = [...this.todosUsuarios, ...gruposComoUsuarios];
+          this.usuariosFiltradosTo = [...this.todosUsuarios];
+          this.usuariosFiltradosCc = [...this.todosUsuarios];
+
+          // Agrega GRUPO si no existe
+          if (!this.tiposUsuario.includes('GRUPO')) {
+            this.tiposUsuario.push('GRUPO');
+          }
+        });
       },
       error: err => {
         console.error('[ERROR] Error al cargar usuarios:', err);
       }
     });
+
+
     this.proyectoService.getAll().subscribe(data => {
       this.proyectos = data;
     });
@@ -232,8 +260,26 @@ export class ExpedientesRegisterComponent implements OnInit {
         const id = this.obtenerIdExpedienteDesdeSerie(expedienteRef.serie);
         console.log("aqui la id:", id);
         if (id) {
-          this.cargarExpedienteDesdeReferencia(id);
+          Swal.fire({
+            title: '¿Desea cargar los datos del expediente referenciado?',
+            text: 'Se sobrescribirán campos como asunto, proyecto, usuarios y documentos.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, cargar datos',
+            cancelButtonText: 'No, solo referenciar',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            confirmButtonColor: '#004C77',
+            cancelButtonColor: '#888'
+          }).then(result => {
+            if (result.isConfirmed) {
+              this.cargarExpedienteDesdeReferencia(id);
+            } else {
+              console.log('Referencia asignada sin cargar datos cruzados.');
+            }
+          });
         }
+
       }
     });
 
@@ -299,6 +345,24 @@ export class ExpedientesRegisterComponent implements OnInit {
       }
     });
   }
+  expandirUsuariosSeleccionados(nombresSeleccionados: string[]): number[] {
+    const ids: number[] = [];
+
+    for (const nombre of nombresSeleccionados) {
+      const usuario = this.todosUsuarios.find(u => u.nombre === nombre);
+
+      if (!usuario) continue;
+
+      if (usuario.tipoUsuario === 'GRUPO' && 'idsUsuarios' in usuario) {
+        ids.push(...usuario.idsUsuarios);
+      } else if ('id' in usuario && typeof usuario.id === 'number') {
+        ids.push(usuario.id);
+      }
+    }
+
+    return Array.from(new Set(ids)); // elimina duplicados
+  }
+
   obtenerIdExpedienteDesdeSerie(serie: string): number | null {
     const ref = this.referenciasOriginales.find(r => r.serie === serie && r.tipo === 'Expediente');
     return ref?.id ? Number(ref.id) : null;
@@ -660,7 +724,7 @@ export class ExpedientesRegisterComponent implements OnInit {
     return true;
   }
 
-  obtenerUsuariosPorTipo(lista: Usuario[], tipo: Usuario['tipoIdentidad']): Usuario[] {
+  obtenerUsuariosPorTipo(lista: UsuarioVisual[], tipo: UsuarioVisual['tipoIdentidad']): UsuarioVisual[] {
     return lista.filter(u => u.tipoIdentidad === tipo);
   }
   obtenerReferenciasPorTipo(tipo: Referencia['tipo']): Referencia[] {
@@ -1234,20 +1298,23 @@ export class ExpedientesRegisterComponent implements OnInit {
   }
 
   obtenerIdsPorNombres(nombresSeleccionados: string[]): string {
-    const ids = this.todosUsuarios
-      .filter(user => nombresSeleccionados.includes(user.nombre))
-      .map(user => {
-        // Aseguramos que user.id esté definido antes de intentar convertirlo
-        if (user.id !== undefined && user.id !== null) {
-          return user.id.toString();
-        } else {
-          console.warn(`Usuario sin ID encontrado: ${user.nombre}`);
-          return ''; // Retorna un string vacío si no tiene id
-        }
-      })
-      .filter(id => id !== ''); // Filtramos los ids vacíos
+    const ids: string[] = [];
 
-    return ids.join('|');
+    for (const nombre of nombresSeleccionados) {
+      const usuario = this.todosUsuarios.find(u => u.nombre === nombre);
+
+      if (!usuario) continue;
+
+      if (usuario.tipoUsuario === 'GRUPO' && 'idsUsuarios' in usuario) {
+        ids.push(...usuario.idsUsuarios.map(id => id.toString()));
+      } else if (usuario.id !== undefined && usuario.id !== null) {
+        ids.push(usuario.id.toString());
+      } else {
+        console.warn(`Usuario sin ID válido encontrado: ${usuario.nombre}`);
+      }
+    }
+
+    return Array.from(new Set(ids)).join('|'); // Elimina duplicados y une con '|'
   }
 
 
