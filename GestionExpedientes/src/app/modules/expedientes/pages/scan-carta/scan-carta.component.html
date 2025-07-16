@@ -1,4 +1,4 @@
-<div class="p-6 bg-white h-full relative">
+<div class="p-6 bg-white h-full w-full relative">
     <!-- Overlay de carga -->
     <div *ngIf="isLoading" class="absolute inset-0 z-50 bg-white bg-opacity-75 flex items-center justify-center">
         <div class="animate-spin h-12 w-12 border-4 border-[#004C77] border-t-transparent rounded-full"></div>
@@ -12,14 +12,15 @@
     <ng-container *ngIf="mostrarResultado && !isLoading; else seleccionZona">
         <div
             class="max-w-3xl mx-auto mt-10 bg-green-100 border border-green-500 text-green-800 p-6 rounded-xl shadow-lg">
-            <h2 class="text-2xl font-bold text-center mb-4">Resultado del OCR</h2>
-            <pre class="whitespace-pre-wrap text-sm bg-white rounded p-4 shadow-inner border border-gray-300">
-{{ ocrResult }}
-            </pre>
-            <div class="mt-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">¿A qué campo deseas asignar este
-                    texto?</label>
-                <select [(ngModel)]="campoSeleccionado" class="w-full border border-gray-300 rounded px-3 py-2">
+            <h2 class="text-2xl font-bold text-center mb-4">Resultados del OCR</h2>
+
+            <div *ngFor="let zona of zonasSeleccionadas; let i = index" class="mb-6">
+                <label class="text-sm font-semibold text-gray-700 block mb-1">Zona {{ i + 1 }}</label>
+                <pre
+                    class="whitespace-pre-wrap text-sm bg-white rounded p-4 shadow-inner border border-gray-300">{{ zona.texto }}</pre>
+
+                <label class="block text-sm font-medium text-gray-700 mb-1 mt-2">¿A qué campo deseas asignarlo?</label>
+                <select [(ngModel)]="zona.campoDestino" class="w-full border border-gray-300 rounded px-3 py-2">
                     <option disabled [ngValue]="null">Seleccione una opción</option>
                     <option value="asunto">Asunto</option>
                     <option value="emisor">Usuario emisor</option>
@@ -34,6 +35,7 @@
                     (click)="cerrar()">Continuar</button>
             </div>
         </div>
+
     </ng-container>
 
     <!-- Vista por defecto -->
@@ -43,14 +45,10 @@
         <!-- Botones principales -->
         <div class="mb-4 flex justify-center gap-4 items-center">
             <input type="file" #fileInput (change)="onFileSelected($event)" accept="application/pdf" hidden />
-
-            <!-- Botón cargar/reemplazar -->
             <button class="bg-[#004C77] text-white px-6 py-2 rounded-lg hover:bg-[#003955] cursor-pointer transition"
                 (click)="fileInput.click()">
                 {{ selectedFile ? 'Reemplazar PDF' : 'Seleccionar PDF' }}
             </button>
-
-            <!-- Botón procesar OCR -->
             <button
                 class="cursor-pointer bg-[#004C77] text-white px-6 py-2 rounded-lg transition hover:bg-[#007799] disabled:opacity-50 disabled:cursor-not-allowed"
                 [disabled]="!selection.completed || isLoading" (click)="procesarSeleccion()">
@@ -58,15 +56,58 @@
             </button>
         </div>
 
-        <!-- Imagen y selección -->
-        <div *ngIf="imagenSrc" class="relative w-full max-w-4xl mx-auto border rounded shadow">
-            <img [src]="imagenSrc" #imgRef class="w-full select-none pointer-events-none" />
-            <div class="absolute inset-0 z-10 cursor-crosshair" (mousedown)="startSelection($event)"
-                (mousemove)="updateSelection($event)" (mouseup)="endSelection($event)">
-                <div *ngIf="selection.active || selection.completed"
-                    class="absolute border-2 border-orange-500 bg-orange-300 bg-opacity-20 pointer-events-none"
-                    [ngStyle]="getSelectionStyle()"></div>
+        <!-- CONTENEDOR SCROLLEABLE -->
+        <div class="overflow-y-auto max-h-[85vh] px-2 space-y-1">
+
+            <!-- Sección Zonas Seleccionadas -->
+            <div *ngIf="zonasSeleccionadas.length > 0" class="max-h-[10vh] overflow-y-auto max-w-4xl mx-auto">
+                <div *ngFor="let zona of zonasSeleccionadas; let i = index"
+                    class="border border-gray-300 bg-gray-50 rounded p-2 shadow-sm relative mb-1">
+
+                    <div class="flex justify-between items-center mb-1">
+                        <!-- Izquierda: Zona + coords -->
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-sm font-medium text-gray-700">
+                            <span>Zona {{ i + 1 }}</span>
+                            <span class="text-xs text-gray-500">
+                                ({{ zona.coords.x.toFixed(1) }}, {{ zona.coords.y.toFixed(1) }}) –
+                                {{ zona.coords.width.toFixed(1) }}x{{ zona.coords.height.toFixed(1) }}
+                            </span>
+                        </div>
+
+                        <!-- Derecha: botón eliminar -->
+                        <button (click)="eliminarZona(i)"
+                            class="cursor-pointer text-red-600 hover:text-red-800 font-semibold text-sm transition"
+                            type="button">
+                            ✖
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Imagen con selección -->
+            <div *ngIf="imagenSrc" class="relative max-w-5xl mx-auto border rounded shadow">
+                <img [src]="imagenSrc" #imgRef
+                    class="w-full h-auto max-h-[65vh] object-contain select-none pointer-events-none" />
+                <div class="absolute inset-0 z-10 cursor-crosshair" (mousedown)="startSelection($event)"
+                    (mousemove)="updateSelection($event)" (mouseup)="endSelection($event)">
+                    <div *ngIf="selection.active || selection.completed"
+                        class="absolute border-2 border-orange-500 bg-orange-300 bg-opacity-20 pointer-events-none"
+                        [ngStyle]="getSelectionStyle()"></div>
+                    <div *ngFor="let zona of getZonasVisuales(); let i = index"
+                        class="absolute border-2 border-green-600 bg-green-300 bg-opacity-20 pointer-events-auto"
+                        [ngStyle]="{
+                left: zona.x + 'px',
+                top: zona.y + 'px',
+                width: zona.width + 'px',
+                height: zona.height + 'px',
+                position: 'absolute'
+             }">
+                    </div>
+                </div>
             </div>
         </div>
     </ng-template>
+
 </div>

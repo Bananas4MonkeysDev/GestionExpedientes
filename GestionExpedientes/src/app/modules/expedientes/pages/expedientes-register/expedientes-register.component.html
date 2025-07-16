@@ -343,10 +343,9 @@
     </div>
     <!-- PASO 3 para tipo Emisor -->
     <div *ngIf="pasoActual === 3 && tipoExpediente === 'Emisor'" class="bg-white rounded-xl shadow p-8 space-y-6">
-      <h2 class="text-xl font-semibold text-[#004C77]">Documentos heredados del expediente base</h2>
       <!-- Selector de tipo de flujo de firma mejorado -->
       <div class="bg-white border border-gray-300 shadow-sm rounded-xl px-6 py-5 mb-6">
-        <label class="text-sm font-semibold text-gray-700 block mb-3">Tipo de flujo de firma:</label>
+        <h2 class="text-xl font-semibold text-[#004C77]">Tipo de flujo de firma:</h2>
 
         <div class="flex gap-2 bg-gray-100 rounded-full w-fit p-1 shadow-inner">
           <!-- Botón: Por documento -->
@@ -365,11 +364,13 @@
             Niveles generales
           </button>
         </div>
-
-        <!-- Línea divisora -->
-        <hr class="mt-6 border-t border-gray-300">
       </div>
-
+      <!-- Línea divisora -->
+      <hr class="mt-6 border-t border-gray-300">
+      <h2 class="text-xl font-semibold text-[#004C77]">Documentos heredados del expediente base</h2>
+      <div *ngIf="documentosExistentes.length === 0" class="text-sm text-gray-500 italic mb-4">
+        No se han heredado documentos del expediente base.
+      </div>
       <!-- Documentos existentes -->
       <div *ngFor="let doc of documentosExistentes; let i = index"
         class="space-y-4 items-center bg-white border border-gray-200 shadow-sm rounded px-4 py-3">
@@ -391,13 +392,20 @@
             <input type="text" class="w-full px-2 py-1 text-sm border border-gray-300 rounded bg-gray-100"
               [value]="doc.tipoDocumento" readonly />
           </div>
+          <!-- Requiere firma -->
+          <div class="flex flex-col items-center gap-1 min-w-[100px] whitespace-nowrap">
+            <label class="text-xs text-gray-500">¿Requiere firma?</label>
+            <input type="checkbox" [(ngModel)]="doc.requiereFirma" (ngModelChange)="actualizarEstadoBotonRegistro()"
+              class="accent-[#004C77] w-4 h-4 cursor-pointer">
+          </div>
+
           <!-- Botón Ver -->
           <div class="flex gap-3 text-sm">
             <button (click)="abrirEnNuevaVentana(transformarRutaDocumento(doc.rutaArchivo)!)" matTooltip="Ver documento"
               class="text-[#004C77] hover:underline cursor-pointer">Ver</button>
           </div>
         </div>
-        <div *ngIf="modoFlujoFirma === 'individual'">
+        <div *ngIf="modoFlujoFirma === 'individual'&& doc.requiereFirma">
           <div class="items-center bg-white border border-gray-200 shadow-sm rounded px-4 py-3">
             <h3 class="text-sm font-semibold text-gray-700 mb-2">Flujo de firma para {{ doc.nombreArchivo }} </h3>
             <div *ngFor="let nivel of doc.nivelesFirma; let j = index" class="mb-3">
@@ -452,19 +460,9 @@
                         </ngx-mat-select-search>
                       </mat-option>
 
-                      <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
-                        <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por tipo:</label>
-                        <select [(ngModel)]="nivel.filtroTipo" [ngModelOptions]="{ standalone: true }"
-                          (ngModelChange)="filtrarUsuariosInternos(nivel)"
-                          class="text-sm border border-gray-300 rounded px-2 py-1 bg-white shadow-sm cursor-pointer">
-                          <option value="">Todos</option>
-                          <option *ngFor="let tipo of tiposUsuario" [value]="tipo">{{ tipo }}</option>
-                        </select>
-                      </div>
-
-                      <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo"
+                      <mat-optgroup *ngFor="let tipo of tiposUsuarioFirma" [label]="tipo"
                         [hidden]="!mostrarGrupoInternoTipo(tipo, nivel)">
-                        <mat-option *ngFor="let user of obtenerUsuariosPorTipo(nivel.usuariosFiltrados, tipo)"
+                        <mat-option *ngFor="let user of obtenerUsuariosPorTipoFirma(nivel.usuariosFiltrados, tipo)"
                           [value]="user.nombre">
                           {{ user.nombre }} - {{ user.correo }}
                         </mat-option>
@@ -483,13 +481,186 @@
               </div>
             </div>
           </div>
-          <button type="button" matTooltip="Agregar Nivel" (click)="agregarNivel(doc)"
+          <button type="button" [disabled]="!doc.requiereFirma" matTooltip="Agregar Nivel" (click)="agregarNivel(doc)"
             class="cursor-pointer text-sm text-[#004C77] hover:underline px-4">
             + Agregar nivel para {{ doc.nombreArchivo }}
           </button>
         </div>
       </div>
       <!-- NIVELES GENERALES DE FIRMA (si está seleccionado el modo general) -->
+
+
+      <!-- Divider -->
+      <hr class="my-6 border-gray-300" />
+      <!-- NUEVOS DOCUMENTOS (solo para tipo Emisor) -->
+      <div class="space-y-6">
+        <h2 class="text-xl font-semibold text-[#004C77]">Carga de nuevos documentos del expediente</h2>
+
+        <!-- Drag & Drop -->
+        <div class="border-2 border-dashed rounded-lg p-10 text-center transition-all duration-300" [ngClass]="{
+    'border-[#004C77] bg-blue-50': arrastrando,
+    'border-gray-300 bg-gray-50': !arrastrando
+  }" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onFileDrop($event)">
+          <label for="uploadInputEmisor" class="cursor-pointer flex flex-col items-center space-y-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#004C77]" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M16 12l-4-4m0 0l-4 4m4-4v12" />
+            </svg>
+            <span class="text-sm text-gray-600">Arrastra tus archivos aquí o haz clic para seleccionar</span>
+            <span class="text-xs text-gray-400">Archivos permitidos: PDF</span>
+          </label>
+          <input id="uploadInputEmisor" type="file" accept=".pdf" multiple class="hidden"
+            (change)="onMultipleFilesSelectedx($event)" />
+        </div>
+
+        <!-- Lista de nuevos documentos -->
+        <div *ngIf="documentosNuevos.length > 0" class="space-y-4">
+          <h4 class="text-sm font-semibold text-gray-700">Documentos añadidos</h4>
+
+          <div *ngFor="let doc of documentosNuevos; let i = index"
+            class="bg-white border border-gray-200 shadow-sm rounded px-4 py-3 space-y-4">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+              <!-- Nombre y progreso -->
+              <div class="flex items-center gap-3 w-full">
+                <svg class="w-5 h-5 text-[#004C77] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M7 7h10M7 11h10M7 15h10M5 5v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2z" />
+                </svg>
+                <span class="text-sm text-gray-700 w-[200px] truncate">
+                  {{ doc.nombre }}
+                </span>
+                <div class="flex-1 flex items-center gap-2">
+                  <span class="text-xs text-gray-500 min-w-[55px] text-right">
+                    {{ formatearPeso(doc.archivo.size) }}
+                  </span>
+                  <div class="w-full max-w-[150px] h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-[#004C77] transition-all duration-300" [style.width.%]="doc.progreso"></div>
+                  </div>
+                  <svg *ngIf="doc.cargado" class="w-5 h-5 text-green-600" fill="none" stroke="currentColor"
+                    stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Tipo -->
+              <div class="w-[180px]">
+                <label class="text-xs text-gray-500 block mb-1">Tipo de documento</label>
+                <select [(ngModel)]="doc.tipoDocumento" [ngModelOptions]="{ standalone: true }"
+                  class="cursor-pointer w-full px-2 py-1 text-sm border border-gray-300 rounded" required>
+                  <option value="" disabled>Seleccione</option>
+                  <option *ngFor="let tipo of tiposDocumento" [value]="tipo">{{ tipo }}</option>
+                </select>
+              </div>
+
+              <!-- Visibilidad + Acciones -->
+              <div class="flex gap-3 text-sm">
+                <button [matTooltip]="doc.visibleParaExternos ? 'Visible para externos' : 'Oculto para externos'"
+                  (click)="alternarVisibilidadNuevo(i)" class="cursor-pointer p-1 rounded hover:bg-gray-100 transition">
+                  <svg *ngIf="doc.visibleParaExternos" class="w-5 h-5 text-[#F36C21]" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <svg *ngIf="!doc.visibleParaExternos" class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.969 9.969 0 012.386-3.872M10.6 4.184a9.957 9.957 0 012.268-.184c4.477 0 8.268 2.943 9.542 7a9.97 9.97 0 01-4.293 5.187M3 3l18 18" />
+                  </svg>
+                </button>
+
+                <button (click)="verDocumentoNuevo(i)" matTooltip="Visualizar Documento"
+                  class="text-[#004C77] hover:underline cursor-pointer">Ver</button>
+                <button (click)="eliminarDocumentoNuevo(i)" matTooltip="Eliminar Documento"
+                  class="text-red-600 hover:underline cursor-pointer">Eliminar</button>
+              </div>
+            </div>
+            <!-- BLOQUE DE FLUJO DE FIRMA PARA DOCUMENTOS NUEVOS -->
+            <div *ngIf="modoFlujoFirma === 'individual'" class="mt-4 w-full pt-4">
+              <h3 class="text-sm font-semibold text-gray-700 mb-2">Flujo de firma para {{ doc.nombre }}</h3>
+
+              <div *ngFor="let nivel of doc.nivelesFirma; let j = index" class="mb-4 rounded p-3 bg-gray-50">
+                <!-- Cabecera -->
+                <div class="flex justify-between items-center mb-2">
+                  <span class="text-sm font-medium text-[#004C77]">Nivel {{ j + 1 }}</span>
+                  <button type="button" (click)="eliminarNivel(doc, j)" matTooltip="Eliminar Nivel"
+                    class="cursor-pointer text-red-600 text-xs hover:underline">
+                    Eliminar nivel
+                  </button>
+                </div>
+
+                <!-- Fecha límite -->
+                <div class="mb-3">
+                  <label class="block text-sm text-gray-700 mb-1">Fecha límite</label>
+                  <input type="date" [(ngModel)]="nivel.fechaLimite"
+                    [min]="doc.nivelesFirma[j - 1]?.fechaLimite || minDateString"
+                    (ngModelChange)="validarFechasEnCascada(doc.nivelesFirma)"
+                    class="w-full border border-gray-300 rounded px-2 py-1 text-sm" />
+                </div>
+
+                <!-- Chips de usuarios -->
+                <div
+                  class="flex flex-wrap gap-2 mb-2 min-h-[56px] border border-gray-300 rounded px-3 py-1.5 bg-white items-center">
+                  <ng-container *ngIf="nivel.controlUsuarios.value?.length; else placeholderNivelNuevo">
+                    <div *ngFor="let user of nivel.controlUsuarios.value"
+                      class="flex items-center bg-[#E6F2F8] text-[#004C77] text-sm px-3 py-1 rounded-full">
+                      {{ user }}
+                      <button type="button" (click)="removerUsuarioNivel(user, nivel)"
+                        class="ml-2 hover:text-red-600 cursor-pointer">
+                        <mat-icon class="text-xs">cancel</mat-icon>
+                      </button>
+                    </div>
+                  </ng-container>
+                  <ng-template #placeholderNivelNuevo>
+                    <span class="text-sm text-gray-400">Ningún usuario seleccionado</span>
+                  </ng-template>
+                </div>
+
+                <!-- Selector -->
+                <div class="flex gap-2 items-start">
+                  <mat-form-field appearance="outline" class="w-full" matTooltip="Selecciona usuarios internos">
+                    <mat-select [formControl]="nivel.controlUsuarios" multiple class="max-w-full"
+                      (closed)="reiniciarFiltroInternos(nivel)">
+                      <mat-option class="!cursor-default" disabled>
+                        <ngx-mat-select-search [formControl]="nivel.searchControl" placeholderLabel="Buscar usuario..."
+                          (keydown.enter)="abrirDialogoAgregarUsuario(nivel.searchControl.value || '', 'nivel')"
+                          noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nuevo usuario interno">
+                        </ngx-mat-select-search>
+                      </mat-option>
+
+                      <!-- Usuarios agrupados -->
+                      <mat-optgroup *ngFor="let tipo of tiposUsuarioFirma" [label]="tipo"
+                        [hidden]="!mostrarGrupoInternoTipo(tipo, nivel)">
+                        <mat-option *ngFor="let user of obtenerUsuariosPorTipoFirma(nivel.usuariosFiltrados, tipo)"
+                          [value]="user.nombre">
+                          {{ user.nombre }} - {{ user.correo }}
+                        </mat-option>
+                      </mat-optgroup>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <!-- Botón Agregar Usuario -->
+                  <button type="button" #btnAgregarUsuarioNuevo
+                    (click)="desenfocarYabrir(btnAgregarUsuarioNuevo, '', 'nivel')"
+                    class="cursor-pointer h-[56px] px-3 py-2 bg-[#004C77] text-white rounded-md hover:bg-[#003655] transition"
+                    matTooltip="Agregar nuevo usuario interno">
+                    <mat-icon fontIcon="person_add" class="text-base">person_add</mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              <button type="button" matTooltip="Agregar Nivel" (click)="agregarNivel(doc)"
+                class="cursor-pointer text-sm text-[#004C77] hover:underline mt-2">
+                + Agregar nivel para {{ doc.nombre }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <hr class="my-6 border-gray-300" />
       <div *ngIf="modoFlujoFirma === 'general'"
         class="mt-6 items-center bg-white border border-gray-200 shadow-sm rounded px-4 py-3">
         <h3 class="text-sm font-semibold text-gray-700 mb-2">Flujo de firma general para todos los documentos</h3>
@@ -546,20 +717,9 @@
                       noEntriesFoundLabel="No encontrado. Presiona ENTER para registrar nuevo usuario interno">
                     </ngx-mat-select-search>
                   </mat-option>
-
-                  <div class="flex items-center gap-2 py-2 px-3 rounded-md bg-gray-50">
-                    <label class="text-xs text-gray-600 whitespace-nowrap">Filtrar por tipo:</label>
-                    <select [(ngModel)]="nivel.filtroTipo" [ngModelOptions]="{ standalone: true }"
-                      (ngModelChange)="filtrarUsuariosInternos(nivel)"
-                      class="text-sm border border-gray-300 rounded px-2 py-1 bg-white shadow-sm cursor-pointer">
-                      <option value="">Todos</option>
-                      <option *ngFor="let tipo of tiposUsuario" [value]="tipo">{{ tipo }}</option>
-                    </select>
-                  </div>
-
-                  <mat-optgroup *ngFor="let tipo of tiposUsuario" [label]="tipo"
+                  <mat-optgroup *ngFor="let tipo of tiposUsuarioFirma" [label]="tipo"
                     [hidden]="!mostrarGrupoInternoTipo(tipo, nivel)">
-                    <mat-option *ngFor="let user of obtenerUsuariosPorTipo(nivel.usuariosFiltrados, tipo)"
+                    <mat-option *ngFor="let user of obtenerUsuariosPorTipoFirma(nivel.usuariosFiltrados, tipo)"
                       [value]="user.nombre">
                       {{ user.nombre }} - {{ user.correo }}
                     </mat-option>
@@ -582,17 +742,14 @@
           + Agregar nivel general
         </button>
       </div>
-
-      <!-- Divider -->
       <hr class="my-6 border-gray-300" />
-
 
       <!-- Botones -->
       <div class="flex justify-between items-center mt-6">
         <button type="button" (click)="regresarPaso()"
           class="text-[#004C77] font-medium hover:underline cursor-pointer">←
           Regresar</button>
-        <button [disabled]="!esFlujoValido()" (click)="onSubmit()"
+        <button [disabled]="!validarNivelesFirma()" (click)="onSubmit()"
           class="cursor-pointer bg-[#004C77] text-white px-4 py-2 rounded disabled:bg-gray-300 disabled:cursor-not-allowed transition">
           Registrar expediente
         </button>

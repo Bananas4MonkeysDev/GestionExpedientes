@@ -58,7 +58,7 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
         String fechaFormateada = flujo.getFechaLimite().format(formatter);
         List<Usuario> usuarios = usuarioService.obtenerPorIdsSeparados(flujo.getUsuarios());
         for (Usuario usuario : usuarios) {
-            String mensaje;
+            String mensaje = "";
             String asunto = "Expediente " + expediente.getCodigo();
 
             if (flujo.getNivel() == 1) {
@@ -71,15 +71,15 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
                         nombreRemitente
                 );
                 asunto = "Firma requerida – " + asunto;
-            } else {
-                mensaje = emailService.generarMensajeEspera(
+            }/* else {
+              mensaje = emailService.generarMensajeEspera(
                         usuario.getNombre(),
                         expediente,
                         flujo.getNivel(),
                         nombreRemitente
                 );
                 asunto = "Notificación de flujo – " + asunto;
-            }
+            }*/
 
             emailService.enviarCorreoConAdjunto(
                     List.of(usuario.getCorreo()),

@@ -17,11 +17,14 @@ export class ScanCartaComponent {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('imgRef') imgRef!: ElementRef<HTMLImageElement>;
   isLoading = false;
-  ocrResult: string | null = null;
   selectedFile!: File;
   imagenSrc: string | null = null;
   mostrarResultado = false;
-  campoSeleccionado: 'asunto' | 'emisor' | 'destinatario' | 'referencia' | null = null;
+  zonasSeleccionadas: {
+    coords: { x: number, y: number, width: number, height: number },
+    texto?: string,
+    campoDestino?: 'asunto' | 'emisor' | 'destinatario' | 'referencia' | null
+  }[] = [];
 
   selection = {
     startX: 0, startY: 0, endX: 0, endY: 0,
@@ -33,19 +36,20 @@ export class ScanCartaComponent {
     private dialogRef: MatDialogRef<ScanCartaComponent>,
     private cd: ChangeDetectorRef
   ) {
-    dialogRef.disableClose = true; 
+    dialogRef.disableClose = true;
   }
 
   cerrar() {
-    if (!this.ocrResult || !this.campoSeleccionado) {
+    const resultados = this.zonasSeleccionadas
+      .filter(z => z.texto && z.campoDestino)
+      .map(z => ({ texto: z.texto!.trim(), destino: z.campoDestino! }));
+
+    if (resultados.length === 0) {
       this.dialogRef.close();
       return;
     }
 
-    this.dialogRef.close({
-      texto: this.ocrResult.trim(),
-      destino: this.campoSeleccionado
-    });
+    this.dialogRef.close(resultados);
   }
 
   onFileSelected(event: Event) {
@@ -102,22 +106,6 @@ export class ScanCartaComponent {
 
     this.selection.active = false;
     this.selection.completed = true;
-    this.cd.detectChanges();
-    console.log('🟠 Selección completada:', this.getSelectionStyle());
-  }
-
-  getSelectionStyle() {
-    const x = Math.min(this.selection.startX, this.selection.endX);
-    const y = Math.min(this.selection.startY, this.selection.endY);
-    const width = Math.abs(this.selection.endX - this.selection.startX);
-    const height = Math.abs(this.selection.endY - this.selection.startY);
-    return { left: `${x}px`, top: `${y}px`, width: `${width}px`, height: `${height}px`, position: 'absolute' };
-  }
-
-  procesarSeleccion() {
-    this.isLoading = true;
-    this.cd.detectChanges();
-    this.ocrResult = null;
 
     const img = this.imgRef.nativeElement;
     const scaleX = img.naturalWidth / img.clientWidth;
@@ -128,21 +116,77 @@ export class ScanCartaComponent {
     const width = Math.abs(this.selection.endX - this.selection.startX) * scaleX;
     const height = Math.abs(this.selection.endY - this.selection.startY) * scaleY;
 
-    console.log('📐 Región para OCR:', { x, y, width, height });
+    const zona = { coords: { x, y, width, height }, texto: '', campoDestino: null };
+    this.zonasSeleccionadas.push(zona);
+    this.cd.detectChanges();
 
-    this.ocrService.enviarZona(this.selectedFile, 1, { x, y, width, height }).subscribe({
-      next: (resp) => {
-        console.log('✅ Texto OCR:', resp.texto_extraido);
-        this.ocrResult = resp.texto_extraido;
-        this.isLoading = false;
-        this.mostrarResultado = true; // ✅ Cambia la vista
-      },
-      error: (err) => {
-        console.error('💥 Error al procesar OCR:', err);
-        this.ocrResult = 'Error al procesar la imagen.';
-        this.isLoading = false;
-      }
+    console.log('🟠 Zona agregada:', zona);
+  }
+  getZonasVisuales(): { x: number, y: number, width: number, height: number }[] {
+    if (!this.imgRef?.nativeElement) return [];
+
+    const img = this.imgRef.nativeElement;
+    const scaleX = img.clientWidth / img.naturalWidth;
+    const scaleY = img.clientHeight / img.naturalHeight;
+
+    return this.zonasSeleccionadas.map(z => {
+      return {
+        x: z.coords.x * scaleX,
+        y: z.coords.y * scaleY,
+        width: z.coords.width * scaleX,
+        height: z.coords.height * scaleY
+      };
     });
+  }
+  eliminarZona(index: number) {
+    this.zonasSeleccionadas.splice(index, 1);
+  }
+
+
+  getSelectionStyle() {
+    const x = Math.min(this.selection.startX, this.selection.endX);
+    const y = Math.min(this.selection.startY, this.selection.endY);
+    const width = Math.abs(this.selection.endX - this.selection.startX);
+    const height = Math.abs(this.selection.endY - this.selection.startY);
+    return { left: `${x}px`, top: `${y}px`, width: `${width}px`, height: `${height}px`, position: 'absolute' };
+  }
+
+  procesarSeleccion() {
+    if (this.zonasSeleccionadas.length === 0) return;
+
+    this.isLoading = true;
+    const img = this.imgRef.nativeElement;
+    const file = this.selectedFile;
+
+    let zonasProcesadas = 0;
+
+    for (const zona of this.zonasSeleccionadas) {
+      const { x, y, width, height } = zona.coords;
+
+      this.ocrService.enviarZona(file, 1, { x, y, width, height }).subscribe({
+        next: (resp) => {
+          zona.texto = resp.texto_extraido;
+          zonasProcesadas++;
+          console.log(`✅ Zona ${zonasProcesadas}:`, zona);
+
+          if (zonasProcesadas === this.zonasSeleccionadas.length) {
+            this.isLoading = false;
+            this.mostrarResultado = true;
+            this.cd.detectChanges();
+          }
+        },
+        error: (err) => {
+          console.error('💥 Error al procesar OCR:', err);
+          zona.texto = 'Error al procesar.';
+          zonasProcesadas++;
+          if (zonasProcesadas === this.zonasSeleccionadas.length) {
+            this.isLoading = false;
+            this.mostrarResultado = true;
+            this.cd.detectChanges();
+          }
+        }
+      });
+    }
   }
 
 }
