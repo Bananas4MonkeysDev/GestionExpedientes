@@ -768,18 +768,116 @@
                 </div>
 
                 <!-- Estado del Proceso -->
-                <div *ngSwitchCase="'estado'" class="p-4">
-                    <div class="p-6 bg-white rounded-lg shadow">
+                <!-- Estado del Proceso (Receptor) -->
+                <div *ngSwitchCase="'estado'" class="p-6 bg-white rounded-lg shadow">
+
+                    <ng-container *ngIf="expediente?.tipo === 'Receptor'; else vistaAnterior">
+                        <h3 class="text-lg font-semibold text-[#004C77] mb-6">Estado del Proceso</h3>
+                        <!-- Leyenda de colores -->
+                        <div class="flex items-center justify-end gap-6 text-sm text-gray-600 mb-6">
+                            <div class="flex items-center gap-2">
+                                <div class="w-4 h-4 rounded-full bg-[#129490] border border-[#129490]"></div>
+                                <span class="text-gray-700">Completado</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-4 h-4 rounded-full bg-[#F36C21] border border-[#F36C21]"></div>
+                                <span class="text-gray-700">En curso</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-4 h-4 rounded-full bg-[#A0AEC0] border border-[#A0AEC0]"></div>
+                                <span class="text-gray-700">Pendiente</span>
+                            </div>
+                        </div>
+
+                        <!-- Línea de pasos -->
+                        <div class="relative flex items-center justify-between max-w-3xl mx-auto h-20">
+
+                            <!-- Línea de conexión (centrada perfectamente) -->
+                            <div
+                                class="absolute top-1/4 left-[6%] right-[6%] h-1 bg-gray-300 z-0 transform -translate-y-1/2">
+                            </div>
+
+                            <!-- Paso 1: Creación -->
+                            <div class="flex flex-col items-center z-10 cursor-pointer"
+                                (click)="etapaSeleccionada = 'CREACION'">
+                                <div class="w-12 h-12 rounded-full border-4 flex items-center justify-center font-bold text-white transition"
+                                    [ngClass]="{
+  'bg-[#129490] border-[#129490]': [1, 2, 3, 4].includes(estadoProcesoIndex),
+  'bg-[#F36C21] border-[#F36C21]': estadoProcesoIndex === 0,
+  'bg-[#A0AEC0] border-[#A0AEC0]': estadoProcesoIndex < 0
+}">
+                                    1
+                                </div>
+                                <span
+                                    class="mt-2 text-sm text-center text-gray-700 font-medium leading-tight">Creación<br>Expediente</span>
+                            </div>
+
+                            <!-- Paso 2 -->
+                            <div class="flex flex-col items-center z-10 cursor-pointer"
+                                (click)="etapaSeleccionada = 'APROBACION'">
+                                <div class="w-12 h-12 rounded-full border-4 flex items-center justify-center font-bold text-white transition"
+                                    [ngClass]="{
+      'bg-[#129490] border-[#129490]': estadoProcesoIndex === 2 || estadoProcesoIndex === 3,
+      'bg-[#F36C21] border-[#F36C21]': estadoProcesoIndex === 1 || estadoProcesoIndex === 4,
+      'bg-[#A0AEC0] border-[#A0AEC0]': estadoProcesoIndex < 1
+    }">
+                                    2
+                                </div>
+                                <span class="mt-2 text-sm text-center text-gray-700 font-medium leading-tight">
+                                    Aprobación<br>Expediente
+                                </span>
+                            </div>
+
+                            <!-- Paso 3 -->
+                            <div class="flex flex-col items-center z-10 cursor-pointer"
+                                (click)="etapaSeleccionada = 'CARGO'">
+                                <div class="w-12 h-12 rounded-full border-4 flex items-center justify-center font-bold text-white transition"
+                                    [ngClass]="{
+      'bg-[#129490] border-[#129490]': estadoProcesoIndex === 3 || estadoProcesoIndex === 4,
+      'bg-[#A0AEC0] border-[#A0AEC0]': estadoProcesoIndex < 3
+    }">
+                                    3
+                                </div>
+                                <span class="mt-2 text-sm text-center text-gray-700 font-medium leading-tight">
+                                    Cargo<br>Generado
+                                </span>
+                            </div>
+
+                        </div>
+
+
+                        <!-- Detalles de la etapa -->
+                        <div class="mt-10 bg-gray-50 border border-gray-200 rounded-lg p-6 text-sm text-gray-700">
+                            <ng-container [ngSwitch]="etapaSeleccionada">
+                                <p *ngSwitchCase="'CREACION'">
+                                    <strong>Creación:</strong> El expediente fue registrado en el sistema y está
+                                    esperando revisión.
+                                </p>
+                                <p *ngSwitchCase="'APROBACION'">
+                                    <strong>Aprobación:</strong> El expediente está en proceso de revisión y debe ser
+                                    aprobado por las personas asignadas.
+                                </p>
+                                <p *ngSwitchCase="'CARGO'">
+                                    <strong>Cargo:</strong> El expediente ya cuenta con un documento de cargo generado
+                                    que formaliza su entrega.
+                                </p>
+                                <p *ngSwitchDefault class="italic text-gray-500">
+                                    Selecciona una etapa del proceso para ver su detalle.
+                                </p>
+                            </ng-container>
+                        </div>
+                    </ng-container>
+
+                    <!-- Vista anterior (para emisores u otros) -->
+                    <ng-template #vistaAnterior>
                         <h3 class="text-lg font-semibold text-[#004C77] mb-6">Línea de tiempo del proceso</h3>
                         <div class="relative pl-10">
                             <div class="absolute left-6 top-0 bottom-0 w-0.5 bg-[#004C77]"></div>
-
                             <div *ngFor="let etapa of expediente.estadoProceso; let i = index" class="relative mb-8">
                                 <div class="absolute left-5 w-4 h-4 rounded-full border-4 z-10"
                                     style="top: calc(50% - 0.5rem);"
                                     [ngClass]="etapa.completado ? 'bg-[#004C77] border-[#004C77]' : 'bg-white border-gray-400'">
                                 </div>
-
                                 <div
                                     class="ml-12 bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all">
                                     <p class="font-semibold text-[#004C77]">{{ etapa.nombre }}</p>
@@ -789,8 +887,10 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </ng-template>
+
                 </div>
+
 
                 <!-- Sección Auditoría -->
                 <div *ngIf="seccion === 'auditoria'" class="space-y-6 mt-8">

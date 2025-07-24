@@ -72,10 +72,12 @@ export class DocumentoAgregarComponent {
       this.modo === 'usuario'
         ? {
           nombre: [usuarioEditando?.nombre || (data as DatosUsuario).nombre || '', Validators.required],
-          correo: [usuarioEditando?.correo ||
-            '',
-          [Validators.required, Validators.email],
-          [this.usuarioService.validarCorreoAsync(usuarioService)]
+          correo: [
+            usuarioEditando?.correo || '',
+            [Validators.required, Validators.email],
+            usuarioEditando
+              ? [this.usuarioService.validarCorreoSiHaCambiado(usuarioEditando.correo)]
+              : [this.usuarioService.validarCorreoAsync(usuarioService)]
           ],
           contraseña: [usuarioEditando ? '' : '', usuarioEditando ? [] : Validators.required],
           dni: [usuarioEditando?.dni || '', [Validators.pattern('^[0-9]{8}$'), Validators.minLength(8), Validators.maxLength(8)]],
@@ -154,7 +156,7 @@ export class DocumentoAgregarComponent {
 
   guardar() {
     if (this.form.valid && this.modo === 'usuario') {
-      const nuevoUsuario = this.form.value;
+      const nuevoUsuario = this.form.getRawValue();
       const esEdicion = !!this.form.get('id')?.value;
       const usuarioActual = this.authService.getUserFromToken();
       const grupoAreaId = this.form.value.grupoAreaId;

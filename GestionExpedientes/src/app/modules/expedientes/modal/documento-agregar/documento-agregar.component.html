@@ -169,9 +169,14 @@
       class="rounded-full px-6 text-xs border-[#004C77] text-[#004C77] hover:bg-[#004C77]/10"
       (click)="cancelar()">Cancelar</button>
 
-    <button mat-flat-button type="submit" color="primary"
+    <button *ngIf="!form.get('id')?.value" mat-flat-button type="submit" color="primary"
       class="rounded-full px-8 text-xs bg-[#F36C21] hover:bg-[#d4570f] text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
       (click)="guardar()" [disabled]="form.invalid">Agregar</button>
+
+    <button *ngIf="form.get('id')?.value" mat-flat-button type="submit" color="accent"
+      class="rounded-full px-8 text-xs bg-[#004C77] hover:bg-[#003350] text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
+      (click)="guardar()" [disabled]="form.invalid">Actualizar</button>
   </div>
+
 
 </div>

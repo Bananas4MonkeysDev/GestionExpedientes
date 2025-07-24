@@ -76,7 +76,8 @@ export class UsuariosExpedientesComponent implements OnInit {
     this.usuarioService.obtenerUsuarios().subscribe({
       next: (usuarios) => {
         console.log(usuarios);
-        this.dataSource.data = usuarios;
+        const ordenados = usuarios.sort((a, b) => b.id - a.id); // más recientes primero
+        this.dataSource.data = ordenados;
       },
       error: (err) => {
         console.error('Error al cargar usuarios:', err);
@@ -84,14 +85,11 @@ export class UsuariosExpedientesComponent implements OnInit {
     });
   }
 
-
-
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
+    this.paginator.pageSize = 25;
   }
-
-
 
   isAllSelected() {
     return this.selection.selected.length === this.dataSource.data.length;
@@ -180,9 +178,12 @@ export class UsuariosExpedientesComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result === 'guardado') {
-        this.ngOnInit(); // recargar usuarios
+      console.log(result)
+
+      if (result === true) {
+        this.ngOnInit();
       }
+
     });
   }
   eliminarUsuario(usuario: Usuario) {
@@ -219,7 +220,8 @@ export class UsuariosExpedientesComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result === 'guardado') {
+      console.log(result)
+      if (result === 'true') {
         this.ngOnInit(); // recargar usuarios
       }
     });

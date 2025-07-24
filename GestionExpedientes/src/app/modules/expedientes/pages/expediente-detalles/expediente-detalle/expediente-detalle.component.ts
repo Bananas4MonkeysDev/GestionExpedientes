@@ -24,6 +24,14 @@ import { AuditoriaService } from '../../../../../core/services/auditoria.service
 import { ReferenciaAgregarComponent } from '../../../modal/referencia-agregar/referencia-agregar.component';
 import { Proyecto } from '../../../../../core/models/proyecto.model';
 import { ProyectoService } from '../../../../../core/services/proyecto.service';
+enum EstadoProcesoReceptor {
+  INICIAL = 'INICIAL',
+  CREANDO = 'CREANDO',
+  CREADO = 'CREADO',
+  APROBANDO = 'APROBANDO',
+  APROBADO = 'APROBADO',
+  CARGADO = 'CARGADO'
+}
 
 export interface Usuario {
   id: number; // ← Agregado
@@ -115,6 +123,9 @@ export class ExpedienteDetalleComponent implements OnInit {
   auditorias: any[] = [];
   referencias: Referencia[] = [];
   esAnulado: boolean = false;
+  etapaSeleccionada: 'CREACION' | 'APROBACION' | 'CARGO' | '' = '';
+  estadoProcesoIndex: number = 0; // 0 = en creación, 1 = aprobación, 2 = esperando cargo, 3 = cargo generado
+
   constructor(private proyectoService: ProyectoService, private router: Router, private auditoriaService: AuditoriaService, private authService: AuthService, private loadingService: LoadingOverlayService,
     private sanitizer: DomSanitizer, private zone: NgZone, private route: ActivatedRoute, private cdr: ChangeDetectorRef, private expedienteService: ExpedienteService, private dialog: MatDialog, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
   @ViewChild('slider', { static: false }) sliderRef!: ElementRef;
@@ -242,6 +253,8 @@ export class ExpedienteDetalleComponent implements OnInit {
             return { nombre: u.nombre, correo: u.correo };
           })
         };
+
+
         if (this.expediente.estado == 'ANULADO') {
           this.esAnulado = true;
         }
@@ -274,6 +287,31 @@ export class ExpedienteDetalleComponent implements OnInit {
             ...historial[0],
             archivo: historial[0].archivoPath || ""
           };
+          console.log(this.expediente.cargo);
+          console.log(this.historialCargos);
+
+          this.estadoProcesoIndex = 0;
+
+          if (this.expediente?.estado === 'PENDIENTE') {
+            const cargoRelacionado = this.historialCargos.length > 0;
+            console.log(cargoRelacionado);
+            console.log('[DEBUG] Estado = PENDIENTE, cargoRelacionado:', cargoRelacionado);
+
+            if (cargoRelacionado) {
+              this.estadoProcesoIndex = 4; // caso especial: paso 1 y 3 verdes, paso 2 ambar
+            } else {
+              this.estadoProcesoIndex = 1;
+            }
+            console.log('[DEBUG] estadoProcesoIndex asignado:', this.estadoProcesoIndex);
+
+          } else if (this.expediente?.estado === 'APROBADO') {
+            const cargoRelacionado = this.historialCargos.length > 0;
+            if (cargoRelacionado) {
+              this.estadoProcesoIndex = 3;
+            } else {
+              this.estadoProcesoIndex = 2;
+            }
+          }
           this.cdr.markForCheck();
         });
       },
@@ -465,6 +503,24 @@ export class ExpedienteDetalleComponent implements OnInit {
 
           this.expedienteService.getHistorialCargos(expedienteId).subscribe(hist => {
             this.historialCargos = hist;
+            this.estadoProcesoIndex = 0;
+
+            if (this.expediente?.estado === 'PENDIENTE') {
+              const cargoRelacionado = this.historialCargos.length > 0;
+              console.log(cargoRelacionado);
+              if (cargoRelacionado) {
+                this.estadoProcesoIndex = 4; // caso especial: paso 1 y 3 verdes, paso 2 ambar
+              } else {
+                this.estadoProcesoIndex = 1;
+              }
+            } else if (this.expediente?.estado === 'APROBADO') {
+              const cargoRelacionado = this.historialCargos.length > 0;
+              if (cargoRelacionado) {
+                this.estadoProcesoIndex = 3;
+              } else {
+                this.estadoProcesoIndex = 2;
+              }
+            }
             this.cdr.markForCheck();
           });
           this.auditoriaService.registrarAuditoria({

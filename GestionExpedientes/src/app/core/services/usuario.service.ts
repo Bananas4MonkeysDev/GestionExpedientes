@@ -73,6 +73,14 @@ export class UsuarioService {
     const headers = this.getAuthHeaders();
     return this.http.get<boolean>(`${this.apiUrl}/check-correo?correo=${correo}`, { headers });
   }
+  validarCorreoSiHaCambiado(correoOriginal: string) {
+    return (control: AbstractControl) => {
+      if (control.value === correoOriginal) {
+        return of(null); // no hacer nada si es igual
+      }
+      return this.validarCorreoAsync(this); // usa el validador normal si cambió
+    };
+  }
 
 
   // Validador asincrónico para correo
@@ -110,7 +118,7 @@ export class UsuarioService {
   }
   actualizarUsuario(id: number, usuario: Usuario): Observable<Usuario> {
     const headers = this.getAuthHeaders();
-    return this.http.put<Usuario>(`${this.apiUrl}/actualizar/${id}`, usuario, { headers });
+    return this.http.put<Usuario>(`${this.apiUrl}/${id}`, usuario, { headers });
   }
 
   eliminarUsuario(id: number): Observable<any> {
