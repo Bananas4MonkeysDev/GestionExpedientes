@@ -204,7 +204,7 @@ export class ExpedientesRegisterComponent implements OnInit {
     this.usuarioService.obtenerUsuarios().subscribe({
       next: usuarios => {
         console.log("ususarios totales:", usuarios);
-        this.usuariosInternos = usuarios.filter(u => u.tipoUsuario === 'INTERNO' && u.firmante === true);
+        this.usuariosInternos = usuarios.filter(u => u.firmante === true);
         console.log("ususarios internos:", this.usuariosInternos);
 
         const usuariosTransformados: Usuario[] = usuarios.map(user => ({
@@ -807,7 +807,7 @@ export class ExpedientesRegisterComponent implements OnInit {
           this.todosUsuarios = [...usuariosTransformados, ...gruposComoUsuarios];
           this.usuariosFiltradosTo = [...this.todosUsuarios];
           this.usuariosFiltradosCc = [...this.todosUsuarios];
-          this.usuariosInternos = usuarios.filter(u => u.tipo === 'INTERNO' && u.firmante === 1);
+          this.usuariosInternos = usuarios.filter(u => u.firmante === 1);
           // Asegúrate que "GRUPO" esté como tipo visible
           if (!this.tiposUsuario.includes('GRUPO')) {
             this.tiposUsuario.push('GRUPO');

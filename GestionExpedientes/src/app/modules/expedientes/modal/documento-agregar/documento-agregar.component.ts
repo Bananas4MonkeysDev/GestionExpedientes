@@ -46,6 +46,7 @@ type DatosDialogo = DatosUsuario | DatosReferencia;
 
 export class DocumentoAgregarComponent {
   form: FormGroup;
+  mostrarContrasena = false;
   modo: ModoDialogo;
   tipoUsuarioActual: string = '';
   grupoAreaTipoSeleccionado: string = '';
@@ -76,10 +77,14 @@ export class DocumentoAgregarComponent {
             usuarioEditando?.correo || '',
             [Validators.required, Validators.email],
             usuarioEditando
-              ? [this.usuarioService.validarCorreoSiHaCambiado(usuarioEditando.correo)]
-              : [this.usuarioService.validarCorreoAsync(usuarioService)]
+              ? this.usuarioService.validarCorreoSiHaCambiado(usuarioEditando.correo)
+              : this.usuarioService.validarCorreoAsync()
           ],
-          contraseña: [usuarioEditando ? '' : '', usuarioEditando ? [] : Validators.required],
+          contraseña: [
+            usuarioEditando?.contraseña ? '' : '',
+            usuarioEditando ? [] : [Validators.required]
+          ],
+
           dni: [usuarioEditando?.dni || '', [Validators.pattern('^[0-9]{8}$'), Validators.minLength(8), Validators.maxLength(8)]],
           ruc: [usuarioEditando?.ruc || ''],
           rol: [usuarioEditando?.rol || '', Validators.required],
@@ -94,7 +99,7 @@ export class DocumentoAgregarComponent {
     if (usuarioEditando?.id) {
       const idUsuario = usuarioEditando.id.toString();
       this.form.addControl('id', this.fb.control(usuarioEditando.id));
-      this.form.get('contraseña')?.disable();
+      this.form.get('contraseña');
       this.grupoAreaService.listar().subscribe((todos) => {
         this.todasLasOpcionesGrupoArea = todos;
         const grupoDelUsuario = todos.find(grupo =>
@@ -160,6 +165,12 @@ export class DocumentoAgregarComponent {
       const esEdicion = !!this.form.get('id')?.value;
       const usuarioActual = this.authService.getUserFromToken();
       const grupoAreaId = this.form.value.grupoAreaId;
+
+      if (!nuevoUsuario.contraseña) {
+        // Si está vacío y es edición, no lo mandes para no sobreescribir
+        delete nuevoUsuario.contraseña;
+      }
+      console.log("edicion de  usuario se esta por registrar:", nuevoUsuario)
       const request = esEdicion
         ? this.usuarioService.actualizarUsuario(this.form.get('id')!.value, nuevoUsuario)
         : this.usuarioService.registrarUsuario(nuevoUsuario);
@@ -224,15 +235,48 @@ export class DocumentoAgregarComponent {
         }
       });
     } else {
+      // Marcar todos como tocados y validar
+      Object.entries(this.form.controls).forEach(([key, control]) => {
+        control.markAsTouched();
+        control.updateValueAndValidity();
+      });
+
+      // Obtener los nombres de los campos inválidos
+      const camposInvalidos = Object.entries(this.form.controls)
+        .filter(([_, control]) => control.invalid)
+        .map(([key]) => this.obtenerNombreCampoAmigable(key));
+
+      // Mostrar en el SweetAlert
       Swal.fire({
         icon: 'warning',
         title: 'Formulario incompleto',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        text: 'Por favor, completa todos los campos obligatorios antes de continuar.',
+        html: `
+    <p>Por favor completa los siguientes campos:</p>
+    <ul style="text-align: left; padding-left: 20px;">
+      ${camposInvalidos.map(campo => `<li>• ${campo}</li>`).join('')}
+    </ul>
+  `,
         confirmButtonColor: '#F36C21'
       });
+
     }
+  }
+  obtenerNombreCampoAmigable(clave: string): string {
+    const nombres: Record<string, string> = {
+      nombre: 'Nombre completo',
+      correo: 'Correo electrónico',
+      contraseña: 'Contraseña',
+      dni: 'DNI',
+      ruc: 'RUC',
+      rol: 'Rol',
+      tipoIdentidad: 'Tipo de identidad',
+      tipoUsuario: 'Tipo de usuario',
+      firmante: '¿Es firmante?',
+      tipoFirma: 'Tipo de firma',
+      grupoAreaTipo: 'Tipo de Grupo/Área',
+      grupoAreaId: 'Grupo o Área'
+    };
+    return nombres[clave] || clave;
   }
 
 

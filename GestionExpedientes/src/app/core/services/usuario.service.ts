@@ -73,24 +73,31 @@ export class UsuarioService {
     const headers = this.getAuthHeaders();
     return this.http.get<boolean>(`${this.apiUrl}/check-correo?correo=${correo}`, { headers });
   }
-  validarCorreoSiHaCambiado(correoOriginal: string) {
-    return (control: AbstractControl) => {
-      if (control.value === correoOriginal) {
-        return of(null); // no hacer nada si es igual
+  validarCorreoSiHaCambiado(correoOriginal: string): AsyncValidatorFn {
+    return (control: AbstractControl): Observable<ValidationErrors | null> => {
+      if (control.value === correoOriginal || !control.value) {
+        return of(null); // No hay cambio o está vacío
       }
-      return this.validarCorreoAsync(this); // usa el validador normal si cambió
+      return this.verificarCorreoExistente(control.value).pipe(
+        map(existe => (existe ? { correoExistente: true } : null)),
+        catchError(() => of(null))
+      );
     };
   }
 
 
   // Validador asincrónico para correo
-  validarCorreoAsync(usuarioService: UsuarioService) {
-    return (control: AbstractControl) => {
-      return control.value ? usuarioService.verificarCorreoExistente(control.value).pipe(
-        map(isExist => (isExist ? { correoExistente: true } : null))
-      ) : null;
+  validarCorreoAsync(): AsyncValidatorFn {
+    return (control: AbstractControl): Observable<ValidationErrors | null> => {
+      if (!control.value) return of(null);
+
+      return this.verificarCorreoExistente(control.value).pipe(
+        map(existe => (existe ? { correoExistente: true } : null)),
+        catchError(() => of(null)) // ← evita romper si hay error
+      );
     };
   }
+
   validarDniAsync(): AsyncValidatorFn {
     return (control: AbstractControl): Observable<ValidationErrors | null> => {
       const dni = control.value;

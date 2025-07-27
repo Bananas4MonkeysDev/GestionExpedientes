@@ -91,6 +91,56 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
         return flujoProcesoRepository.save(flujo);
     }
     @Override
+    public void eliminarFlujo(Long id) {
+        FlujoProceso flujo = flujoProcesoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Flujo no encontrado con id: " + id));
+
+        int nivelEliminado = flujo.getNivel();
+        Long expedienteId = flujo.getExpedienteId();
+        String tipoNivel = flujo.getTipoNivel();
+        String documentosId = flujo.getDocumentosId();
+        flujoProcesoRepository.deleteById(id);
+        List<FlujoProceso> siguientesNiveles;
+
+        if ("Especifico".equalsIgnoreCase(tipoNivel)) {
+            siguientesNiveles = flujoProcesoRepository
+                    .findByExpedienteIdAndTipoNivelAndDocumentosIdAndNivelGreaterThanOrderByNivelAsc(
+                            expedienteId, tipoNivel, documentosId, nivelEliminado
+                    );
+        } else {
+            siguientesNiveles = flujoProcesoRepository
+                    .findByExpedienteIdAndTipoNivelAndNivelGreaterThanOrderByNivelAsc(
+                            expedienteId, tipoNivel, nivelEliminado
+                    );
+        }
+
+        for (FlujoProceso siguiente : siguientesNiveles) {
+            siguiente.setNivel(siguiente.getNivel() - 1);
+            flujoProcesoRepository.save(siguiente);
+        }
+    }
+
+    @Override
+    public List<FlujoProceso> obtenerPorExpediente(Long expedienteId) {
+        return flujoProcesoRepository.findByExpedienteId(expedienteId);
+    }
+    @Override
+    public FlujoProceso actualizarFlujo(Long id, FlujoProcesoRequest request) {
+        FlujoProceso flujo = flujoProcesoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("FlujoProceso no encontrado con ID: " + id));
+
+        flujo.setTipoNivel(request.getTipo_nivel());
+        flujo.setNivel(request.getNivel());
+        flujo.setUsuarios(request.getUsuarios());
+        flujo.setExpedienteId(request.getExpediente_id());
+        flujo.setDocumentosId(request.getDocumentos_id());
+        flujo.setFechaLimite(request.getFecha_limite());
+        flujo.setEstado(request.getEstado());
+
+        return flujoProcesoRepository.save(flujo);
+    }
+
+    @Override
     public List<Documento> obtenerDocumentosPendientesParaFirmar(Long expedienteId, Long usuarioId) {
         List<FlujoProceso> flujos = flujoProcesoRepository.findByExpedienteIdAndEstado(expedienteId, "PENDIENTE");
         List<Documento> documentosParaFirmar = new ArrayList<>();

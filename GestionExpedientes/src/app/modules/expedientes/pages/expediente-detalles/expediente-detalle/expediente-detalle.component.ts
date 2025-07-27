@@ -32,6 +32,20 @@ enum EstadoProcesoReceptor {
   APROBADO = 'APROBADO',
   CARGADO = 'CARGADO'
 }
+export interface FlujoProceso {
+  id: number;
+  estado: 'PENDIENTE' | 'FIRMADO';
+  expediente_id: number;
+  fecha_limite: string;
+  nivel: number;
+  tipo_nivel: 'General' | 'Especifico';
+  documentos_id: string; // Puedes parsearlo a string[] si deseas luego
+  usuarios: string; // Ej: "10|12|3"
+}
+interface NivelFirma {
+  usuarios: string[];
+  usuarioSeleccionado?: string;
+}
 
 export interface Usuario {
   id: number; // ← Agregado
@@ -55,6 +69,7 @@ interface DocumentoExistente {
 }
 
 interface DocumentoNuevo {
+  id?: any;
   nombre: string;
   archivo: File;
   cargado?: boolean;
@@ -62,6 +77,8 @@ interface DocumentoNuevo {
   visibleParaExternos?: boolean;
   tipoDocumento?: string;
   esExistente: false;
+  requiereFirma?: boolean;
+  nivelesFirma?: any;
 }
 
 interface DocumentoExpediente {
@@ -73,6 +90,17 @@ interface DocumentoExpediente {
   visibleParaExternos?: boolean;
   esExistente: true;
 }
+interface GrupoVisual {
+  id: string;
+  nombre: string;
+  tipoUsuario: 'GRUPO';
+  correo: string;
+  idsUsuarios: number[];
+  tipoIdentidad?: 'GRUPO';
+}
+
+type UsuarioVisual = Usuario | GrupoVisual;
+
 @Component({
   selector: 'app-expediente-detalle',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -92,9 +120,11 @@ interface DocumentoExpediente {
   styleUrls: ['./expediente-detalle.component.css'],
 })
 export class ExpedienteDetalleComponent implements OnInit {
+
   seccion: 'expediente' | 'documentos' | 'cargo' | 'estado' | 'auditoria' = 'expediente';
   expediente: any = null;
   modoEdicionExpediente = false;
+  minDateString: string | undefined;
   formularioPaso1!: FormGroup;
   controlUsuario = new FormControl<string[]>([], Validators.required);
   controlUsuarioCc = new FormControl<string[]>([], Validators.required);
@@ -110,12 +140,15 @@ export class ExpedienteDetalleComponent implements OnInit {
   usuariosFiltradosTo: Usuario[] = [];
   usuariosFiltradosCc: Usuario[] = [];
   referenciasFiltradas: Referencia[] = [];
+  usuariosInternos: any[] = [];
+  usuariosInternosFiltrados: Usuario[] = [];
   referenciasOriginales: Referencia[] = [];
   tiposUsuario: Usuario['tipoIdentidad'][] = ['PERSONA', 'GRUPO', 'ENTIDAD'];
   tiposReferencia: Referencia['tipo'][] = ['Documento', 'Expediente'];
   proyectos: Proyecto[] = [];
   documentosExistentes: DocumentoExpediente[] = [];
   documentosNuevos: DocumentoNuevo[] = [];
+  modoEdicionFlujos: boolean = false;
   arrastrando = false;
   tiposDocumento = ['Anexos', 'Actas', 'Carta', 'Oficio', 'Contrato', 'Adenda', 'Solicitud de compra', 'Cotizaciones', 'Cuadro Comparativo', 'Orden de Compra', 'Guia', 'Factura', 'Informe', 'Anexo'];
   historialCargos: any[] = [];
@@ -125,6 +158,42 @@ export class ExpedienteDetalleComponent implements OnInit {
   esAnulado: boolean = false;
   etapaSeleccionada: 'CREACION' | 'APROBACION' | 'CARGO' | '' = '';
   estadoProcesoIndex: number = 0; // 0 = en creación, 1 = aprobación, 2 = esperando cargo, 3 = cargo generado
+  flujosIndividuales: FlujoProceso[] = [];
+  flujosGenerales: FlujoProceso[] = [];
+  nivelesFirmaGenerales: any[] = [];
+  tiposUsuarioFirma: Usuario['tipoUsuario'][] = ['INTERNO', 'EXTERNO', 'ADMIN'];
+  modoFlujoFirma: 'individual' | 'general' = 'general';
+  botonDeshabilitado: boolean = false;
+  nivelesEliminadosPorDocId: { [docId: number]: number[] } = {};
+  nivelesFirmaGeneralOriginal: any[] = [];
+  nivelesFirmaEspecificoOriginal: any[] = [];
+
+  documentosDeFlujo: {
+    id: number;
+    nombreArchivo: string;
+    rutaArchivo: string;
+    tipoDocumento: string;
+    tamaño: number;
+    visibleParaExternos: boolean;
+    esExistente: boolean,
+    requiereFirma?: boolean;
+    nivelesFirma?: any;
+  }[] = [];
+  nivelesFirmaGeneral: {
+    nivel: number;
+    usuarios: any[];
+    fechaLimite: string;
+    estado: string;
+  }[] = [];
+  nivelesFirmaPorDocumento: {
+    documentoId: number;
+    niveles: {
+      nivel: number;
+      usuarios: any[];
+      fechaLimite: string;
+      estado: string;
+    }[];
+  }[] = [];
 
   constructor(private proyectoService: ProyectoService, private router: Router, private auditoriaService: AuditoriaService, private authService: AuthService, private loadingService: LoadingOverlayService,
     private sanitizer: DomSanitizer, private zone: NgZone, private route: ActivatedRoute, private cdr: ChangeDetectorRef, private expedienteService: ExpedienteService, private dialog: MatDialog, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
@@ -139,7 +208,357 @@ export class ExpedienteDetalleComponent implements OnInit {
   abrirEnNuevaVentana(url: string) {
     window.open(url, '_blank');
   }
+  actualizarNivelesGeneralesExistentes(): Promise<any[]> {
+    console.log("niveles generales:", this.nivelesFirmaGenerales);
+    const actualizaciones = this.nivelesFirmaGenerales
+      .filter(n => n.id != null) // Solo los ya existentes
+      .map((nivel, i) => {
+        const usuarios = this.obtenerIdsPorNombres(nivel.controlUsuarios?.value || []);
+        const flujoActualizado = {
+          tipo_nivel: 'General',
+          nivel: i + 1,
+          usuarios: usuarios,
+          expediente_id: this.expediente.id,
+          documentos_id: this.obtenerTodosLosIdsDeDocumentosFirmables().join('|'),
+          fecha_limite: nivel.fechaLimite,
+          estado: nivel.estado || 'PENDIENTE'
+        };
+
+        console.log("[FRONT] Actualizando flujo ID:", nivel.id, flujoActualizado);
+        console.log("[FRONT] Preparando actualización del flujo general:");
+        console.log("Nivel:", i + 1);
+        console.log("Usuarios:", usuarios);
+        console.log("Documentos:", this.obtenerTodosLosIdsDeDocumentosFirmables());
+        console.log("Fecha Límite:", nivel.fechaLimite);
+
+        return this.expedienteService
+          .actualizarFlujoProceso(nivel.id, flujoActualizado)
+          .toPromise();
+      });
+
+    return Promise.all(actualizaciones);
+  }
+  obtenerTodosLosIdsDeDocumentosFirmables(): number[] {
+    const idsExistentes = this.documentosDeFlujo
+      .filter(doc => doc.requiereFirma && doc.id != null)
+      .map(doc => doc.id);
+
+    const idsNuevos = this.documentosNuevos
+      .filter(doc => doc.requiereFirma && doc.id != null)
+      .map(doc => doc.id);
+
+    return [...idsExistentes, ...idsNuevos];
+  }
+
   // expediente-detalle.component.ts
+  guardarCambiosFlujos() {
+    console.log("Guardando cambios...");
+    if (!this.validarNivelesFirma()) {
+      Swal.fire({
+        title: 'Error de validación',
+        text: 'Todos los documentos que requieren firma deben tener al menos un nivel con usuarios asignados.',
+        icon: 'error',
+        confirmButtonColor: '#004C77'
+      });
+      return;
+    }
+    const expedienteId = this.expediente.id;
+    const usuarioActual = this.authService.getUserFromToken();
+    console.log("expediente id:", expedienteId);
+    console.log("usuario actual:", usuarioActual);
+    const uploadsNuevos = this.documentosNuevos.map(doc => {
+      const formData = new FormData();
+      formData.append('file', doc.archivo);
+      formData.append('nombreArchivo', doc.nombre);
+      formData.append('tipoDocumento', doc.tipoDocumento || '');
+      formData.append('visibleParaExternos', String(doc.visibleParaExternos ?? false));
+      formData.append('tamaño', doc.archivo.size.toString());
+
+      return this.expedienteService.registrarDocumento(expedienteId, formData);
+    });
+    this.loadingService.show();
+
+    Promise.all(uploadsNuevos.map(u => u.toPromise()))
+      .then(async (documentosRegistrados) => {
+        documentosRegistrados.forEach((docRegistrado, i) => {
+          this.documentosNuevos[i].id = docRegistrado.id;
+
+          const doc = this.documentosNuevos[i];
+          if (
+            (this.modoFlujoFirma === 'individual' && doc.nivelesFirma?.length > 0) ||
+            (this.modoFlujoFirma === 'general')
+          ) {
+            doc.requiereFirma = true;
+          }
+        });
+
+        console.log("Documentos Nuevos registrados:", this.documentosNuevos);
+        const nuevosDocIds = this.documentosNuevos.map(d => d.id);
+
+        if (this.modoFlujoFirma === 'individual') {
+          Promise.all([
+            this.registrarFlujosParaNuevosDocumentos(),
+            this.actualizarNivelesEspecificos()
+          ]).then(() => {
+            this.finalizarGuardado();
+          });
+
+        } else if (this.modoFlujoFirma === 'general') {
+          // Primero actualizar flujos existentes con nuevos documentos
+          Promise.all([
+            this.actualizarDocumentosEnFlujosGenerales(nuevosDocIds),
+            this.actualizarNivelesGeneralesExistentes()
+          ]).then(() => {
+            this.registrarNuevosNivelesGenerales().then(() => {
+              this.finalizarGuardado();
+            });
+          });
+
+        }
+      })
+      .catch(err => {
+        console.error('[✖] Error al guardar cambios:', err);
+        this.loadingService.hide();
+        Swal.fire('Error', 'No se pudieron guardar los cambios.', 'error');
+      });
+  }
+  finalizarGuardado() {
+    Swal.fire({
+      title: 'Cambios guardados',
+      text: 'Los documentos y flujos se actualizaron correctamente.',
+      icon: 'success',
+      confirmButtonColor: '#004C77'
+    }).then(() => {
+      this.modoEdicionFlujos = false;
+      this.documentosNuevos = [];
+      this.cargarFlujosYDocumentosDeFirma(this.expediente.id);
+      this.cdr.detectChanges();
+      this.loadingService.hide();
+    });
+  }
+  hayCambiosEnFlujos(): boolean {
+    const originalesGeneral = JSON.stringify(this.nivelesFirmaGeneralOriginal || []);
+    const actualesGeneral = JSON.stringify(this.nivelesFirmaGenerales || []);
+    const originalesEspecifico = JSON.stringify(this.nivelesFirmaEspecificoOriginal || []);
+    const actualesEspecifico = JSON.stringify(this.nivelesFirmaPorDocumento || []);
+
+    return originalesGeneral !== actualesGeneral || originalesEspecifico !== actualesEspecifico;
+  }
+
+  async actualizarNivelesEspecificos(): Promise<any[]> {
+    const actualizaciones: Promise<any>[] = [];
+
+    this.documentosDeFlujo.forEach(doc => {
+      const niveles = doc.nivelesFirma || [];
+
+      niveles
+        .filter((n: any) => n.id != null)
+        .forEach((nivel: any, i: any) => {
+          const usuarios = this.obtenerIdsPorNombres(nivel.controlUsuarios?.value || []);
+          const payload = {
+            id: nivel.id,
+            tipo_nivel: 'Especifico',
+            nivel: i + 1,
+            usuarios,
+            expediente_id: this.expediente.id,
+            documentos_id: doc.id,
+            fecha_limite: nivel.fechaLimite,
+            estado: nivel.estado || 'PENDIENTE'
+          };
+          actualizaciones.push(
+            this.expedienteService.actualizarFlujoProceso(nivel.id, payload).toPromise()
+          );
+        });
+
+      niveles
+        .filter((n: any) => n.id == null)
+        .forEach((nivel: any, i: any, nuevos: any) => {
+          const usuarios = this.obtenerIdsPorNombres(nivel.controlUsuarios?.value || []);
+          const nivelesExistentes = niveles.filter((n: any) => n.id != null);
+
+          const siguienteNivel = nivelesExistentes.length + nuevos.indexOf(nivel) + 1;
+
+          const payload = {
+            tipo_nivel: 'Especifico',
+            nivel: siguienteNivel,
+            usuarios,
+            expediente_id: this.expediente.id,
+            documentos_id: doc.id,
+            fecha_limite: nivel.fechaLimite,
+            estado: nivel.estado || 'PENDIENTE'
+          };
+          actualizaciones.push(
+            this.expedienteService.registrarFlujoProceso(payload).toPromise()
+          );
+        });
+
+    });
+
+    return Promise.all(actualizaciones);
+  }
+
+  async registrarNuevosNivelesGenerales(): Promise<void> {
+    return new Promise((resolve) => {
+      const nivelesExistentes = this.nivelesFirmaGeneral.length;
+      const nivelesActuales = this.nivelesFirmaGenerales.length;
+
+      if (nivelesActuales <= nivelesExistentes) return resolve();
+
+      const nuevos = this.nivelesFirmaGenerales.slice(nivelesExistentes);
+
+      let pendientes = nuevos.length;
+      if (pendientes === 0) return resolve();
+
+      nuevos.forEach((nivel, i) => {
+        const usuarios = this.obtenerIdsPorNombres(nivel.controlUsuarios?.value || []);
+        const documentosIds = [...this.documentosDeFlujo.map(d => d.id), ...this.documentosNuevos.map(d => d.id)];
+
+        const flujoData = {
+          tipo_nivel: 'General',
+          nivel: nivelesExistentes + i + 1,
+          usuarios: usuarios,
+          expediente_id: this.expediente.id,
+          documentos_id: documentosIds.join('|'),
+          fecha_limite: nivel.fechaLimite,
+          estado: 'PENDIENTE'
+        };
+
+        this.expedienteService.registrarFlujoProceso(flujoData).subscribe({
+          next: () => {
+            console.log(`[✔] Nivel general nuevo ${flujoData.nivel} registrado`);
+            pendientes--;
+            if (pendientes === 0) resolve();
+          },
+          error: err => {
+            console.error(`[✖] Error registrando nuevo nivel general:`, err);
+            pendientes--;
+            if (pendientes === 0) resolve();
+          }
+        });
+      });
+    });
+  }
+
+  async registrarFlujosParaNuevosDocumentos(): Promise<void> {
+    const docsFirmablesNuevos = this.documentosNuevos.filter(d => d.requiereFirma);
+    console.log('[DEBUG] Docs firmables nuevos:', docsFirmablesNuevos);
+
+    if (docsFirmablesNuevos.length === 0) return;
+    const registros: Promise<any>[] = [];
+
+    // --- Modo General ---
+    if (this.modoFlujoFirma === 'general') {
+      const nuevosDocsIds = docsFirmablesNuevos.map(d => d.id).join('|');
+      if (!this.validarFechasNiveles(this.nivelesFirmaGenerales)) {
+        Swal.fire('Error', 'Las fechas límite deben estar en orden ascendente por nivel.', 'error');
+        return;
+      }
+      for (let i = 0; i < this.nivelesFirmaGenerales.length; i++) {
+        const nivel = this.nivelesFirmaGenerales[i];
+        const usuarios = this.obtenerIdsPorNombres(nivel.controlUsuarios?.value || []);
+        const fecha = nivel.fechaLimite;
+
+        const flujoData = {
+          tipo_nivel: 'General',
+          nivel: i + 1,
+          usuarios: usuarios,
+          expediente_id: this.expediente.id,
+          documentos_id: nuevosDocsIds,
+          fecha_limite: fecha,
+          estado: 'PENDIENTE'
+        };
+
+        const obs = this.expedienteService.registrarFlujoProceso(flujoData).toPromise();
+        registros.push(obs);
+      }
+    }
+
+    // --- Modo Individual ---
+    if (this.modoFlujoFirma === 'individual') {
+      for (const doc of docsFirmablesNuevos) {
+        if (!doc.nivelesFirma) continue;
+
+        for (let i = 0; i < doc.nivelesFirma.length; i++) {
+          const nivel = doc.nivelesFirma[i];
+          const usuarios = this.obtenerIdsPorNombres(nivel.controlUsuarios?.value || []);
+          const fecha = nivel.fechaLimite;
+
+          const flujoData = {
+            tipo_nivel: 'Especifico',
+            nivel: i + 1,
+            usuarios: usuarios,
+            expediente_id: this.expediente.id,
+            documentos_id: doc.id.toString(),
+            fecha_limite: fecha,
+            estado: 'PENDIENTE'
+          };
+
+          const obs = this.expedienteService.registrarFlujoProceso(flujoData).toPromise();
+          registros.push(obs);
+
+        }
+      }
+    }
+    await Promise.all(registros);
+  }
+  validarFechasNiveles(niveles: any[]): boolean {
+    for (let i = 1; i < niveles.length; i++) {
+      const actual = new Date(niveles[i].fechaLimite);
+      const anterior = new Date(niveles[i - 1].fechaLimite);
+      if (actual < anterior) return false;
+    }
+    return true;
+  }
+  async actualizarDocumentosEnFlujosGenerales(nuevosDocIds: number[]): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.expedienteService.obtenerFlujosPorExpediente(this.expediente.id).subscribe((flujos: any[]) => {
+        const flujosGenerales = flujos.filter(f => f.tipoNivel === 'General');
+        let pendientes = flujosGenerales.length;
+
+        if (pendientes === 0) return resolve();
+
+        flujosGenerales.forEach(flujo => {
+          const existentes = flujo.documentosId?.split('|').map((id: string) => parseInt(id)) || [];
+          const nuevos = nuevosDocIds.filter(id => !existentes.includes(id));
+          const todos = [...existentes, ...nuevos];
+
+          if (nuevos.length > 0) {
+            const flujoActualizado = {
+              ...flujo,
+              documentos_id: todos.join('|'),
+              expediente_id: this.expediente.id,
+              tipo_nivel: 'General',
+              nivel: flujo.nivel,
+              usuarios: flujo.usuarios,
+              fecha_limite: flujo.fechaLimite,
+              estado: flujo.estado
+            };
+
+            this.expedienteService.actualizarFlujoProceso(flujo.id, flujoActualizado).subscribe({
+              next: () => {
+                console.log(`[✔] Actualizado flujo general nivel ${flujo.nivel}`);
+                pendientes--;
+                if (pendientes === 0) resolve();
+              },
+              error: (err: any) => {
+                console.error(`[✖] Error actualizando flujo nivel ${flujo.nivel}:`, err);
+                pendientes--;
+                if (pendientes === 0) resolve();
+              }
+            });
+          } else {
+            pendientes--;
+            if (pendientes === 0) resolve();
+          }
+        });
+      }, reject);
+    });
+  }
+  cancelarEdicionFlujos() {
+    // Aquí puedes restaurar el estado inicial si tienes backup
+    console.log("Cancelando edición");
+    this.modoEdicionFlujos = false;
+  }
 
   compararReferencias(a: any, b: any): boolean {
     if (!a || !b) return false;
@@ -154,7 +573,7 @@ export class ExpedienteDetalleComponent implements OnInit {
     const actual = this.controlUsuarioCc.value || [];
     this.controlUsuarioCc.setValue(actual.filter(u => u !== nombre));
   }
-  desenfocarYabrir(boton: EventTarget | null, nombre: string, destino: 'to' | 'cc') {
+  desenfocarYabrir(boton: EventTarget | null, nombre: string, destino: 'to' | 'cc' | 'nivel') {
     const htmlBoton = boton as HTMLElement;
     htmlBoton.blur();
 
@@ -162,14 +581,232 @@ export class ExpedienteDetalleComponent implements OnInit {
       this.abrirDialogoAgregarUsuario(nombre, destino);
     }, 100);
   }
+  agregarNivel(doc: any) {
+    console.log("usuarios internos:", this.usuariosInternos);
+    const nivel = {
+      controlUsuarios: new FormControl([]),
+      searchControl: new FormControl(''),
+      filtroTipo: '',
+      usuariosFiltrados: [...this.usuariosInternos],
+      fechaLimite: ''
+    };
 
+    doc.nivelesFirma = doc.nivelesFirma || [];
+    doc.nivelesFirma.push(nivel);
+
+    nivel.searchControl.valueChanges.subscribe(() => this.filtrarUsuariosInternos(nivel));
+  }
+  agregarNivelGeneral() {
+    this.nivelesFirmaGenerales.push({
+      controlUsuarios: new FormControl<string[]>([]),
+      searchControl: new FormControl(''),
+      filtroTipo: '',
+      usuariosFiltrados: [...this.usuariosInternos]
+    });
+  }
+  mostrarGrupoInternoTipo(tipo: string, nivel: { usuariosFiltrados: Usuario[] }): boolean {
+    return nivel.usuariosFiltrados.some((u: Usuario) => u.tipoUsuario === tipo);
+  }
+  obtenerUsuariosPorTipoFirma(lista: Usuario[], tipo: Usuario['tipoUsuario']): UsuarioVisual[] {
+    return lista.filter(u => u.tipoUsuario === tipo);
+  }
+  mostrarGrupoInterno(tipo: string): boolean {
+    return this.usuariosInternosFiltrados.some(user => user.tipoUsuario === tipo);
+  }
+  filtrarUsuariosInternos(nivel: any) {
+    const searchTerm = nivel.searchControl.value?.toLowerCase() || '';
+    const tipoFiltro = nivel.filtroTipo;
+
+    nivel.usuariosFiltrados = this.usuariosInternos.filter(u => {
+      const coincideNombre = u.nombre.toLowerCase().includes(searchTerm);
+      const coincideTipo = !tipoFiltro || u.tipoIdentidad === tipoFiltro;
+      return coincideNombre && coincideTipo;
+    });
+  }
+  onMultipleFilesSelectedx(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      console.log('[DEBUG] Archivos seleccionados:', input.files);
+      this.cargarArchivosDocumentosNuevos(Array.from(input.files));
+    }
+  }
+  alternarVisibilidadNuevo(index: number) {
+    this.documentosNuevos[index].visibleParaExternos = !this.documentosNuevos[index].visibleParaExternos;
+  }
+  eliminarDocumentoNuevo(index: number) {
+    this.documentosNuevos.splice(index, 1);
+  }
+
+  cargarArchivosDocumentosNuevos(files: File[]) {
+    console.log('[DEBUG] Archivos a procesar:', files);
+    for (const archivo of files) {
+      if (archivo.type !== 'application/pdf') {
+        console.warn('[AVISO] Archivo ignorado (no es PDF):', archivo.name);
+        continue;
+      }
+
+      const nuevo: DocumentoNuevo & {
+        nivelesFirma?: any[];
+      } = {
+        nombre: archivo.name,
+        archivo,
+        cargado: false,
+        progreso: 0,
+        visibleParaExternos: false,
+        tipoDocumento: '',
+        esExistente: false,
+        nivelesFirma: []
+      };
+      this.documentosNuevos.push(nuevo);
+
+      const interval = setInterval(() => {
+        if (nuevo.progreso! >= 100) {
+          nuevo.cargado = true;
+          clearInterval(interval);
+        } else {
+          nuevo.progreso! += 10;
+        }
+      }, 100);
+      this.actualizarEstadoBotonRegistro();
+    }
+  }
+  actualizarEstadoBotonRegistro(): void {
+    this.botonDeshabilitado = !this.validarNivelesFirma();
+  }
   referenciasLibresSeleccionadas(): Referencia[] {
     const seleccionadasSeries = this.controlReferencia.value || [];
     return this.referenciasOriginales.filter(ref =>
       seleccionadasSeries.includes(ref.serie)
     );
   }
+  validarNivelesFirma(): boolean {
+    // Si estamos en modo general, validar niveles generales
+    if (this.modoFlujoFirma === 'general') {
+      if (!this.nivelesFirmaGenerales || this.nivelesFirmaGenerales.length === 0) {
+        console.warn('[✖] No se han definido niveles de firma general.');
+        return false;
+      }
 
+      for (const nivel of this.nivelesFirmaGenerales) {
+        if (!nivel.controlUsuarios?.value || nivel.controlUsuarios.value.length === 0) {
+          console.warn('[✖] Un nivel general no tiene usuarios asignados.');
+          return false;
+        }
+
+        if (!nivel.fechaLimite) {
+          console.warn('[✖] Un nivel general no tiene fecha límite asignada.');
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    // Validar niveles en documentos heredados que requieren firma
+    for (const doc of this.documentosDeFlujo) {
+      if (doc.requiereFirma && (!doc.nivelesFirma || doc.nivelesFirma.length === 0)) {
+        console.warn(`[✖] El documento heredado "${doc.nombreArchivo}" requiere firma pero no tiene niveles.`);
+        return false;
+      }
+    }
+
+    // Validar niveles en documentos nuevos (todos requieren firma)
+    for (const doc of this.documentosNuevos) {
+      if (!doc.nivelesFirma || doc.nivelesFirma.length === 0) {
+        console.warn(`[✖] El documento nuevo "${doc.nombre}" no tiene niveles de firma asignados.`);
+        return false;
+      }
+
+      // Verifica que cada nivel tenga al menos un usuario
+      for (const nivel of doc.nivelesFirma) {
+        if (!nivel.controlUsuarios?.value || nivel.controlUsuarios.value.length === 0) {
+          console.warn(`[✖] El documento nuevo "${doc.nombre}" tiene un nivel sin usuarios asignados.`);
+          return false;
+        }
+        // Validar fecha
+        if (!nivel.fechaLimite) {
+          console.warn(`[✖] El documento nuevo "${doc.nombre}" tiene un nivel sin fecha límite.`);
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+  eliminarNivelGeneral(index: number) {
+    const nivel = this.nivelesFirmaGenerales[index];
+
+    if (!nivel?.id) {
+      // Si no tiene ID, es un nivel aún no guardado en el backend
+      this.nivelesFirmaGenerales.splice(index, 1);
+      return;
+    }
+
+    Swal.fire({
+      title: '¿Eliminar nivel de firma?',
+      text: `Se eliminará el Nivel ${nivel.nivel} permanentemente.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(result => {
+      if (result.isConfirmed) {
+        this.expedienteService.eliminarFlujoProceso(nivel.id).subscribe({
+          next: () => {
+            this.nivelesFirmaGenerales.splice(index, 1);
+            Swal.fire('Eliminado', 'Nivel eliminado correctamente.', 'success');
+          },
+          error: err => {
+            console.error('[✖] Error al eliminar flujo:', err);
+            Swal.fire('Error', 'No se pudo eliminar el nivel.', 'error');
+          }
+        });
+      }
+    });
+  }
+
+  eliminarNivel(doc: any, index: number) {
+    const nivel = doc.nivelesFirma[index];
+
+    if (!nivel?.id) {
+      // Nivel aún no guardado en backend, simplemente lo quitamos del arreglo
+      doc.nivelesFirma.splice(index, 1);
+      return;
+    }
+
+    Swal.fire({
+      title: '¿Eliminar nivel de firma?',
+      text: `Se eliminará el Nivel ${nivel.nivel} del documento "${doc.nombre || doc.nombreArchivo}".`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(result => {
+      if (result.isConfirmed) {
+        this.expedienteService.eliminarFlujoProceso(nivel.id).subscribe({
+          next: () => {
+            doc.nivelesFirma.splice(index, 1);
+            Swal.fire('Eliminado', 'Nivel eliminado correctamente.', 'success');
+
+            // Reordenar niveles localmente (si deseas mantener consistencia visual)
+            doc.nivelesFirma.forEach((n: any, idx: number) => {
+              n.nivel = idx + 1;
+            });
+
+            this.cdr.detectChanges();
+          },
+          error: err => {
+            console.error('[✖] Error al eliminar flujo:', err);
+            Swal.fire('Error', 'No se pudo eliminar el nivel.', 'error');
+          }
+        });
+      }
+    });
+  }
 
   obtenerIdsPorNombres(nombresSeleccionados: string[]): string {
     const ids = this.todosUsuarios
@@ -189,8 +826,33 @@ export class ExpedienteDetalleComponent implements OnInit {
   isDocumentoNuevo(doc: DocumentoExpediente | DocumentoNuevo): doc is DocumentoNuevo {
     return !doc.esExistente; // o doc.esExistente === false
   }
+  validarFechasEnCascada(niveles: any[]) {
+    for (let i = 1; i < niveles.length; i++) {
+      const fechaAnterior = new Date(niveles[i - 1].fechaLimite);
+      const fechaActual = new Date(niveles[i].fechaLimite);
+
+      if (niveles[i].fechaLimite && fechaActual < fechaAnterior) {
+        niveles[i].fechaLimite = null;
+      }
+    }
+  }
+  removerUsuarioNivel(usuario: string, nivel: any) {
+    const actual = nivel.controlUsuarios.value as string[];
+    nivel.controlUsuarios.setValue(actual.filter(u => u !== usuario));
+  }
+  removerUsuarioNivelGeneral(usuario: string, nivel: any) {
+    nivel.controlUsuarios.setValue(nivel.controlUsuarios.value.filter((u: string) => u !== usuario));
+  }
+  reiniciarFiltroInternos(nivel: any) {
+    nivel.searchControl.setValue('');
+  }
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
+    const hoy = new Date();
+    const yyyy = hoy.getFullYear();
+    const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dd = String(hoy.getDate()).padStart(2, '0');
+    this.minDateString = `${yyyy}-${mm}-${dd}`;
     if (!id) {
       console.error('ID de expediente no proporcionado');
       return;
@@ -253,8 +915,6 @@ export class ExpedienteDetalleComponent implements OnInit {
             return { nombre: u.nombre, correo: u.correo };
           })
         };
-
-
         if (this.expediente.estado == 'ANULADO') {
           this.esAnulado = true;
         }
@@ -283,9 +943,10 @@ export class ExpedienteDetalleComponent implements OnInit {
         this.expedienteService.getHistorialCargos(id).subscribe(historial => {
           console.log('[DEBUG] Historial de cargos:', historial); // ← AÑADIDO
           this.historialCargos = historial;
+          console.log(this.expediente.cargo);
           this.expediente.cargo = {
             ...historial[0],
-            archivo: historial[0].archivoPath || ""
+            archivo: historial[0]?.archivoPath || ""
           };
           console.log(this.expediente.cargo);
           console.log(this.historialCargos);
@@ -314,12 +975,165 @@ export class ExpedienteDetalleComponent implements OnInit {
           }
           this.cdr.markForCheck();
         });
+        console.log("Id del expediente:", this.expediente.id)
+        this.cargarFlujosYDocumentosDeFirma(this.expediente.id);
       },
       error: (err) => {
         console.error('Error al car expediente', err);
       }
     });
   }
+  cargarFlujosYDocumentosDeFirma(expedienteId: number) {
+    this.expedienteService.obtenerFlujosPorExpediente(expedienteId).subscribe((flujos: any[]) => {
+      const idsDocumentos: Set<number> = new Set();
+
+      this.nivelesFirmaGeneral = [];
+      this.nivelesFirmaPorDocumento = [];
+
+      flujos.forEach(flujo => {
+        const usuariosIds = flujo.usuarios?.split('|').map((id: string) => parseInt(id)) || [];
+        const usuariosNombres = usuariosIds.map((id: number) => {
+          const u = this.usuariosInternos.find((ui: any) => ui.id === id);
+          return u ? u.nombre : `ID ${id}`;
+        });
+
+        console.log("flujo detalle:", flujo);
+        const nivelBase = {
+          id: flujo.id,
+          nivel: flujo.nivel,
+          usuarios: usuariosIds,
+          fechaLimite: flujo.fechaLimite,
+          estado: flujo.estado,
+          controlUsuarios: new FormControl(usuariosNombres),
+          searchControl: new FormControl(''),
+          usuariosFiltrados: this.usuariosInternos
+        };
+
+        if (flujo.tipoNivel === 'General') {
+          const ids = flujo.documentosId
+            ?.split('|')
+            .map((id: string) => parseInt(id))
+            .filter((id: number) => !isNaN(id));
+
+          ids?.forEach((id: number) => idsDocumentos.add(id));
+
+          this.nivelesFirmaGeneral.push(nivelBase);
+        } else if (flujo.tipoNivel === 'Especifico') {
+          const docId = parseInt(flujo.documentosId);
+          if (!isNaN(docId)) {
+            idsDocumentos.add(docId);
+
+            let flujoDoc = this.nivelesFirmaPorDocumento.find(f => f.documentoId === docId);
+            if (!flujoDoc) {
+              flujoDoc = { documentoId: docId, niveles: [] };
+              this.nivelesFirmaPorDocumento.push(flujoDoc);
+              // Ordenar los niveles específicos por documento
+              this.nivelesFirmaPorDocumento.forEach(flujoDoc => {
+                flujoDoc.niveles.sort((a, b) => a.nivel - b.nivel);
+              });
+
+            }
+
+            if (!flujoDoc.niveles.some(n => n.nivel === flujo.nivel)) {
+              flujoDoc.niveles.push(nivelBase);
+            } else {
+              console.warn(`[WARN] Nivel duplicado detectado en documento ${docId}, nivel: ${flujo.nivel}`);
+            }
+
+
+          }
+        }
+      });
+      this.modoFlujoFirma = this.nivelesFirmaGeneral.length > 0 ? 'general' : 'individual';
+      console.log("Modo de Flujo Firma:", this.modoFlujoFirma);
+      console.log("Flujo General:", this.nivelesFirmaGeneral);
+      console.log("Flujo Especifico:", this.nivelesFirmaPorDocumento);
+      const flujosGeneralesFormateados = flujos
+        .filter(flujo => flujo.tipoNivel === 'General')
+        .map(flujo => {
+          const ids = flujo.usuarios?.split('|').map((id: string) => parseInt(id));
+          const nombres = ids.map((id: number) => {
+            const u = this.usuariosInternos.find(ui => ui.id === id);
+            return u ? u.nombre : `ID ${id}`;
+          });
+          return {
+            id: flujo.id,
+            nivel: flujo.nivel,
+            usuarios: ids,
+            fechaLimite: flujo.fechaLimite,
+            estado: flujo.estado,
+            controlUsuarios: new FormControl(nombres),
+            searchControl: new FormControl(''),
+            usuariosFiltrados: this.usuariosInternos
+          };
+        });
+      flujosGeneralesFormateados.sort((a, b) => a.nivel - b.nivel);
+
+      // Ahora los asignas todos de golpe:
+      this.nivelesFirmaGenerales = [...flujosGeneralesFormateados];
+      console.log("Niveles de Firma General", this.nivelesFirmaGeneral)
+      this.expedienteService.getPorIds(Array.from(idsDocumentos)).subscribe((documentos: any[]) => {
+        console.log("docuemtnos del flujo:", documentos)
+        this.documentosDeFlujo = documentos.map(doc => {
+          const nivelesEncontrados = this.nivelesFirmaPorDocumento.find(f => f.documentoId === doc.id)?.niveles || [];
+
+          return {
+            id: doc.id,
+            nombreArchivo: doc.nombreArchivo,
+            rutaArchivo: doc.rutaArchivo,
+            tipoDocumento: doc.tipoDocumento || '',
+            tamaño: doc.tamaño || 0,
+            visibleParaExternos: doc.visibleParaExternos,
+            esExistente: true,
+            requiereFirma: true,
+            nivelesFirma: nivelesEncontrados
+          };
+        });
+
+        // ← este bloque asegura que todos los niveles individuales tienen sus controles listos
+        this.documentosDeFlujo.forEach(doc => {
+          doc.nivelesFirma?.forEach((nivel: any) => {
+            const nombres = nivel.usuarios.map((id: number) => {
+              const u = this.usuariosInternos.find((ui: any) => ui.id === id);
+              return u ? u.nombre : `ID ${id}`;
+            });
+
+            nivel.controlUsuarios = new FormControl(nombres);
+            nivel.searchControl = new FormControl('');
+            nivel.usuariosFiltrados = this.usuariosInternos;
+          });
+
+        });
+      });
+  
+    });
+  }
+ 
+  restablecerFlujosDesdeOriginal(): void {
+    this.nivelesFirmaGenerales = this.nivelesFirmaGeneralOriginal.map(n => ({
+      ...n,
+      controlUsuarios: new FormControl(n.controlUsuarios.value),
+      searchControl: new FormControl(''),
+      usuariosFiltrados: this.usuariosInternos
+    }));
+
+    this.nivelesFirmaPorDocumento = this.nivelesFirmaEspecificoOriginal.map(doc => ({
+      documentoId: doc.documentoId,
+      niveles: doc.niveles.map((n: any) => ({
+        ...n,
+        controlUsuarios: new FormControl(n.controlUsuarios.value),
+        searchControl: new FormControl(''),
+        usuariosFiltrados: this.usuariosInternos
+      }))
+    }));
+
+    // Esto asegura que los valores se re-rendericen
+    this.cdr.detectChanges();
+  }
+
+
+
+
   onTabChange(tab: 'expediente' | 'documentos' | 'estado' | 'cargo' | 'auditoria'): void {
     this.seccion = tab;
     if (tab === 'auditoria') {
@@ -671,7 +1485,7 @@ export class ExpedienteDetalleComponent implements OnInit {
       (u.nombre.toLowerCase().includes(texto) || u.correo.toLowerCase().includes(texto))
     );
   }
-  abrirDialogoAgregarUsuario(nombre: string, destino: 'to' | 'cc') {
+  abrirDialogoAgregarUsuario(nombre: string, destino: 'to' | 'cc' | 'nivel') {
     const dialogRef = this.dialog.open(DocumentoAgregarComponent, {
       width: '800px',
       maxWidth: '95vw',
@@ -728,6 +1542,8 @@ export class ExpedienteDetalleComponent implements OnInit {
   cargarUsuarios(): void {
     this.usuarioService.obtenerUsuarios().subscribe({
       next: (usuarios) => {
+        this.usuariosInternos = usuarios.filter(u => u.firmante === true);
+        console.log("ususarios internos:", this.usuariosInternos);
         this.todosUsuarios = usuarios;
         this.usuariosFiltradosTo = [...this.todosUsuarios];
         this.usuariosFiltradosCc = [...this.todosUsuarios];

@@ -114,191 +114,317 @@
                 <p class="text-lg">Selecciona un expediente para ver sus detalles</p>
             </div>
             <!-- DETALLE DE EXPEDIENTE -->
-            <div *ngIf="expedienteSeleccionado" class="space-y-6">
+            <div *ngIf="expedienteSeleccionado" class="space-y-2">
                 <!-- Botón Volver -->
-                <button (click)="expedienteSeleccionado = null"
-                    class="flex items-center gap-2 text-[#004C77] hover:text-[#F36C21] font-medium transition cursor-pointer">
-                    <mat-icon>arrow_back</mat-icon>
-                    <span>Volver</span>
-                </button>
+             <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-300 pb-3 mb-4">
+
+  <!-- Botón Volver -->
+  <button
+    (click)="expedienteSeleccionado = null"
+    class="flex items-center gap-2 text-[#004C77] hover:text-[#F36C21] font-medium transition-colors duration-200 cursor-pointer"
+  >
+    <mat-icon class="text-base">arrow_back</mat-icon>
+    <span class="text-sm">Volver</span>
+  </button>
+
+  <!-- Botón Ver expediente completo -->
+  <button
+    (click)="abrirDetalle(expedienteSeleccionado)"
+    class="flex items-center gap-2 text-[#004C77] bg-white px-4 py-2 text-sm font-medium rounded-md hover:bg-[#f2f9fc] hover:border-[#06334f] hover:text-[#06334f] transition-colors duration-200 cursor-pointer"
+    title="Ver expediente completo"
+  >
+    <mat-icon class="text-sm">open_in_new</mat-icon>
+    <span>Ver expediente completo</span>
+  </button>
+
+</div>
+
+
                 <!-- Tarjeta principal -->
-                <div class="bg-white border border-gray-200 shadow rounded-xl p-6 space-y-5">
-                    <!-- Título -->
-                    <div class="flex items-center gap-2 text-2xl font-bold text-[#004C77]">
-                        <mat-icon>description</mat-icon>
-                        <span>Detalles del Expediente</span>
+                <div class="bg-white border border-gray-200 shadow rounded-xl px-6 space-y-5">
+                    <!-- Tabs -->
+                    <div class="border-b border-gray-200 mb-2">
+                        <nav class="flex space-x-4 text-sm font-medium">
+                            <button (click)="tabActivo = 'expediente'" [ngClass]="{
+        'text-[#004C77] border-b-2 border-[#004C77]': tabActivo === 'expediente',
+        'text-gray-500 hover:text-[#004C77]': tabActivo !== 'expediente'
+      }" class="cursor-pointer px-4 py-2 transition">
+                                Expediente
+                            </button>
+                            <button (click)="tabActivo = 'documentos'" [ngClass]="{
+        'text-[#004C77] border-b-2 border-[#004C77]': tabActivo === 'documentos',
+        'text-gray-500 hover:text-[#004C77]': tabActivo !== 'documentos'
+      }" class="cursor-pointer px-4 py-2 transition">
+                                Documentos
+                            </button>
+                            <button (click)="tabActivo = 'firmas'" [ngClass]="{
+        'text-[#004C77] border-b-2 border-[#004C77]': tabActivo === 'firmas',
+        'text-gray-500 hover:text-[#004C77]': tabActivo !== 'firmas'
+      }" class="cursor-pointer px-4 py-2 transition">
+                                Firmas
+                            </button>
+                        </nav>
                     </div>
+                    <!-- Contenido de tabs -->
+                    <div  [ngClass]="{
+    'h-[200px]': expedienteSeleccionado?.tipo === 'Receptor',
+    'h-[565px]': expedienteSeleccionado?.tipo === 'Emisor'
+  }"  class="overflow-y-auto overflow-x-auto pr-2 custom-scroll">
+                        <!-- TAB: EXPEDIENTE -->
+                        <div *ngIf="tabActivo === 'expediente'">
+  <!-- Título -->
+  <div class="flex items-center gap-2 py-4 text-2xl font-bold text-[#004C77]">
+    <span>Detalles del Expediente</span>
+  </div>
 
-                    <!-- Datos básicos -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700">
+  <!-- Detalles del Expediente con estilo tipo tabla -->
+  <div class="space-y-3 text-sm text-gray-700">
+    <!-- Fila 1 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4 shadow-sm">
+      <div class="flex items-start gap-3">
+        <mat-icon class="text-[#004C77] mt-1">confirmation_number</mat-icon>
+        <div>
+          <div class="text-xs text-gray-500">Código</div>
+          <div class="font-semibold text-[#004C77]">{{ expedienteSeleccionado.codigo }}</div>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <mat-icon class="text-[#004C77] mt-1">category</mat-icon>
+        <div>
+          <div class="text-xs text-gray-500">Tipo</div>
+          <div class="font-medium">{{ expedienteSeleccionado.tipo }}</div>
+        </div>
+      </div>
+    </div>
 
-                        <div class="flex items-start gap-2">
-                            <mat-icon class="text-[#004C77]">confirmation_number</mat-icon>
-                            <span><strong>Código:</strong> {{ expedienteSeleccionado.codigo }}</span>
-                        </div>
+    <!-- Fila 2 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white rounded-lg p-4 shadow-sm">
+      <div class="flex items-start gap-3">
+        <mat-icon class="text-[#004C77] mt-1">event</mat-icon>
+        <div>
+          <div class="text-xs text-gray-500">Fecha</div>
+          <div>{{ expedienteSeleccionado.fecha }}</div>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <mat-icon class="text-[#004C77] mt-1">work_outline</mat-icon>
+        <div>
+          <div class="text-xs text-gray-500">Proyecto</div>
+          <div>{{ nombreProyectoSeleccionado || 'Sin proyecto' }}</div>
+        </div>
+      </div>
+    </div>
 
-                        <div class="flex items-start gap-2">
-                            <mat-icon class="text-[#004C77]">category</mat-icon>
-                            <span><strong>Tipo:</strong> {{ expedienteSeleccionado.tipo }}</span>
-                        </div>
+    <!-- Fila 3: Estado y privacidad -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4 shadow-sm">
+      <div class="flex items-start gap-3">
+        <mat-icon class="text-[#004C77] mt-1">info</mat-icon>
+        <div>
+          <div class="text-xs text-gray-500">Estado</div>
+          <div
+            [ngClass]="{
+              'text-yellow-600 font-semibold': expedienteSeleccionado.estado === 'PENDIENTE',
+              'text-green-600 font-semibold': expedienteSeleccionado.estado === 'APROBADO',
+              'text-red-600 font-semibold': expedienteSeleccionado.estado === 'RECHAZADO',
+              'text-gray-400 italic': !expedienteSeleccionado.estado
+            }"
+          >
+            {{ expedienteSeleccionado.estado || 'SIN ESTADO' }}
+          </div>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <mat-icon class="text-[#004C77] mt-1">lock</mat-icon>
+        <div>
+          <div class="text-xs text-gray-500">Privacidad</div>
+          <div
+            [ngClass]="expedienteSeleccionado.reservado ? 'text-red-500 font-semibold' : 'text-gray-500 italic'"
+          >
+            {{ expedienteSeleccionado.reservado ? 'Reservado' : 'No reservado' }}
+          </div>
+        </div>
+      </div>
+    </div>
 
-                        <div class="flex items-start gap-2">
-                            <mat-icon class="text-[#004C77]">event</mat-icon>
-                            <span><strong>Fecha:</strong> {{ expedienteSeleccionado.fecha }}</span>
-                        </div>
+    <!-- Fila 4: Comentario -->
+    <div class="flex items-start gap-3 bg-white rounded-lg p-4 shadow-sm">
+      <mat-icon class="text-[#004C77] mt-1">chat</mat-icon>
+      <div>
+        <div class="text-xs text-gray-500">Comentario</div>
+        <div class="italic text-gray-700">
+          {{ expedienteSeleccionado.comentario || 'Sin comentario' }}
+        </div>
+      </div>
+    </div>
+  </div>
 
-                        <div class="flex items-start gap-2">
-                            <mat-icon class="text-[#004C77]">work_outline</mat-icon>
-                            <span><strong>Proyecto:</strong> {{ nombreProyectoSeleccionado || 'Sin proyecto' }}</span>
-                        </div>
+  <!-- Usuarios -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 py-6">
+    <div>
+      <h3 class="text-sm font-semibold text-[#004C77] mb-2 flex items-center gap-1">
+        <mat-icon class="text-base">send</mat-icon>  Emisores
+      </h3>
+      <ul class="list-disc list-inside text-sm text-gray-700 space-y-0.5">
+        <li *ngFor="let u of expedienteSeleccionado.usuariosEmisores">
+          {{ u.nombre }} ({{ u.correo }})
+        </li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="text-sm font-semibold text-[#004C77] mb-2 flex items-center gap-1">
+        <mat-icon class="text-base">inbox</mat-icon>  Destinatarios
+      </h3>
+      <ul class="list-disc list-inside text-sm text-gray-700 space-y-0.5">
+        <li *ngFor="let u of expedienteSeleccionado.usuariosDestinatarios">
+          {{ u.nombre }} ({{ u.correo }})
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
 
-                        <div class="flex items-start gap-2 sm:col-span-2">
-                            <mat-icon class="text-[#004C77]">chat</mat-icon>
-                            <span><strong>Comentario:</strong> {{ expedienteSeleccionado.comentario || 'Sin comentario'
-                                }}</span>
-                        </div>
 
-                        <div class="flex items-start gap-2 sm:col-span-2">
-                            <mat-icon class="text-[#004C77]">info</mat-icon>
-                            <span><strong>Estado:</strong>
-                                <span [ngClass]="{
-      'text-yellow-600': expedienteSeleccionado.estado === 'PENDIENTE',
-      'text-green-600': expedienteSeleccionado.estado === 'APROBADO',
-      'text-red-600': expedienteSeleccionado.estado === 'RECHAZADO',
-      'text-gray-500 italic': !expedienteSeleccionado.estado
-    }">
-                                    {{ expedienteSeleccionado.estado || 'SIN ESTADO' }}
-                                </span>
-                            </span>
-                        </div>
-
-
-                        <div class="flex items-start gap-2 sm:col-span-2">
-                            <mat-icon class="text-[#004C77]">lock</mat-icon>
-                            <span
-                                [ngClass]="expedienteSeleccionado.reservado ? 'text-red-500 font-semibold' : 'text-gray-500 italic'">
-                                {{ expedienteSeleccionado.reservado ? 'Reservado' : 'No reservado' }}
-                            </span>
-                        </div>
-
-                    </div>
-
-                    <!-- Usuarios -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-                        <div>
-                            <h3 class="text-sm font-semibold text-[#004C77] mb-2 flex items-center gap-1">
-                                <mat-icon class="text-base">send</mat-icon> Emisores
-                            </h3>
-                            <ul class="list-disc list-inside text-sm text-gray-700 space-y-0.5">
-                                <li *ngFor="let u of expedienteSeleccionado.usuariosEmisores">{{ u.nombre }} ({{
-                                    u.correo }})</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h3 class="text-sm font-semibold text-[#004C77] mb-2 flex items-center gap-1">
-                                <mat-icon class="text-base">inbox</mat-icon> Destinatarios
-                            </h3>
-                            <ul class="list-disc list-inside text-sm text-gray-700 space-y-0.5">
-                                <li *ngFor="let u of expedienteSeleccionado.usuariosDestinatarios">{{ u.nombre }} ({{
-                                    u.correo }})</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Documentos -->
-                    <div *ngIf="expedienteSeleccionado.documentos?.length" class="pt-2">
-                        <h3 class="text-sm font-semibold text-[#004C77] mb-2 flex items-center gap-1">
-                            <mat-icon class="text-base">attach_file</mat-icon> Documentos Asociados
-                        </h3>
-                        <div class="space-y-2">
-                            <div *ngFor="let doc of expedienteSeleccionado.documentos"
-                                class="bg-gray-50 border border-gray-200 rounded-md px-4 py-3 flex justify-between items-center hover:bg-gray-100 transition">
-                                <div>
-                                    <p class="font-medium text-[#004C77] text-sm">{{ doc.nombreArchivo }}</p>
-                                    <p class="text-xs text-gray-500 italic">{{ doc.tipoDocumento || 'No especificado' }}
-                                        - {{
-                                        formatearPeso(doc['tamaño']) }} bytes</p>
-                                </div>
-                                <button (click)="abrirEnNuevaVentana(transformarRutaDocumento(doc.rutaArchivo)!)"
-                                    matTooltip="Ver documento"
-                                    class="text-[#004C77] hover:text-[#F36C21] p-1 rounded transition cursor-pointer">
-                                    <mat-icon class="!text-lg">picture_as_pdf</mat-icon>
-                                </button>
+                        <!-- TAB: DOCUMENTOS -->
+                        <div *ngIf="tabActivo === 'documentos'">
+                            <!-- Título -->
+                            <div class="flex items-center gap-2 py-4 text-2xl font-bold text-[#004C77]">
+                                <span>Detalles de los Documentos</span>
                             </div>
+                            <!-- Documentos -->
+                            <div *ngIf="expedienteSeleccionado.documentos?.length; else sinDocumentos" class="pt-2">
+                                <h3 class="text-sm font-semibold text-[#004C77] mb-2 flex items-center gap-1">
+                                    <mat-icon class="text-base">attach_file</mat-icon> Documentos Asociados
+                                </h3>
+                                <div class="space-y-2">
+                                    <div *ngFor="let doc of expedienteSeleccionado.documentos"
+                                        class="bg-gray-50 border border-gray-200 rounded-md px-4 py-3 flex justify-between items-center hover:bg-gray-100 transition">
+                                        <div>
+                                            <p class="font-medium text-[#004C77] text-sm">{{ doc.nombreArchivo }}</p>
+                                            <p class="text-xs text-gray-500 italic">{{ doc.tipoDocumento || 'No especificado' }} - {{
+                                                formatearPeso(doc['tamaño']) }} bytes</p>
+                                        </div>
+                                        <button
+                                            (click)="abrirEnNuevaVentana(transformarRutaDocumento(doc.rutaArchivo)!)"
+                                            matTooltip="Ver documento"
+                                            class="text-[#004C77] hover:text-[#F36C21] p-1 rounded transition cursor-pointer">
+                                            <mat-icon class="!text-lg">picture_as_pdf</mat-icon>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <ng-template #sinDocumentos>
+                                <div class="text-center py-6 text-gray-500 italic">
+                                    No tienes documentos pendientes de firma en este expediente.
+                                </div>
+                            </ng-template>
+                        </div>
+
+                        <!-- TAB: FIRMAS -->
+                        <div *ngIf="tabActivo === 'firmas'">
+                            <!-- Título -->
+                            <div class="flex items-center gap-2 py-4 text-2xl font-bold text-[#004C77]">
+                                <span>Documentos Disponibles de Firma</span>
+                            </div>
+                            <!-- Documentos listos para firmar -->
+                            <div *ngIf="documentosFirmables?.length && documentosFirmables.length > 0; else sinFirmas">
+                                <h3 class="text-sm font-semibold text-[#004C77] mb-2 flex items-center gap-1">
+                                    <mat-icon class="text-base">how_to_reg</mat-icon> Documentos listos para firmar
+                                </h3>
+                                <div class="space-y-2">
+                                    <div *ngFor="let doc of documentosFirmables"
+                                        class="bg-green-50 border border-green-200 rounded-md px-4 py-3 flex justify-between items-center hover:bg-green-100 transition">
+                                        <div>
+                                            <p class="font-medium text-green-800 text-sm">{{ doc.nombreArchivo }}</p>
+                                            <p class="text-xs text-green-600 italic">
+                                                {{ doc.tipoDocumento || 'No especificado' }} - {{
+                                                formatearPeso(doc['tamaño']) }}
+                                                bytes
+                                            </p>
+                                        </div>
+                                        <button matTooltip="Firmar documento"
+                                            class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition">
+                                            Firmar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <ng-template #sinFirmas>
+                                <div class="text-center py-6 text-gray-500 italic">
+                                    No tienes documentos pendientes de firma en este expediente.
+                                </div>
+                            </ng-template>
                         </div>
                     </div>
-                    <!-- Documentos listos para firmar -->
-                    <div *ngIf="documentosFirmables?.length && documentosFirmables.length > 0">
-                        <h3 class="text-sm font-semibold text-[#004C77] mb-2 flex items-center gap-1">
-                            <mat-icon class="text-base">how_to_reg</mat-icon> Documentos listos para firmar
-                        </h3>
-                        <div class="space-y-2">
-                            <div *ngFor="let doc of documentosFirmables"
-                                class="bg-green-50 border border-green-200 rounded-md px-4 py-3 flex justify-between items-center hover:bg-green-100 transition">
-                                <div>
-                                    <p class="font-medium text-green-800 text-sm">{{ doc.nombreArchivo }}</p>
-                                    <p class="text-xs text-green-600 italic">
-                                        {{ doc.tipoDocumento || 'No especificado' }}
-                                        - {{
-                                        formatearPeso(doc['tamaño']) }}
-                                        bytes
-                                    </p>
-                                </div>
-                                <button matTooltip="Firmar documento"
-                                    class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition">
-                                    Firmar
-                                </button>
-                            </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-md p-6 space-y-6 border border-gray-200"
+                    *ngIf="expedienteSeleccionado?.tipo === 'Receptor'">
+                    <!-- Título de sección -->
+                    <div class="border-b border-gray-200 pb-2">
+                        <h3 class="text-lg font-semibold text-[#004C77] tracking-wide">Acciones del Receptor</h3>
+                    </div>
+
+                    <!-- Comentario adicional -->
+                    <div class="space-y-2">
+                        <label class="text-sm text-gray-700 font-medium block">Comentario adicional:</label>
+                        <textarea [(ngModel)]="nuevoComentario" rows="3"
+                            class="w-full p-3 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-[#004C77] focus:border-[#004C77]"
+                            placeholder="Escribe tu comentario aquí..."></textarea>
+                        <div class="flex justify-end">
+                            <button
+                                class="cursor-pointer bg-[#004C77] text-white px-5 py-2 w-52.5 rounded-md hover:bg-[#06334f] transition-colors font-medium shadow-sm"
+                                (click)="guardarComentario()">
+                                Guardar comentario
+                            </button>
                         </div>
                     </div>
 
-                    <ng-template #sinDocumentos>
-                        <p class="text-gray-500 italic">No hay documentos registrados.</p>
+                    <!-- Si está pendiente -->
+                    <div *ngIf="expedienteSeleccionado.estado === 'PENDIENTE'; else seccionAprobado">
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                            <label class="text-sm text-gray-700 font-medium block">Fecha Limite de Respuesta:</label>
+
+                            <input type="date"
+                                class="cursor-pointer border border-gray-300 p-2 rounded-md w-full sm:w-auto focus:ring-2 focus:ring-[#004C77] focus:border-[#004C77]"
+                                [(ngModel)]="expedienteSeleccionado.fechaSeleccionada"
+                                placeholder="Selecciona fecha límite" />
+
+                            <button
+                                class="cursor-pointer bg-[#004C77] text-white px-5 py-2 w-52.5 rounded-md hover:bg-[#06334f] transition-colors disabled:opacity-50"
+                                [disabled]="!expedienteSeleccionado.fechaSeleccionada"
+                                (click)="confirmarAccion(expedienteSeleccionado, 'APROBADO')">
+                                Aceptar
+                            </button>
+
+                            <button
+                                class="cursor-pointer bg-[#F36C21] text-white px-5 py-2 w-52.5 rounded-md hover:bg-[#d65a17] transition-colors"
+                                (click)="confirmarAccion(expedienteSeleccionado, 'RECHAZADO')">
+                                Rechazar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Si ya fue aprobado -->
+                    <ng-template #seccionAprobado>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="flex items-center gap-3 w-full sm:w-auto">
+                                <label class="text-sm font-medium text-gray-700">Fecha límite:</label>
+                                <input type="date"
+                                    class="cursor-pointer border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#004C77] focus:border-[#004C77]"
+                                    [(ngModel)]="expedienteSeleccionado.fechaLimiteRespuesta"
+                                    (change)="actualizarFechaLimite()" />
+                            </div>
+
+                            <button *ngIf="expedienteSeleccionado.fechaSeleccionada"
+                                class="cursor-pointer bg-blue-700 text-white px-5 py-2 rounded-md hover:bg-blue-800 transition-colors shadow-sm"
+                                (click)="irARegistroExpedienteEmisor(expedienteSeleccionado)">
+                                Registrar expediente emisor
+                            </button>
+                        </div>
                     </ng-template>
                 </div>
 
-                <!-- Dentro del *ngFor="let expediente of expedientesFiltrados" -->
-                <!-- BLOQUE DE ACCIONES PARA EXPEDIENTE SELECCIONADO -->
-                <div  class="bg-white rounded-lg shadow p-4 mb-4" *ngIf="expedienteSeleccionado && expedienteSeleccionado?.tipo === 'Receptor'">
-                    <div class="mt-4 border-t pt-2">
 
-                        <!-- Si está pendiente -->
-                        <div *ngIf="expedienteSeleccionado.estado === 'PENDIENTE'; else aprobado">
-                            <div class="flex items-center gap-4">
-                                <input type="date" class="border p-2 rounded"
-                                    [(ngModel)]="expedienteSeleccionado.fechaSeleccionada"
-                                    placeholder="Selecciona fecha límite" />
-
-                                <button class="bg-green-600 text-white px-4 py-1 rounded disabled:opacity-50"
-                                    [disabled]="!expedienteSeleccionado.fechaSeleccionada"
-                                    (click)="confirmarAccion(expedienteSeleccionado, 'APROBADO')">
-                                    Aceptar
-                                </button>
-
-                                <button class="bg-red-600 text-white px-4 py-1 rounded"
-                                    (click)="confirmarAccion(expedienteSeleccionado, 'RECHAZADO')">
-                                    Rechazar
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Si fue aprobado -->
-                        <ng-template #aprobado>
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm italic text-gray-600">
-                                    Fecha límite de respuesta: {{ expedienteSeleccionado.fechaLimiteRespuesta || 'No
-                                    asignada' }}
-                                </span>
-
-                                <button class="bg-blue-700 text-white px-4 py-1 rounded hover:bg-blue-800 transition"
-                                    (click)="irARegistroExpedienteEmisor(expedienteSeleccionado)">
-                                    Registrar expediente emisor
-                                </button>
-                            </div>
-                        </ng-template>
-
-                    </div>
-                </div>
             </div>
         </div>
 

@@ -20,6 +20,7 @@ export class ExpedientesBuzonComponent implements OnInit {
   filtroActivo = 'recientes';
   filtroTipo: 'todos' | 'Receptor' | 'Emisor' = 'todos';
   documentosFirmables: any[] = [];
+  tabActivo = 'expediente';
 
   esAdmin = false;
   expedienteSeleccionado: any = null;
@@ -29,6 +30,7 @@ export class ExpedientesBuzonComponent implements OnInit {
   historialCargos: any[] = [];
   fechaLimite: string | null = null;
   estadoRegistrado: boolean = false;
+  nuevoComentario: string = '';
 
   constructor(private route: ActivatedRoute, private router: Router, private authService: AuthService, private expedienteService: ExpedienteService, private proyectoService: ProyectoService,
   ) { }
@@ -130,8 +132,19 @@ export class ExpedientesBuzonComponent implements OnInit {
   abrirEnNuevaVentana(url: string) {
     window.open(url, '_blank');
   }
+  resetearSecciones() {
+    this.tabActivo = 'expediente';
+    this.nuevoComentario = '';
+    this.fechaLimite = null;
+    this.estadoRegistrado = false;
+    this.documentosFirmables = [];
+    this.nombreProyectoSeleccionado = '';
+    this.historialCargos = [];
+    this.documentosExistentes = [];
+  }
 
   verDetalle(expediente: any) {
+    this.resetearSecciones();
     const id = expediente.id;
     console.log('Expediente seleccionado:', expediente.codigo);
     if (!expediente.leido) {
@@ -204,7 +217,7 @@ export class ExpedientesBuzonComponent implements OnInit {
             this.expedienteService.obtenerDocumentosFirmables(this.expedienteSeleccionado.id, usuario.id).subscribe({
               next: (docs) => {
                 this.documentosFirmables = docs;
-                console.log('📄 Documentos firmables:', docs);
+                console.log('Documentos firmables:', docs);
               },
               error: (err) => {
                 console.error('Error al cargar documentos firmables', err);
@@ -336,6 +349,40 @@ export class ExpedientesBuzonComponent implements OnInit {
         }
       );
   }
+  guardarComentario() {
+    const usuario = this.authService.getUserFromToken();
+    if (!this.nuevoComentario.trim()) {
+      Swal.fire('Advertencia', 'El comentario no puede estar vacío', 'warning');
+      return;
+    }
+    if (!usuario) {
+      Swal.fire('Error', 'No se pudo obtener el usuario actual', 'error');
+      return;
+    }
 
+    const comentarioData = {
+      expedienteId: this.expedienteSeleccionado.id,
+      usuarioId: usuario.id,
+      comentario: this.nuevoComentario,
+      fechaHora: new Date().toISOString()
+    };
 
+    this.expedienteService.registrarComentario(comentarioData).subscribe({
+      next: () => {
+        Swal.fire('Comentario guardado', '', 'success');
+        this.nuevoComentario = '';
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo guardar el comentario', 'error');
+      }
+    });
+  }
+  actualizarFechaLimite() {
+    const nuevaFecha = this.expedienteSeleccionado.fechaSeleccionada;
+    this.actualizarEstadoExpediente(this.expedienteSeleccionado.estado, nuevaFecha);
+  }
+
+  abrirDetalle(expediente: any) {
+    this.router.navigate(['/detalle-expediente', expediente.id]);
+  }
 }

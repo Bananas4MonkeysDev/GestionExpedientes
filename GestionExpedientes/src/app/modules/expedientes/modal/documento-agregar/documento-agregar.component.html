@@ -75,13 +75,18 @@
 
         <!-- Contraseña -->
         <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">Contraseña <span
-              class="text-red-500">*</span></label>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Contraseña</label>
           <mat-form-field appearance="outline" class="w-full !m-0">
-            <input matInput type="password" formControlName="contraseña" placeholder="********" />
-            <mat-error *ngIf="form.get('contraseña')?.hasError('required')">Este campo es obligatorio.</mat-error>
+            <input matInput [type]="mostrarContrasena ? 'text' : 'password'" formControlName="contraseña"
+              placeholder="********" />
+            <button mat-icon-button matSuffix (click)="mostrarContrasena = !mostrarContrasena" type="button"
+              [attr.aria-label]="'Mostrar/ocultar contraseña'" [attr.aria-pressed]="mostrarContrasena">
+              <mat-icon>{{ mostrarContrasena ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            <mat-error *ngIf="form.get('contraseña')?.hasError('minlength')">Mínimo 6 caracteres.</mat-error>
           </mat-form-field>
         </div>
+
 
         <!-- Rol -->
         <div>

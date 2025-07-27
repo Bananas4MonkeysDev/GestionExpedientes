@@ -45,6 +45,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         Optional<Usuario> existente = usuarioRepository.findById(id);
         if (existente.isPresent()) {
             Usuario actual = existente.get();
+            actual.setContraseña(passwordEncoder.encode(usuario.getContraseña()));
             actual.setNombre(usuario.getNombre());
             actual.setCorreo(usuario.getCorreo());
             actual.setDni(usuario.getDni());

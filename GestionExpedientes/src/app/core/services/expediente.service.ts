@@ -2,6 +2,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+export interface FlujoProceso {
+  id: number;
+  estado: 'PENDIENTE' | 'FIRMADO';
+  expediente_id: number;
+  fecha_limite: string;
+  nivel: number;
+  tipo_nivel: 'General' | 'Especifico';
+  documentos_id: string; // Puedes parsearlo a string[] si deseas luego
+  usuarios: string; // Ej: "10|12|3"
+}
 
 @Injectable({ providedIn: 'root' })
 export class ExpedienteService {
@@ -17,6 +27,7 @@ export class ExpedienteService {
       Authorization: `Bearer ${token}`
     });
   }
+
   actualizarExpediente(id: number, data: any): Observable<any> {
     console.log('[DEBUG] JWT token:', localStorage.getItem('jwt'));
 
@@ -30,6 +41,25 @@ export class ExpedienteService {
     return this.http.put(`${this.baseUrl}/documento/${documentoId}`, data, {
       headers: this.getHeaders(),
     });
+  }
+  getPorIds(ids: any[]): Observable<any[]> {
+    const idsParam = encodeURIComponent(ids.join('|'));
+    const token = localStorage.getItem('jwt') || '';
+    console.log('[DEBUG] JWT token:', localStorage.getItem('jwt'));
+
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return this.http.get<any[]>(`http://localhost:8080/api/documentos/por-ids?ids=${idsParam}`, { headers });
+  }
+  actualizarFlujoProceso(id: number, flujoActualizado: any): Observable<any> {
+    console.log("[Front] Actualizando flujo con ID: " + id);
+    const token = localStorage.getItem('jwt') || '';
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return this.http.put(`http://localhost:8080/api/flujo-proceso/actualizar/${id}`, flujoActualizado, { headers });
+  }
+  eliminarFlujoProceso(id: number): Observable<any> {
+    const token = localStorage.getItem('jwt') || '';
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return this.http.delete(`http://localhost:8080/api/flujo-proceso/eliminar/${id}`, { headers });
   }
 
   eliminarDocumento(documentoId: number): Observable<any> {
@@ -132,9 +162,21 @@ export class ExpedienteService {
       headers: this.getHeaders()
     });
   }
+  obtenerFlujosPorExpediente(id: number): Observable<FlujoProceso[]> {
+    return this.http.get<FlujoProceso[]>(`http://localhost:8080/api/flujo-proceso/por-expediente/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
   obtenerDocumentosFirmables(expedienteId: number, usuarioId: number) {
     return this.http.get<any[]>(`${this.baseUrl}/${expedienteId}/documentos-firmables`, {
       params: { usuarioId }
     });
   }
+  registrarComentario(comentarioData: any) {
+    return this.http.post(`http://localhost:8080/api/expedientes/comentarios`, comentarioData, {
+      headers: this.getHeaders()
+    });
+  }
+
 }
