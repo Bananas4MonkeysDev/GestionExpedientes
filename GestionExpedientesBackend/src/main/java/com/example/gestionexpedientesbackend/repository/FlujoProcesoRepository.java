@@ -29,5 +29,8 @@ public interface FlujoProcesoRepository extends JpaRepository<FlujoProceso, Long
             int nivel
     );
 
+    List<FlujoProceso> findByExpedienteIdAndNivelAndTipoNivel(Long expedienteId, int nivel, String tipoNivel);
+
+    List<FlujoProceso> findByExpedienteIdAndNivelAndDocumentosId(Long expedienteId, int nivel, String documentosId);
 
 }

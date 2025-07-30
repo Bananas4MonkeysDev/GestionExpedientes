@@ -45,6 +45,113 @@ public class EmailServiceImpl implements EmailService {
             throw new RuntimeException("Error al enviar el correo: " + e.getMessage());
         }
     }
+    @Override
+    public String generarMensajePendiente(String nombreUsuario, Expediente expediente) {
+        String nombreGrupoArea = "[Área o institución]";
+        if (expediente.getCreadoPor() != null) {
+            logger.info("ID del usuario creador del expediente: {}", expediente.getCreadoPor());
+
+            List<GrupoArea> grupos = grupoAreaService.buscarGruposAreasPorUsuarioId(expediente.getCreadoPor());
+            logger.info("Grupos encontrados para el usuario: {}", grupos.stream().map(GrupoArea::getNombre).toList());
+
+            if (!grupos.isEmpty()) {
+                nombreGrupoArea = grupos.stream()
+                        .map(GrupoArea::getNombre)
+                        .collect(Collectors.joining(", "));
+            } else {
+                logger.warn("No se encontraron grupos para el usuario con ID {}", expediente.getCreadoPor());
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html><body style='font-family: Arial, sans-serif; color: #333;'>");
+
+        sb.append("<p>Estimado(a) <strong>").append(nombreUsuario).append("</strong>,</p>");
+
+        sb.append("<p>Se le informa que el expediente <strong>").append(expediente.getCodigo())
+                .append("</strong> ha cambiado su estado a <strong>PENDIENTE</strong> debido a modificaciones en los flujos de firma.</p>");
+
+        sb.append("<ul>");
+        sb.append("<li><strong>Asunto:</strong> ").append(expediente.getAsunto()).append("</li>");
+        sb.append("<li><strong>Fecha:</strong> ").append(expediente.getFecha()).append("</li>");
+        sb.append("</ul>");
+
+        sb.append("<p>Le notificaremos nuevamente una vez que todas las firmas requeridas hayan sido completadas.</p>");
+
+        // Botón para ver expediente
+        sb.append("<table role='presentation' cellspacing='0' cellpadding='0'><tr><td align='center'>");
+        sb.append("<a href='http://localhost:4200/login?redirect=buzon-expedientes&id=")
+                .append(expediente.getId())
+                .append("' style='")
+                .append("display: inline-block; ")
+                .append("padding: 12px 24px; ")
+                .append("font-size: 16px; ")
+                .append("font-weight: bold; ")
+                .append("font-family: Arial, sans-serif; ")
+                .append("color: #ffffff; ")
+                .append("background-color: #F36C21; ")
+                .append("border-radius: 8px; ")
+                .append("text-decoration: none; ")
+                .append("box-shadow: 0 4px 12px rgba(243, 108, 33, 0.4); ")
+                .append("'>")
+                .append("Ver expediente")
+                .append("</a>");
+        sb.append("</td></tr></table>");
+
+        sb.append("<p style='margin-top: 30px; font-size: 14px;'>Gracias por su atención.</p>");
+        sb.append("<p>Atentamente,<br>");
+        sb.append("<strong>").append(nombreGrupoArea).append("</strong></p>");
+        sb.append("</body></html>");
+
+        return sb.toString();
+    }
+
+    @Override
+    public String generarMensajeAprobacion(Expediente expediente, List<Documento> documentos, String nombreRemitente) {
+        String nombreGrupoArea = "[Área o institución]";
+        if (expediente.getCreadoPor() != null) {
+            List<GrupoArea> grupos = grupoAreaService.buscarGruposAreasPorUsuarioId(expediente.getCreadoPor());
+            if (!grupos.isEmpty()) {
+                nombreGrupoArea = grupos.stream()
+                        .map(GrupoArea::getNombre)
+                        .collect(Collectors.joining(", "));
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html><body style='font-family: Arial, sans-serif; color: #333;'>");
+
+        sb.append("<p>Estimado usuario,</p>");
+        sb.append("<p>El expediente <strong>").append(expediente.getCodigo()).append("</strong> ha sido <strong>aprobado</strong> tras completarse todas las firmas necesarias.</p>");
+
+        sb.append("<ul>");
+        sb.append("<li><strong>Asunto:</strong> ").append(expediente.getAsunto()).append("</li>");
+        sb.append("<li><strong>Fecha:</strong> ").append(expediente.getFecha()).append("</li>");
+        sb.append("</ul>");
+
+        if (!documentos.isEmpty()) {
+            sb.append("<p><strong>Documentos asociados:</strong></p><ul>");
+            for (Documento doc : documentos) {
+                sb.append("<li>").append(doc.getCodigo()).append(" – ").append(doc.getNombreArchivo()).append("</li>");
+            }
+            sb.append("</ul>");
+        }
+
+        sb.append("<table role='presentation' cellspacing='0' cellpadding='0'><tr><td align='center'>");
+        sb.append("<a href='http://localhost:4200/login?redirect=buzon-expedientes&id=")
+                .append(expediente.getId())
+                .append("' style='display:inline-block;padding:12px 24px;font-size:16px;font-weight:bold;")
+                .append("color:#ffffff;background-color:#129490;border-radius:8px;text-decoration:none;'>")
+                .append("Ver expediente aprobado</a>");
+        sb.append("</td></tr></table>");
+
+        sb.append("<p style='margin-top: 30px; font-size: 14px;'>Gracias por su atención.</p>");
+        sb.append("<p>Atentamente,<br>")
+                .append(nombreRemitente).append("<br><em>").append(nombreGrupoArea).append("</em></p>");
+        sb.append("</body></html>");
+
+        return sb.toString();
+    }
 
     @Override
     public String generarMensajeExpediente(Expediente expediente, List<Documento> documentos, String nombreRemitente) {

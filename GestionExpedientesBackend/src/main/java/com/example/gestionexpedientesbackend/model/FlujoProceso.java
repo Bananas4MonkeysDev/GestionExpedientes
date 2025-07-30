@@ -23,15 +23,35 @@ public class FlujoProceso {
 
     @Column(length = 1000)
     private String usuarios; // Ejemplo: "3|4|7"
-
+    @Column(length = 1000)
+    private String usuariosFirmantes;
     private Long expedienteId;
 
     @Column(length = 1000)
-    private String documentosId; // Ejemplo: "12|15|22" o solo "12"
+    private String documentosId;
+    // Ejemplo: "12|15|22" o solo "12"
+    @Column(length = 1000)
+    private String documentosFirmados; // Ejemplo: "12|15|22" o solo "12"
 
     private LocalDate fechaLimite;
 
     private String estado; // PENDIENTE o FIRMADO
+
+    public String getDocumentosFirmados() {
+        return documentosFirmados;
+    }
+
+    public void setDocumentosFirmados(String documentosFirmados) {
+        this.documentosFirmados = documentosFirmados;
+    }
+
+    public String getUsuariosFirmantes() {
+        return usuariosFirmantes;
+    }
+
+    public void setUsuariosFirmantes(String usuariosFirmantes) {
+        this.usuariosFirmantes = usuariosFirmantes;
+    }
 
     public Long getId() {
         return id;
