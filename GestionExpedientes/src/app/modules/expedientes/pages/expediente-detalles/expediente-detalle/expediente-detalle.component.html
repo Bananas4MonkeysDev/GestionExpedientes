@@ -680,7 +680,7 @@
                             <div class="flex gap-2 bg-gray-100 rounded-full w-fit p-1 shadow-inner"
                                 [class.pointer-events-none]="!modoEdicionFlujos">
                                 <!-- Botón: Por documento -->
-                                <button type="button" [disabled]="!modoEdicionFlujos"
+                                <button type="button"  [class.pointer-events-none]="modoFlujoFirma == 'general'" [disabled]="!modoEdicionFlujos || modoFlujoFirma == 'general'"
                                     (click)="modoFlujoFirma = 'individual'" [ngClass]="{
         'bg-white shadow text-[#004C77] font-semibold': modoFlujoFirma === 'individual',
         'text-gray-600 hover:text-[#004C77]': modoFlujoFirma !== 'individual'
@@ -689,7 +689,7 @@
                                 </button>
 
                                 <!-- Botón: General -->
-                                <button type="button" [disabled]="!modoEdicionFlujos"
+                                <button type="button" [class.pointer-events-none]="modoFlujoFirma == 'individual'"  [disabled]="!modoEdicionFlujos || modoFlujoFirma == 'individual'"
                                     (click)="modoFlujoFirma = 'general'" [ngClass]="{
         'bg-white shadow text-[#004C77] font-semibold': modoFlujoFirma === 'general',
         'text-gray-600 hover:text-[#004C77]': modoFlujoFirma !== 'general'
