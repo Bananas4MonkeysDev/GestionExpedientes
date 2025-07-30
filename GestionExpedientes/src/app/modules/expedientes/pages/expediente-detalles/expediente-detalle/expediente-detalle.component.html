@@ -95,7 +95,7 @@
                         <div *ngIf="!esAnulado" class="flex items-center gap-6">
 
                             <!-- Toggle de edición -->
-                            <label class="flex items-center gap-2 cursor-pointer">
+                            <label *ngIf="currentUser?.rol === 'EDICION'" class="flex items-center gap-2 cursor-pointer">
                                 <div class="relative">
                                     <input type="checkbox" class="sr-only peer" [(ngModel)]="modoEdicionExpediente"
                                         (change)="activarModoEdicion()" />
@@ -659,7 +659,7 @@
                         <div class="mb-4 flex items-center justify-between">
                             <h2 class="text-xl font-semibold text-[#004C77]">Documentos y flujos de firma</h2>
                             <!-- Toggle de edición para flujos de firma -->
-                            <label class="flex items-center gap-2 cursor-pointer mb-4">
+                            <label *ngIf="currentUser?.rol === 'EDICION'" class="flex items-center gap-2 cursor-pointer mb-4">
                                 <div class="relative">
                                     <input type="checkbox" class="sr-only peer" [(ngModel)]="modoEdicionFlujos" />
                                     <div
@@ -1144,7 +1144,6 @@
 
                         </div>
 
-                        <hr class="my-6 border-gray-300" />
 
                     </ng-template>
                 </div>

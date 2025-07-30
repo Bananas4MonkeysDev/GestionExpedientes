@@ -12,6 +12,15 @@ export interface FlujoProceso {
   documentos_id: string; // Puedes parsearlo a string[] si deseas luego
   usuarios: string; // Ej: "10|12|3"
 }
+export interface EstadoFirmaResponse {
+  yaFirmo: boolean;
+  usuariosTotales: number;
+  firmantesTotales: number;
+  docYaFirmado?: boolean;
+  mostrarBoton: boolean;
+  tipo: string;
+}
+
 
 @Injectable({ providedIn: 'root' })
 export class ExpedienteService {
@@ -142,7 +151,7 @@ export class ExpedienteService {
     });
   }
   obtenerExpedientesPorFirma(usuarioId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/asignados-condicionados/${usuarioId}`, {
+    return this.http.get<any[]>(`${this.baseUrl}/asignados-por-firma/${usuarioId}`, {
       headers: this.getHeaders()
     });
   }
@@ -173,10 +182,35 @@ export class ExpedienteService {
       params: { usuarioId }
     });
   }
+  observarNivel(flujoId: number, comentario: string): Observable<void> {
+  return this.http.delete<void>(
+    `http://localhost:8080/api/flujo-proceso/observar/${flujoId}`,
+    { params: { comentario } , headers: this.getHeaders()
+    });
+}
+
+  verEstadoFirma(flujoId: number, usuarioId: number, documentoId: number) {
+  return this.http.get<EstadoFirmaResponse>(
+    `http://localhost:8080/api/flujo-proceso/firma/estado`,
+    { params: { flujoId, usuarioId, documentoId}, headers: this.getHeaders()
+    });
+}
+
   registrarComentario(comentarioData: any) {
     return this.http.post(`http://localhost:8080/api/expedientes/comentarios`, comentarioData, {
       headers: this.getHeaders()
     });
   }
+// expediente.service.ts
+firmarDocumento(flujoId: number, documentoId: number, usuarioId: number): Observable<any> {
+  const headers = new HttpHeaders({
+    Authorization: `Bearer ${localStorage.getItem('token') || ''}`
+  });
+
+  return this.http.post<any>(
+    `http://localhost:8080/api/flujo-proceso/firmar/${flujoId}/${documentoId}/${usuarioId}`,{ headers }
+  );
+}
+
 
 }

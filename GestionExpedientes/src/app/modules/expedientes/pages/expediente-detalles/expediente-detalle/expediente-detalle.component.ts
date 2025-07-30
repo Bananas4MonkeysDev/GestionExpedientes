@@ -120,6 +120,7 @@ type UsuarioVisual = Usuario | GrupoVisual;
   styleUrls: ['./expediente-detalle.component.css'],
 })
 export class ExpedienteDetalleComponent implements OnInit {
+  currentUser: any;
 
   seccion: 'expediente' | 'documentos' | 'cargo' | 'estado' | 'auditoria' = 'expediente';
   expediente: any = null;
@@ -298,7 +299,7 @@ export class ExpedienteDetalleComponent implements OnInit {
         if (this.modoFlujoFirma === 'individual') {
           Promise.all([
             this.registrarFlujosParaNuevosDocumentos(),
-            this.actualizarNivelesEspecificos()
+            this.actualizarNivelesEspecificos()            
           ]).then(() => {
             this.finalizarGuardado();
           });
@@ -847,6 +848,8 @@ export class ExpedienteDetalleComponent implements OnInit {
     nivel.searchControl.setValue('');
   }
   ngOnInit(): void {
+    this.currentUser = this.authService.getUserFromToken();
+    console.log("Current User:", this.currentUser);
     const id = Number(this.route.snapshot.paramMap.get('id'));
     const hoy = new Date();
     const yyyy = hoy.getFullYear();
@@ -1105,10 +1108,10 @@ export class ExpedienteDetalleComponent implements OnInit {
 
         });
       });
-  
+
     });
   }
- 
+
   restablecerFlujosDesdeOriginal(): void {
     this.nivelesFirmaGenerales = this.nivelesFirmaGeneralOriginal.map(n => ({
       ...n,
@@ -1196,6 +1199,7 @@ export class ExpedienteDetalleComponent implements OnInit {
     return fileName ? `http://localhost:8080/expedientes/${fileName}` : null;
   }
   confirmarAnulacion() {
+    this.loadingService.show();
     Swal.fire({
       title: '¿Anular expediente?',
       text: 'Esta acción no eliminará el expediente, solo cambiará su estado a "ANULADO".',
@@ -1228,10 +1232,13 @@ export class ExpedienteDetalleComponent implements OnInit {
             this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
               this.router.navigate(['/detalle-expediente', this.expediente.id]);
             });
+            this.loadingService.hide();
 
           },
           error: () => {
             Swal.fire('Error', 'No se pudo anular el expediente', 'error');
+            this.loadingService.hide();
+
           }
         });
       }
@@ -1419,7 +1426,7 @@ export class ExpedienteDetalleComponent implements OnInit {
       usuariosDestinatarios: this.obtenerIdsPorNombres(this.controlUsuarioCc.value ?? []),
       referencias: this.controlReferencia.value?.join('|') || '',
     };
-
+    this.loadingService.show();
     this.expedienteService.actualizarExpediente(this.expediente.id, datosActualizar).subscribe({
       next: (resp) => {
         const usuario = this.authService.getUserFromToken();
@@ -1442,12 +1449,12 @@ export class ExpedienteDetalleComponent implements OnInit {
         });
         this.cargarAuditoria();
 
-        // Actualizar localmente datos (opcional)
-        Object.assign(this.expediente, datosActualizar);
-        this.expediente.referencias = (datosActualizar.referencias || '').split('|');
+        this.cargarDetalleExpediente(this.expediente.id);
 
         // Desactivar modo edición
         this.modoEdicionExpediente = false;
+        this.loadingService.hide();
+
       },
       error: (err) => {
         Swal.fire({
@@ -1457,6 +1464,7 @@ export class ExpedienteDetalleComponent implements OnInit {
           text: 'No se pudo actualizar el expediente',
           icon: 'error'
         });
+        this.loadingService.hide();
       }
     });
   }

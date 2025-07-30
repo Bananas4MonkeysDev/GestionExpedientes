@@ -8,6 +8,7 @@ import { ProyectoService } from '../../../../core/services/proyecto.service';
 import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { ActivatedRoute, Router } from '@angular/router';
+import { LoadingOverlayService } from '../../../../core/services/loading-overlay.service';
 
 @Component({
   selector: 'app-expedientes-buzon',
@@ -32,7 +33,7 @@ export class ExpedientesBuzonComponent implements OnInit {
   estadoRegistrado: boolean = false;
   nuevoComentario: string = '';
 
-  constructor(private route: ActivatedRoute, private router: Router, private authService: AuthService, private expedienteService: ExpedienteService, private proyectoService: ProyectoService,
+  constructor(private loadingService: LoadingOverlayService, private route: ActivatedRoute, private router: Router, private authService: AuthService, private expedienteService: ExpedienteService, private proyectoService: ProyectoService,
   ) { }
 
   ngOnInit(): void {
@@ -43,6 +44,7 @@ export class ExpedientesBuzonComponent implements OnInit {
         this.procesarExpedientes(data);
       });
     } else if (usuario?.tipoUsuario === 'INTERNO') {
+      console.log("Uusario actual:", usuario);
       const id = usuario.id;
       // Paso 1: Obtener expedientes tipo Receptor (como antes)
       this.expedienteService.obtenerExpedientesPorUsuario(id).subscribe(expedientesReceptor => {
@@ -117,6 +119,48 @@ export class ExpedientesBuzonComponent implements OnInit {
       }
     }
   }
+
+  firmar(doc: any) {
+    const usuario = this.authService.getUserFromToken(); // asegúrate de obtener el ID del usuario
+    if (!usuario) return;
+    const partes = doc.tipoDocumento.split('|');
+    const flujoId = partes[1];
+    console.log("flujo id del doc firmado:", flujoId);
+    this.loadingService.show();
+
+    this.expedienteService.firmarDocumento(flujoId, doc.id, usuario.id).subscribe({
+      next: (res) => {
+        Swal.fire({
+          icon: 'success',
+          title: '¡Documento firmado!',
+          text: 'Tu firma ha sido añadida correctamente.',
+          confirmButtonColor: '#004C77',
+          background: '#f4fdfc',
+          color: '#004C77',
+          confirmButtonText: 'Aceptar'
+        });
+        this.verDetalle(this.expedienteSeleccionado);
+        this.loadingService.hide();
+
+      },
+      error: (err) => {
+        console.error('[ERROR FIRMA]:', err); // 👈 Esto es lo que necesitas
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al firmar',
+          text: 'No se pudo firmar el documento. Intenta de nuevo.',
+          confirmButtonColor: '#F36C21',
+          background: '#fff8f2',
+          color: '#F36C21',
+          confirmButtonText: 'Cerrar'
+        });
+        this.loadingService.hide();
+
+      }
+    });
+  }
+
 
   formatearPeso(bytes: number): string {
     if (!bytes) return 'No especificado';
@@ -218,6 +262,10 @@ export class ExpedientesBuzonComponent implements OnInit {
               next: (docs) => {
                 this.documentosFirmables = docs;
                 console.log('Documentos firmables:', docs);
+                this.documentosFirmables.forEach(doc => {
+                  this.verificarSiPuedeFirmar(doc);
+                });
+
               },
               error: (err) => {
                 console.error('Error al cargar documentos firmables', err);
@@ -255,6 +303,59 @@ export class ExpedientesBuzonComponent implements OnInit {
       }
     });
   }
+  observarNivel(doc: any) {
+    const partes = doc.tipoDocumento.split('|');
+    const flujoId = partes[1];
+    Swal.fire({
+      title: '¿Deseas observar este nivel?',
+      input: 'text',
+      inputLabel: 'Motivo de observación',
+      inputPlaceholder: 'Escribe un comentario...',
+      showCancelButton: true,
+      confirmButtonText: 'Observar y eliminar',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Debes ingresar un comentario';
+        }
+        return null;
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.loadingService.show();
+        this.expedienteService.observarNivel(flujoId, result.value).subscribe({
+          next: () => {
+            Swal.fire('Observado', 'Se eliminaron los niveles relacionados.', 'success');
+            this.verDetalle(this.expedienteSeleccionado);
+            this.loadingService.hide();
+          },
+          error: () => {
+            Swal.fire('Error', 'No se pudo observar el flujo', 'error');
+            this.loadingService.hide();
+          }
+        });
+      }
+    });
+  }
+
+  verificarSiPuedeFirmar(doc: any): void {
+    const usuario = this.authService.getUserFromToken();
+    if (!usuario || !doc.tipoDocumento) return;
+
+    const partes = doc.tipoDocumento.split('|');
+    const flujoId = partes[1];
+
+    this.expedienteService.verEstadoFirma(flujoId, usuario.id, doc.id).subscribe(res => {
+      console.log("respuesta:", res);
+      if (res.tipo === 'General') {
+        doc.puedeFirmar = !res.docYaFirmado;
+      } else {
+        doc.puedeFirmar = !res.yaFirmo;
+      }
+
+    });
+  }
+
 
   marcarComoLeido(event: Event | null, exp: any) {
     if (event) event.stopPropagation();
