@@ -121,6 +121,8 @@ export class ExpedientesRegisterComponent implements OnInit {
   idExpedienteRespondido: number | null = null;
   botonDeshabilitado: boolean = false;
   minDate = new Date();
+  rutaLocal: string = '';
+  rutaOUrl: string = '';
   cargo?: File;
   fechaCargo: string = '';
   arrastrandoCargo = false;
@@ -364,7 +366,27 @@ export class ExpedientesRegisterComponent implements OnInit {
       }
     });
   }
+  onCarpetaSeleccionada(event: any): void {
+    const archivos: FileList = event.target.files;
+    if (!archivos || archivos.length === 0) {
+      Swal.fire('Aviso', 'No se encontraron archivos PDF en la carpeta seleccionada.', 'info');
+      return;
+    }
 
+    const pdfs = Array.from(archivos).filter(
+      (file: File) => file.type === 'application/pdf'
+    );
+
+    if (pdfs.length === 0) {
+      Swal.fire('Aviso', 'No se encontraron archivos PDF.', 'info');
+      return;
+    }
+
+    // ✅ Reutilizamos tu función de carga manual
+    this.cargarArchivosDocumentosNuevos(pdfs);
+
+    Swal.fire('Éxito', `${pdfs.length} documentos PDF cargados correctamente.`, 'success');
+  }
 
   expandirUsuariosSeleccionados(nombresSeleccionados: string[]): number[] {
     const ids: number[] = [];
@@ -676,7 +698,48 @@ export class ExpedientesRegisterComponent implements OnInit {
     const fileName = path.split(/\\|\//).pop();
     return fileName ? `http://localhost:8080/expedientes/${fileName}` : null;
   }
+  leerDesdeRutaOUrl(): void {
+    if (!this.rutaOUrl.trim()) {
+      Swal.fire('Error', 'Debe ingresar una ruta o URL.', 'warning');
+      return;
+    }
 
+    this.loadingService.show();
+
+    this.expedienteService.obtenerPdfsDesdeRuta(this.rutaOUrl).subscribe({
+      next: (pdfs) => {
+        this.loadingService.hide();
+
+        if (!pdfs || pdfs.length === 0) {
+          Swal.fire('Aviso', 'No se encontraron archivos PDF.', 'info');
+          return;
+        }
+
+        pdfs.forEach((pdf: any) => {
+          const blob = this.base64ToBlob(pdf.base64, 'application/pdf');
+          const file = new File([blob], pdf.nombre, { type: 'application/pdf' });
+          this.cargarArchivosDocumentosNuevos([file]);
+        });
+
+        Swal.fire('Éxito', `${pdfs.length} archivos PDF listos para registrar.`, 'success');
+      },
+      error: (err) => {
+        this.loadingService.hide();
+        console.error(err);
+        Swal.fire('Error', 'No se pudieron leer los archivos PDF.', 'error');
+      }
+    });
+  }
+
+  base64ToBlob(base64: string, type: string): Blob {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type });
+  }
   onFileSelected(event: any) {
     const files: FileList = event.target.files;
 

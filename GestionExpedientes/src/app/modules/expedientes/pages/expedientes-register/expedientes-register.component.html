@@ -513,6 +513,53 @@
       <!-- NUEVOS DOCUMENTOS (solo para tipo Emisor) -->
       <div class="space-y-6">
         <h2 class="text-xl font-semibold text-[#004C77]">Carga de nuevos documentos del expediente</h2>
+        <!-- Carga masiva desde carpeta local -->
+        <!-- Sección: Carga de documentos desde ruta o enlace -->
+        <div class="w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-6 mt-4 space-y-5">
+
+          <!-- Encabezado -->
+          <div class="flex items-center gap-2">
+            <mat-icon class="text-[#004C77] text-xl">folder_open</mat-icon>
+            <h2 class="text-lg font-semibold text-[#004C77]">
+              Cargar documentos desde ruta o enlace
+            </h2>
+          </div>
+
+          <!-- Descripción -->
+          <p class="text-sm text-gray-600 leading-relaxed">
+            Ingresa una <strong>ruta local</strong> (accesible desde el servidor)
+            o una <strong>URL pública</strong> que contenga archivos PDF para agregarlos automáticamente al expediente.
+          </p>
+
+          <!-- Campo de texto y botón -->
+          <div class="flex flex-col sm:flex-row items-center gap-3">
+            <div class="relative flex-1 w-full">
+              <mat-icon class="absolute left-3 top-2.5 text-gray-400">link</mat-icon>
+              <input type="text" [(ngModel)]="rutaOUrl"
+                placeholder="Ejemplo: E:\\Documentos\\PDFs o http://192.168.1.5/uploads/" class="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700
+               bg-gray-50 focus:ring-2 focus:ring-[#004C77] focus:border-[#004C77]
+               transition duration-200 outline-none hover:bg-gray-100" />
+            </div>
+
+            <button type="button" (click)="leerDesdeRutaOUrl()" class="flex items-center justify-center gap-2 bg-[#004C77] hover:bg-[#00365f]
+             text-white px-6 py-2.5 rounded-lg text-sm font-medium shadow-md
+             transition-all duration-200 whitespace-nowrap">
+              <mat-icon class="cursor-pointer text-white text-base">search</mat-icon>
+              Leer PDFs
+            </button>
+          </div>
+
+          <!-- Nota informativa -->
+          <!-- Nota informativa -->
+          <div class="flex items-center gap-3 bg-[#F9FBFD] border border-gray-200 rounded-lg p-3 mt-2">
+            <mat-icon class="text-[#004C77] text-base flex-shrink-0">info</mat-icon>
+            <p class="text-xs text-gray-600 leading-snug">
+              Solo se cargarán los archivos con extensión <strong>.pdf</strong> encontrados en la ruta o URL indicada.
+              Una vez leídos, se mostrarán listos para registrar.
+            </p>
+          </div>
+
+        </div>
 
         <!-- Drag & Drop -->
         <div class="border-2 border-dashed rounded-lg p-10 text-center transition-all duration-300" [ngClass]="{
@@ -816,7 +863,53 @@
     <!-- PASO 3 -->
     <div *ngIf="pasoActual === 3 && tipoExpediente !== 'Emisor'" class="bg-white rounded-xl shadow p-8 space-y-6">
       <h2 class="text-xl font-semibold text-[#004C77]">Carga de documentos del expediente</h2>
+      <!-- Carga masiva desde carpeta local -->
+      <!-- Sección: Carga de documentos desde ruta o enlace -->
+      <div class="w-full bg-white border border-gray-200 rounded-2xl shadow-sm p-6 mt-4 space-y-5">
 
+        <!-- Encabezado -->
+        <div class="flex items-center gap-2">
+          <mat-icon class="text-[#004C77] text-xl">folder_open</mat-icon>
+          <h2 class="text-lg font-semibold text-[#004C77]">
+            Cargar documentos desde ruta o enlace
+          </h2>
+        </div>
+
+        <!-- Descripción -->
+        <p class="text-sm text-gray-600 leading-relaxed">
+          Ingresa una <strong>ruta local</strong> (accesible desde el servidor)
+          o una <strong>URL pública</strong> que contenga archivos PDF para agregarlos automáticamente al expediente.
+        </p>
+
+        <!-- Campo de texto y botón -->
+        <div class="flex flex-col sm:flex-row items-center gap-3">
+          <div class="relative flex-1 w-full">
+            <mat-icon class="absolute left-3 top-2.5 text-gray-400">link</mat-icon>
+            <input type="text" [(ngModel)]="rutaOUrl"
+              placeholder="Ejemplo: E:\\Documentos\\PDFs o http://192.168.1.5/uploads/" class="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700
+               bg-gray-50 focus:ring-2 focus:ring-[#004C77] focus:border-[#004C77]
+               transition duration-200 outline-none hover:bg-gray-100" />
+          </div>
+
+          <button type="button" (click)="leerDesdeRutaOUrl()" class="flex items-center justify-center gap-2 bg-[#004C77] hover:bg-[#00365f]
+             text-white px-6 py-2.5 rounded-lg text-sm font-medium shadow-md
+             transition-all duration-200 whitespace-nowrap">
+            <mat-icon class="cursor-pointer text-white text-base">search</mat-icon>
+            Leer PDFs
+          </button>
+        </div>
+
+        <!-- Nota informativa -->
+        <div class="flex items-center gap-3 bg-[#F9FBFD] border border-gray-200 rounded-lg p-3 mt-2">
+          <mat-icon class="text-[#004C77] text-base flex-shrink-0">info</mat-icon>
+          <p class="text-xs text-gray-600 leading-snug">
+            Solo se cargarán los archivos con extensión <strong>.pdf</strong> encontrados en la ruta o URL indicada.
+            Una vez leídos, se mostrarán listos para registrar.
+          </p>
+        </div>
+
+
+      </div>
       <!-- Drag & Drop -->
       <div class="border-2 border-dashed rounded-lg p-10 text-center transition-all duration-300" [ngClass]="{
     'border-[#004C77] bg-blue-50': arrastrando,

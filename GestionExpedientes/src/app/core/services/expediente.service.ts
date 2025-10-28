@@ -36,6 +36,9 @@ export class ExpedienteService {
       Authorization: `Bearer ${token}`
     });
   }
+  obtenerPdfsDesdeRuta(ruta: string) {
+    return this.http.post<any[]>(`${this.baseUrl}/documentos/listar-pdfs`, { ruta });
+  }
 
   actualizarExpediente(id: number, data: any): Observable<any> {
     console.log('[DEBUG] JWT token:', localStorage.getItem('jwt'));
@@ -183,34 +186,36 @@ export class ExpedienteService {
     });
   }
   observarNivel(flujoId: number, comentario: string): Observable<void> {
-  return this.http.delete<void>(
-    `http://localhost:8080/api/flujo-proceso/observar/${flujoId}`,
-    { params: { comentario } , headers: this.getHeaders()
-    });
-}
+    return this.http.delete<void>(
+      `http://localhost:8080/api/flujo-proceso/observar/${flujoId}`,
+      {
+        params: { comentario }, headers: this.getHeaders()
+      });
+  }
 
   verEstadoFirma(flujoId: number, usuarioId: number, documentoId: number) {
-  return this.http.get<EstadoFirmaResponse>(
-    `http://localhost:8080/api/flujo-proceso/firma/estado`,
-    { params: { flujoId, usuarioId, documentoId}, headers: this.getHeaders()
-    });
-}
+    return this.http.get<EstadoFirmaResponse>(
+      `http://localhost:8080/api/flujo-proceso/firma/estado`,
+      {
+        params: { flujoId, usuarioId, documentoId }, headers: this.getHeaders()
+      });
+  }
 
   registrarComentario(comentarioData: any) {
     return this.http.post(`http://localhost:8080/api/expedientes/comentarios`, comentarioData, {
       headers: this.getHeaders()
     });
   }
-// expediente.service.ts
-firmarDocumento(flujoId: number, documentoId: number, usuarioId: number): Observable<any> {
-  const headers = new HttpHeaders({
-    Authorization: `Bearer ${localStorage.getItem('token') || ''}`
-  });
+  // expediente.service.ts
+  firmarDocumento(flujoId: number, documentoId: number, usuarioId: number): Observable<any> {
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${localStorage.getItem('token') || ''}`
+    });
 
-  return this.http.post<any>(
-    `http://localhost:8080/api/flujo-proceso/firmar/${flujoId}/${documentoId}/${usuarioId}`,{ headers }
-  );
-}
+    return this.http.post<any>(
+      `http://localhost:8080/api/flujo-proceso/firmar/${flujoId}/${documentoId}/${usuarioId}`, { headers }
+    );
+  }
 
 
 }
