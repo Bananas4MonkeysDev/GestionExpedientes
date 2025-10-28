@@ -61,6 +61,7 @@ public class ExpedienteServiceImpl implements ExpedienteService {
         expediente.setLeido(true);
         expedienteRepository.save(expediente);
     }
+
     @Override
     public void cambiarEstadoConFecha(Long id, String estado, String fechaLimiteStr) throws Exception {
         Optional<Expediente> optional = expedienteRepository.findById(id);

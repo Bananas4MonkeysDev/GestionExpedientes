@@ -17,10 +17,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.nio.file.Files;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/expedientes")
@@ -52,7 +52,29 @@ public class ExpedienteController {
                 flujoProcesoService.obtenerDocumentosPendientesParaFirmar(expedienteId, usuarioId)
         );
     }
+    @PostMapping("/documentos/listar-pdfs")
+    public ResponseEntity<?> listarPdfs(@RequestBody Map<String, String> body) throws IOException {
+        String ruta = body.get("ruta");
 
+        File carpeta = new File(ruta);
+        if (!carpeta.exists() || !carpeta.isDirectory()) {
+            return ResponseEntity.badRequest().body("Ruta no válida o inaccesible.");
+        }
+
+        List<Map<String, String>> pdfs = new ArrayList<>();
+        for (File file : Objects.requireNonNull(carpeta.listFiles())) {
+            if (file.getName().toLowerCase().endsWith(".pdf")) {
+                byte[] bytes = Files.readAllBytes(file.toPath());
+                String base64 = Base64.getEncoder().encodeToString(bytes);
+                Map<String, String> pdf = new HashMap<>();
+                pdf.put("nombre", file.getName());
+                pdf.put("base64", base64);
+                pdfs.add(pdf);
+            }
+        }
+
+        return ResponseEntity.ok(pdfs);
+    }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizarExpediente(
