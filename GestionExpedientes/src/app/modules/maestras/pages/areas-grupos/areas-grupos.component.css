@@ -1,0 +1,111 @@
+/* Scroll elegante */
+.flex-1 {
+  scrollbar-color: #47565fad #e5e7eb;
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #004C77;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #F36C21;
+}
+
+/* Header fijo */
+table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #004C77;
+  z-index: 10;
+}
+
+/* Hover suave */
+tbody tr:hover {
+  background: linear-gradient(to right, #f9fbfd, #f2f8ff);
+}
+
+/* Transiciones suaves */
+td[colspan] {
+  transition: all 0.3s ease-in-out;
+}
+
+/* === FORMULARIO === */
+
+/* Inputs base */
+input,
+.mat-mdc-select-value-text {
+  font-size: 0.875rem !important;
+}
+
+input {
+  height: 40px;
+  border-radius: 6px;
+  border-color: #d1d5db;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: #004C77 !important;
+  box-shadow: 0 0 0 1px #004C77 !important;
+  transition: all 0.15s ease-in-out;
+}
+
+/* Alinea mat-select con inputs */
+::ng-deep .mat-mdc-form-field {
+  height: 40px !important;
+  margin: 0 !important;
+}
+
+::ng-deep .mat-mdc-text-field-wrapper {
+  height: 40px !important;
+  padding: 0 !important;
+  border-radius: 6px !important;
+}
+
+::ng-deep .mat-mdc-form-field-flex {
+  align-items: center !important;
+  height: 40px !important;
+}
+
+::ng-deep .mat-mdc-select-trigger {
+  min-height: 40px !important;
+  display: flex;
+  align-items: center;
+  padding: 0 10px !important;
+}
+
+::ng-deep .mat-mdc-form-field-outline {
+  border-color: #d1d5db !important;
+}
+
+::ng-deep .mat-mdc-select-arrow {
+  color: #004C77 !important;
+}
+
+/* Botones */
+button {
+  transition: all 0.2s ease-in-out;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Ajuste del formulario */
+form {
+  border-radius: 0.5rem;
+}
+
+label {
+  font-size: 0.85rem;
+}

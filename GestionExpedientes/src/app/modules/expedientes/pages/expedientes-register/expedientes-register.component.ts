@@ -404,6 +404,7 @@ export class ExpedientesRegisterComponent implements OnInit {
   }
 
   agregarNivelGeneral() {
+    console.log("usuarios internos:", this.usuariosInternos);
     this.nivelesFirmaGenerales.push({
       controlUsuarios: new FormControl<string[]>([]),
       searchControl: new FormControl(''),
@@ -434,7 +435,8 @@ export class ExpedientesRegisterComponent implements OnInit {
       searchControl: new FormControl(''),
       filtroTipo: '',
       usuariosFiltrados: [...this.usuariosInternos],
-      fechaLimite: ''
+      fechaLimite: '',
+      modoConexion: 'Y'
     };
 
     doc.nivelesFirma = doc.nivelesFirma || [];
@@ -1199,7 +1201,8 @@ export class ExpedientesRegisterComponent implements OnInit {
           expediente_id: this.expedienteIdRegistrado,
           documentos_id: todosDocsIds,
           fecha_limite: fecha,
-          estado: 'PENDIENTE'
+          estado: 'PENDIENTE',
+          modoConexion: nivel.modoConexion
         };
 
         if (!this.validarFechasNiveles(this.nivelesFirmaGenerales)) {
@@ -1233,7 +1236,8 @@ export class ExpedientesRegisterComponent implements OnInit {
             expediente_id: this.expedienteIdRegistrado,
             documentos_id: doc.id.toString(),
             fecha_limite: fecha,
-            estado: 'PENDIENTE'
+            estado: 'PENDIENTE',
+            modoConexion: nivel.modoConexion
           };
 
           this.expedienteService.registrarFlujoProceso(flujoData).subscribe({

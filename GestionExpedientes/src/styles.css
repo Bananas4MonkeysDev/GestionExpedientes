@@ -24,6 +24,7 @@ body {
 html,
 body {
   height: 100%;
+  --mat-sys-primary: #004C77 !important;
 }
 
 ::ng-deep .custom-dialog-container .mat-dialog-container {
@@ -59,3 +60,4 @@ body {
   display: flex;
   flex-direction: column;
 }
+

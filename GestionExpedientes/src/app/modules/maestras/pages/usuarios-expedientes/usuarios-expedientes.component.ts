@@ -41,7 +41,12 @@ export class UsuariosExpedientesComponent implements OnInit {
   columnas: string[] = ['select', 'nombre', 'correo', 'telefono', 'tipo', 'ruc', 'origen', 'acciones'];
   dataSource = new MatTableDataSource<any>(); // usamos `any` para mapear estructura personalizada
   selection = new SelectionModel<any>(true, []);
-
+  Math = Math;
+  page = 1;
+  pageSize = 25;
+  get totalPages(): number {
+    return Math.ceil(this.dataSource.data.length / this.pageSize);
+  }
   aplicarFiltroGlobal(event: Event): void {
     const filtro = (event.target as HTMLInputElement).value.trim().toLowerCase();
     this.dataSource.filter = filtro;
@@ -88,7 +93,6 @@ export class UsuariosExpedientesComponent implements OnInit {
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
-    this.paginator.pageSize = 25;
   }
 
   isAllSelected() {

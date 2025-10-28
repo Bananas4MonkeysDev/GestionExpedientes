@@ -24,6 +24,7 @@ import { AuditoriaService } from '../../../../../core/services/auditoria.service
 import { ReferenciaAgregarComponent } from '../../../modal/referencia-agregar/referencia-agregar.component';
 import { Proyecto } from '../../../../../core/models/proyecto.model';
 import { ProyectoService } from '../../../../../core/services/proyecto.service';
+import { GrupoAreaService } from '../../../../../core/services/grupo-area.service';
 enum EstadoProcesoReceptor {
   INICIAL = 'INICIAL',
   CREANDO = 'CREANDO',
@@ -57,6 +58,7 @@ export interface Usuario {
   tipoIdentidad: 'PERSONA' | 'ENTIDAD' | 'GRUPO';
   ruc?: string;
   dni: string;
+  firmante?: boolean | number;
 }
 interface DocumentoExistente {
   id?: number;
@@ -130,7 +132,9 @@ export class ExpedienteDetalleComponent implements OnInit {
   controlUsuario = new FormControl<string[]>([], Validators.required);
   controlUsuarioCc = new FormControl<string[]>([], Validators.required);
   controlReferencia = new FormControl<string[]>([], Validators.required);
-  todosUsuarios: Usuario[] = [];
+  todosUsuarios: UsuarioVisual[] = [];
+  usuariosFiltradosTo: UsuarioVisual[] = [];
+  usuariosFiltradosCc: UsuarioVisual[] = [];
   searchCtrlUsuario = new FormControl('');
   searchCtrlCc = new FormControl('');
   nombreProyectoSeleccionado: string = '';
@@ -138,8 +142,6 @@ export class ExpedienteDetalleComponent implements OnInit {
   filtroTipoUsuarioTo = '';
   filtroTipoUsuarioCc = '';
   filtroTipoReferencia = '';
-  usuariosFiltradosTo: Usuario[] = [];
-  usuariosFiltradosCc: Usuario[] = [];
   referenciasFiltradas: Referencia[] = [];
   usuariosInternos: any[] = [];
   usuariosInternosFiltrados: Usuario[] = [];
@@ -196,14 +198,14 @@ export class ExpedienteDetalleComponent implements OnInit {
     }[];
   }[] = [];
 
-  constructor(private proyectoService: ProyectoService, private router: Router, private auditoriaService: AuditoriaService, private authService: AuthService, private loadingService: LoadingOverlayService,
+  constructor(private grupoAreaService: GrupoAreaService, private proyectoService: ProyectoService, private router: Router, private auditoriaService: AuditoriaService, private authService: AuthService, private loadingService: LoadingOverlayService,
     private sanitizer: DomSanitizer, private zone: NgZone, private route: ActivatedRoute, private cdr: ChangeDetectorRef, private expedienteService: ExpedienteService, private dialog: MatDialog, private usuarioService: UsuarioService, private referenciaService: ReferenciaService) { }
   @ViewChild('slider', { static: false }) sliderRef!: ElementRef;
   reiniciarFiltroTipoReferencia() {
     this.filtroTipoReferencia = '';
     this.filtrarReferencias();
   }
-  obtenerUsuariosPorTipo(lista: Usuario[], tipo: Usuario['tipoIdentidad']): Usuario[] {
+  obtenerUsuariosPorTipo(lista: UsuarioVisual[], tipo: UsuarioVisual['tipoIdentidad']): UsuarioVisual[] {
     return lista.filter(u => u.tipoIdentidad === tipo);
   }
   abrirEnNuevaVentana(url: string) {
@@ -299,7 +301,7 @@ export class ExpedienteDetalleComponent implements OnInit {
         if (this.modoFlujoFirma === 'individual') {
           Promise.all([
             this.registrarFlujosParaNuevosDocumentos(),
-            this.actualizarNivelesEspecificos()            
+            this.actualizarNivelesEspecificos()
           ]).then(() => {
             this.finalizarGuardado();
           });
@@ -810,20 +812,32 @@ export class ExpedienteDetalleComponent implements OnInit {
   }
 
   obtenerIdsPorNombres(nombresSeleccionados: string[]): string {
-    const ids = this.todosUsuarios
-      .filter(user => nombresSeleccionados.includes(user.nombre))
-      .map(user => {
-        if (user.id !== undefined && user.id !== null) {
-          return user.id.toString();
-        } else {
-          console.warn(`Usuario sin ID encontrado: ${user.nombre}`);
-          return '';
-        }
-      })
-      .filter(id => id !== '');
+    const ids: string[] = [];
 
-    return ids.join('|');
+    for (const nombre of nombresSeleccionados || []) {
+      const usuario = this.todosUsuarios.find(u => u.nombre === nombre);
+
+      if (!usuario) continue;
+
+      // Si es grupo, expandimos sus miembros
+      if ((usuario as any).tipoUsuario === 'GRUPO' && 'idsUsuarios' in (usuario as any)) {
+        ids.push(...((usuario as any).idsUsuarios as number[]).map(id => id.toString()));
+        continue;
+      }
+
+      // Si es persona/entidad normal con id numérico
+      if ('id' in usuario && typeof (usuario as any).id === 'number') {
+        ids.push(String((usuario as any).id));
+        continue;
+      }
+
+      console.warn(`Usuario sin ID válido: ${usuario.nombre}`);
+    }
+
+    // Quita duplicados y une por '|'
+    return Array.from(new Set(ids)).join('|');
   }
+
   isDocumentoNuevo(doc: DocumentoExpediente | DocumentoNuevo): doc is DocumentoNuevo {
     return !doc.esExistente; // o doc.esExistente === false
   }
@@ -847,27 +861,33 @@ export class ExpedienteDetalleComponent implements OnInit {
   reiniciarFiltroInternos(nivel: any) {
     nivel.searchControl.setValue('');
   }
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.currentUser = this.authService.getUserFromToken();
     console.log("Current User:", this.currentUser);
+
     const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (!id) {
+      console.error('ID de expediente no proporcionado');
+      return;
+    }
+
+    // Calcula minDate
     const hoy = new Date();
     const yyyy = hoy.getFullYear();
     const mm = String(hoy.getMonth() + 1).padStart(2, '0');
     const dd = String(hoy.getDate()).padStart(2, '0');
     this.minDateString = `${yyyy}-${mm}-${dd}`;
-    if (!id) {
-      console.error('ID de expediente no proporcionado');
-      return;
-    }
+
     this.inicializarFormulario();
-    this.cargarUsuarios();
     this.cargarReferencias();
+
+    // 🔹 Espera que los usuarios se carguen completamente
+    await this.cargarUsuarios();
+
+    // 🔹 Ahora sí puedes cargar el expediente (ya tendrás usuarios disponibles)
     this.expedienteService.getExpedienteDetalle(id).subscribe({
       next: (data) => {
         console.log('[DEBUG] Datos recibidos del backend:', data);
-        console.log('[DEBUG] Usuarios emisores raw:', data.usuariosEmisores);
-        console.log('[DEBUG] Usuarios destinatarios raw:', data.usuariosDestinatarios);
 
         this.documentosExistentes = data.documentos.map((doc: any) => ({
           id: doc.id,
@@ -878,6 +898,7 @@ export class ExpedienteDetalleComponent implements OnInit {
           visibleParaExternos: doc.visibleParaExternos,
           esExistente: true,
         }));
+
         this.expediente = {
           id: data.expediente.id,
           codigo: data.expediente.codigo,
@@ -905,87 +926,70 @@ export class ExpedienteDetalleComponent implements OnInit {
               mensaje: data.cargo.mensaje || ''
             }
             : null,
-
           referencias: data.expediente.referencias
             ? data.expediente.referencias.split('|')
             : [],
-          usuariosEmisores: data.usuariosEmisores.map((u: any) => {
-            console.log('[DEBUG] Usuario emisor:', u);
-            return { nombre: u.nombre, correo: u.correo };
-          }),
-          usuariosDestinatarios: data.usuariosDestinatarios.map((u: any) => {
-            console.log('[DEBUG] Usuario destinatario:', u);
-            return { nombre: u.nombre, correo: u.correo };
-          })
+          usuariosEmisores: data.usuariosEmisores.map((u: any) => ({
+            nombre: u.nombre,
+            correo: u.correo
+          })),
+          usuariosDestinatarios: data.usuariosDestinatarios.map((u: any) => ({
+            nombre: u.nombre,
+            correo: u.correo
+          }))
         };
-        if (this.expediente.estado == 'ANULADO') {
+
+        if (this.expediente.estado === 'ANULADO') {
           this.esAnulado = true;
         }
-        if (this.expediente.referencias && this.referencias?.length) {
-          const codigosSeleccionados = this.referencias
-            .filter(ref => this.expediente.referencias.includes(ref.serie))
-            .map(ref => ref.serie);
-          this.controlReferencia.setValue(codigosSeleccionados);
-        }
-        this.proyectoService.getAll().subscribe(data => {
-          this.proyectos = data;
-          console.log(this.proyectos);
-          if (this.expediente.proyecto) {
-            const proyectoEncontrado = this.proyectos.find(p => p.id === Number(this.expediente.proyecto));
-            if (proyectoEncontrado) {
-              this.nombreProyectoSeleccionado = proyectoEncontrado.nombre;
-            }
-            console.log(proyectoEncontrado);
-            console.log(this.expediente.proyecto);
 
-          }
-        });
-        console.log('[DEBUG] Objeto expediente armado:', this.expediente);
-        this.cdr.detectChanges();
-
-        this.expedienteService.getHistorialCargos(id).subscribe(historial => {
-          console.log('[DEBUG] Historial de cargos:', historial); // ← AÑADIDO
-          this.historialCargos = historial;
-          console.log(this.expediente.cargo);
-          this.expediente.cargo = {
-            ...historial[0],
-            archivo: historial[0]?.archivoPath || ""
-          };
-          console.log(this.expediente.cargo);
-          console.log(this.historialCargos);
-
-          this.estadoProcesoIndex = 0;
-
-          if (this.expediente?.estado === 'PENDIENTE') {
-            const cargoRelacionado = this.historialCargos.length > 0;
-            console.log(cargoRelacionado);
-            console.log('[DEBUG] Estado = PENDIENTE, cargoRelacionado:', cargoRelacionado);
-
-            if (cargoRelacionado) {
-              this.estadoProcesoIndex = 4; // caso especial: paso 1 y 3 verdes, paso 2 ambar
-            } else {
-              this.estadoProcesoIndex = 1;
-            }
-            console.log('[DEBUG] estadoProcesoIndex asignado:', this.estadoProcesoIndex);
-
-          } else if (this.expediente?.estado === 'APROBADO') {
-            const cargoRelacionado = this.historialCargos.length > 0;
-            if (cargoRelacionado) {
-              this.estadoProcesoIndex = 3;
-            } else {
-              this.estadoProcesoIndex = 2;
-            }
-          }
-          this.cdr.markForCheck();
-        });
-        console.log("Id del expediente:", this.expediente.id)
+        // Cargar flujos solo cuando ya tenemos usuarios internos disponibles
         this.cargarFlujosYDocumentosDeFirma(this.expediente.id);
+
+        // Cargar proyecto y otros datos
+        this.proyectoService.getAll().subscribe(proyectos => {
+          this.proyectos = proyectos;
+          const p = this.proyectos.find(pr => pr.id === Number(this.expediente.proyecto));
+          if (p) this.nombreProyectoSeleccionado = p.nombre;
+        });
+
+        // Cargar historial de cargos
+        this.expedienteService.getHistorialCargos(id).subscribe(historial => {
+          this.historialCargos = historial;
+          this.actualizarEstadoProceso(historial);
+        });
+
+        this.cdr.detectChanges();
       },
-      error: (err) => {
-        console.error('Error al car expediente', err);
-      }
+      error: (err) => console.error('Error al cargar expediente', err)
     });
   }
+  actualizarEstadoProceso(historial: any[]): void {
+    if (!this.expediente) {
+      console.warn('[DEBUG] expediente aún no cargado, saltando actualización de estado');
+      return;
+    }
+
+    const cargoRelacionado = historial.length > 0;
+    this.estadoProcesoIndex = 0;
+
+    if (this.expediente?.estado === 'PENDIENTE') {
+      if (cargoRelacionado) {
+        this.estadoProcesoIndex = 4; // caso especial: paso 1 y 3 verdes, paso 2 ambar
+      } else {
+        this.estadoProcesoIndex = 1;
+      }
+    } else if (this.expediente?.estado === 'APROBADO') {
+      if (cargoRelacionado) {
+        this.estadoProcesoIndex = 3;
+      } else {
+        this.estadoProcesoIndex = 2;
+      }
+    }
+
+    this.cdr.markForCheck();
+  }
+
   cargarFlujosYDocumentosDeFirma(expedienteId: number) {
     this.expedienteService.obtenerFlujosPorExpediente(expedienteId).subscribe((flujos: any[]) => {
       const idsDocumentos: Set<number> = new Set();
@@ -1000,13 +1004,13 @@ export class ExpedienteDetalleComponent implements OnInit {
           return u ? u.nombre : `ID ${id}`;
         });
 
-        console.log("flujo detalle:", flujo);
         const nivelBase = {
           id: flujo.id,
           nivel: flujo.nivel,
           usuarios: usuariosIds,
           fechaLimite: flujo.fechaLimite,
           estado: flujo.estado,
+          modoConexion: flujo.modoConexion || 'Y', // ✅ Cargar condición de firma
           controlUsuarios: new FormControl(usuariosNombres),
           searchControl: new FormControl(''),
           usuariosFiltrados: this.usuariosInternos
@@ -1025,60 +1029,38 @@ export class ExpedienteDetalleComponent implements OnInit {
           const docId = parseInt(flujo.documentosId);
           if (!isNaN(docId)) {
             idsDocumentos.add(docId);
-
             let flujoDoc = this.nivelesFirmaPorDocumento.find(f => f.documentoId === docId);
+
             if (!flujoDoc) {
               flujoDoc = { documentoId: docId, niveles: [] };
               this.nivelesFirmaPorDocumento.push(flujoDoc);
-              // Ordenar los niveles específicos por documento
-              this.nivelesFirmaPorDocumento.forEach(flujoDoc => {
-                flujoDoc.niveles.sort((a, b) => a.nivel - b.nivel);
-              });
-
             }
 
-            if (!flujoDoc.niveles.some(n => n.nivel === flujo.nivel)) {
-              flujoDoc.niveles.push(nivelBase);
-            } else {
-              console.warn(`[WARN] Nivel duplicado detectado en documento ${docId}, nivel: ${flujo.nivel}`);
-            }
-
-
+            flujoDoc.niveles.push(nivelBase);
           }
         }
       });
-      this.modoFlujoFirma = this.nivelesFirmaGeneral.length > 0 ? 'general' : 'individual';
-      console.log("Modo de Flujo Firma:", this.modoFlujoFirma);
-      console.log("Flujo General:", this.nivelesFirmaGeneral);
-      console.log("Flujo Especifico:", this.nivelesFirmaPorDocumento);
-      const flujosGeneralesFormateados = flujos
-        .filter(flujo => flujo.tipoNivel === 'General')
-        .map(flujo => {
-          const ids = flujo.usuarios?.split('|').map((id: string) => parseInt(id));
-          const nombres = ids.map((id: number) => {
-            const u = this.usuariosInternos.find(ui => ui.id === id);
-            return u ? u.nombre : `ID ${id}`;
-          });
-          return {
-            id: flujo.id,
-            nivel: flujo.nivel,
-            usuarios: ids,
-            fechaLimite: flujo.fechaLimite,
-            estado: flujo.estado,
-            controlUsuarios: new FormControl(nombres),
-            searchControl: new FormControl(''),
-            usuariosFiltrados: this.usuariosInternos
-          };
-        });
-      flujosGeneralesFormateados.sort((a, b) => a.nivel - b.nivel);
 
-      // Ahora los asignas todos de golpe:
-      this.nivelesFirmaGenerales = [...flujosGeneralesFormateados];
-      console.log("Niveles de Firma General", this.nivelesFirmaGeneral)
+      // Orden y modo flujo
+      this.modoFlujoFirma = this.nivelesFirmaGeneral.length > 0 ? 'general' : 'individual';
+      this.nivelesFirmaGenerales = [...this.nivelesFirmaGeneral].sort((a, b) => a.nivel - b.nivel);
+
+      // 🔹 Cargar documentos relacionados
       this.expedienteService.getPorIds(Array.from(idsDocumentos)).subscribe((documentos: any[]) => {
-        console.log("docuemtnos del flujo:", documentos)
         this.documentosDeFlujo = documentos.map(doc => {
           const nivelesEncontrados = this.nivelesFirmaPorDocumento.find(f => f.documentoId === doc.id)?.niveles || [];
+
+          nivelesEncontrados.forEach((nivel: any) => {
+            const nombres = nivel.usuarios.map((id: number) => {
+              const u = this.usuariosInternos.find((ui: any) => ui.id === id);
+              return u ? u.nombre : `ID ${id}`;
+            });
+
+            nivel.controlUsuarios = new FormControl(nombres);
+            nivel.searchControl = new FormControl('');
+            nivel.usuariosFiltrados = this.usuariosInternos;
+            nivel.modoConexion = nivel.modoConexion || 'Y'; 
+          });
 
           return {
             id: doc.id,
@@ -1092,25 +1074,10 @@ export class ExpedienteDetalleComponent implements OnInit {
             nivelesFirma: nivelesEncontrados
           };
         });
-
-        // ← este bloque asegura que todos los niveles individuales tienen sus controles listos
-        this.documentosDeFlujo.forEach(doc => {
-          doc.nivelesFirma?.forEach((nivel: any) => {
-            const nombres = nivel.usuarios.map((id: number) => {
-              const u = this.usuariosInternos.find((ui: any) => ui.id === id);
-              return u ? u.nombre : `ID ${id}`;
-            });
-
-            nivel.controlUsuarios = new FormControl(nombres);
-            nivel.searchControl = new FormControl('');
-            nivel.usuariosFiltrados = this.usuariosInternos;
-          });
-
-        });
       });
-
     });
   }
+
 
   restablecerFlujosDesdeOriginal(): void {
     this.nivelesFirmaGenerales = this.nivelesFirmaGeneralOriginal.map(n => ({
@@ -1547,20 +1514,77 @@ export class ExpedienteDetalleComponent implements OnInit {
     });
   }
 
-  cargarUsuarios(): void {
-    this.usuarioService.obtenerUsuarios().subscribe({
-      next: (usuarios) => {
-        this.usuariosInternos = usuarios.filter(u => u.firmante === true);
-        console.log("ususarios internos:", this.usuariosInternos);
-        this.todosUsuarios = usuarios;
-        this.usuariosFiltradosTo = [...this.todosUsuarios];
-        this.usuariosFiltradosCc = [...this.todosUsuarios];
-      },
-      error: (err) => {
-        console.error('[ERROR] al cargar usuarios', err);
-      }
+  cargarUsuarios(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      console.log('[DETALLE] Cargando usuarios…');
+
+      this.usuarioService.obtenerUsuarios().subscribe({
+        next: (usuarios) => {
+          // 1) Normaliza mayúsculas
+          const usuariosTransformados: Usuario[] = usuarios.map((user: any) => ({
+            ...user,
+            tipoUsuario: (user.tipoUsuario?.toUpperCase?.() ?? user.tipoUsuario) || '',
+            tipoIdentidad: (user.tipoIdentidad?.toUpperCase?.() ?? user.tipoIdentidad) || '',
+          }));
+
+          // 2) Clasifica firmantes como "internos" para select de niveles
+          //    (acepta true o 1 según backend)
+          this.usuariosInternos = usuarios.filter((u: any) => u.firmante === true || u.firmante === 1);
+          // Si quieres solo internos firmantes:
+          // this.usuariosInternos = usuariosTransformados.filter(u => u.tipoUsuario === 'INTERNO' && (u.firmante === true || u.firmante === 1));
+
+          // 3) Agrega GRUPOs como "usuarios visuales"
+          this.grupoAreaService.listar().subscribe({
+            next: (grupos) => {
+              const gruposComoUsuarios: GrupoVisual[] = grupos.map((grupo: any) => ({
+                id: `grupo-${grupo.id}`,
+                nombre: grupo.nombre,
+                tipoUsuario: 'GRUPO',
+                correo: 'Grupo de usuarios',
+                tipoIdentidad: 'GRUPO',
+                idsUsuarios: (grupo.usuariosIds || '')
+                  .split('|')
+                  .map((id: string) => parseInt(id, 10))
+                  .filter((n: number) => !isNaN(n)),
+              }));
+
+              // 4) Mezcla: usuarios + grupos
+              this.todosUsuarios = [...usuariosTransformados, ...gruposComoUsuarios];
+
+              // 5) Asegura que 'GRUPO' esté en los tipos visibles
+              if (!this.tiposUsuario.includes('GRUPO')) {
+                this.tiposUsuario.push('GRUPO');
+              }
+
+              // 6) Inicializa listas filtradas
+              this.usuariosFiltradosTo = [...this.todosUsuarios];
+              this.usuariosFiltradosCc = [...this.todosUsuarios];
+
+              // 7) Reaplica filtros actuales (si había texto/tipo)
+              this.filtrarUsuariosTo?.();
+              this.filtrarUsuariosCc?.();
+
+              // 8) OnPush: dispara verificación
+              this.cdr.markForCheck();
+
+              console.log('[DETALLE] Usuarios y grupos listos.');
+              resolve(); // ✅ IMPORTANTÍSIMO para no colgar el await
+            },
+            error: (err) => {
+              console.error('[DETALLE] Error cargando grupos', err);
+              reject(err);
+            },
+          });
+        },
+        error: (err) => {
+          console.error('[DETALLE] Error cargando usuarios', err);
+          reject(err);
+        },
+      });
     });
   }
+
+
   cancelarEdicion() {
     this.modoEdicionExpediente = false;
     // Opcional: resetear formulario a datos originales

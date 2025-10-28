@@ -1,15 +1,12 @@
-<!-- Breadcrumb -->
-
-<!-- Breadcrumb actualizado -->
 <!-- CONTENEDOR PESTAÑA 1 -->
-<div class="min-h-screen bg-gray-100 p-4 -space-y-8">
+<div class="bg-gray-100 p-6 -space-y-2">
   <div *ngIf="isLoading" class="fixed inset-0 z-50 bg-white bg-opacity-75 flex items-center justify-center">
     <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-[#004C77] border-solid"></div>
     <span class="ml-4 text-[#004C77] font-semibold text-lg">Enviando cargo...</span>
   </div>
   <div *ngIf="!isLoading">
 
-    <div class="text-sm text-gray-600 mb-2">
+    <div class="text-sm text-gray-600 mb-4">
       <span class="text-[#004C77] font-semibold">Inicio</span> &gt;
       <span class="text-[#004C77] font-semibold">Expedientes</span> &gt;
       <span [ngClass]="{
@@ -26,7 +23,7 @@
     <!-- Título actualizado -->
     <div class="flex justify-between items-center mb-2">
 
-      <h1 class="text-2xl font-bold text-[#004C77] mb-4">
+      <h1 class="text-2xl font-bold text-[#004C77]">
         Adicionar Expediente
         <span *ngIf="tipoExpediente"> - {{ tipoExpediente | titlecase }}</span>
       </h1>
@@ -427,9 +424,30 @@
                       [min]="doc.nivelesFirma[j - 1]?.fechaLimite || minDateString"
                       (ngModelChange)="validarFechasEnCascada(doc.nivelesFirma)" class="w-full ..."
                       placeholder="dd/mm/aaaa" />
-
                   </div>
                 </div>
+                <!-- Condición de firma (Y / O) -->
+                <div class="mb-3">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Condición de firma
+                  </label>
+                  <div class="flex gap-2">
+                    <button type="button" (click)="nivel.modoConexion = 'Y'" [ngClass]="{
+        'bg-[#004C77] text-white shadow': nivel.modoConexion === 'Y',
+        'bg-gray-100 text-gray-600 hover:bg-gray-200': nivel.modoConexion !== 'Y'
+      }" class="cursor-pointer px-3 py-1.5 text-sm rounded transition-all duration-150">
+                      Todos deben firmar (Y)
+                    </button>
+
+                    <button type="button" (click)="nivel.modoConexion = 'O'" [ngClass]="{
+        'bg-[#F36C21] text-white shadow': nivel.modoConexion === 'O',
+        'bg-gray-100 text-gray-600 hover:bg-gray-200': nivel.modoConexion !== 'O'
+      }" class="cursor-pointer px-3 py-1.5 text-sm rounded transition-all duration-150">
+                      Cualquiera puede firmar (O)
+                    </button>
+                  </div>
+                </div>
+
                 <!-- Chips de usuarios seleccionados -->
                 <div
                   class="flex flex-wrap gap-2 mb-2 min-h-[56px] border border-gray-300 rounded px-3 py-1.5 bg-white items-center">
@@ -600,7 +618,27 @@
                     (ngModelChange)="validarFechasEnCascada(doc.nivelesFirma)"
                     class="w-full border border-gray-300 rounded px-2 py-1 text-sm" />
                 </div>
+                <!-- Condición de firma (Y / O) -->
+                <div class="mb-3">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Condición de firma
+                  </label>
+                  <div class="flex gap-2">
+                    <button type="button" (click)="nivel.modoConexion = 'Y'" [ngClass]="{
+        'bg-[#004C77] text-white shadow': nivel.modoConexion === 'Y',
+        'bg-gray-100 text-gray-600 hover:bg-gray-200': nivel.modoConexion !== 'Y'
+      }" class="cursor-pointer px-3 py-1.5 text-sm rounded transition-all duration-150">
+                      Todos deben firmar (Y)
+                    </button>
 
+                    <button type="button" (click)="nivel.modoConexion = 'O'" [ngClass]="{
+        'bg-[#F36C21] text-white shadow': nivel.modoConexion === 'O',
+        'bg-gray-100 text-gray-600 hover:bg-gray-200': nivel.modoConexion !== 'O'
+      }" class="cursor-pointer px-3 py-1.5 text-sm rounded transition-all duration-150">
+                      Cualquiera puede firmar (O)
+                    </button>
+                  </div>
+                </div>
                 <!-- Chips de usuarios -->
                 <div
                   class="flex flex-wrap gap-2 mb-2 min-h-[56px] border border-gray-300 rounded px-3 py-1.5 bg-white items-center">
@@ -678,15 +716,35 @@
               <label class="block text-sm font-medium text-gray-700 mb-2">
                 Fecha límite de firma
               </label>
-
               <div class="relative">
                 <input type="date" [(ngModel)]="nivel.fechaLimite"
                   [min]="nivelesFirmaGenerales[j - 1]?.fechaLimite || minDateString"
                   (ngModelChange)="validarFechasEnCascada(nivelesFirmaGenerales)" class="w-full ..."
                   placeholder="dd/mm/aaaa" />
-
               </div>
             </div>
+            <!-- Condición de firma (Y / O) -->
+            <div class="mb-3">
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Condición de firma
+              </label>
+              <div class="flex gap-2">
+                <button type="button" (click)="nivel.modoConexion = 'Y'" [ngClass]="{
+        'bg-[#004C77] text-white shadow': nivel.modoConexion === 'Y',
+        'bg-gray-100 text-gray-600 hover:bg-gray-200': nivel.modoConexion !== 'Y'
+      }" class="cursor-pointer px-3 py-1.5 text-sm rounded transition-all duration-150">
+                  Todos deben firmar (Y)
+                </button>
+
+                <button type="button" (click)="nivel.modoConexion = 'O'" [ngClass]="{
+        'bg-[#F36C21] text-white shadow': nivel.modoConexion === 'O',
+        'bg-gray-100 text-gray-600 hover:bg-gray-200': nivel.modoConexion !== 'O'
+      }" class="cursor-pointer px-3 py-1.5 text-sm rounded transition-all duration-150">
+                  Cualquiera puede firmar (O)
+                </button>
+              </div>
+            </div>
+
             <!-- Chips de usuarios seleccionados -->
             <div
               class="flex flex-wrap gap-2 mb-2 min-h-[56px] border border-gray-300 rounded px-3 py-1.5 bg-white items-center">

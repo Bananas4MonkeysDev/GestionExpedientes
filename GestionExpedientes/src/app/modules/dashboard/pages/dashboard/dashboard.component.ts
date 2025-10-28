@@ -21,6 +21,10 @@ import { MatTooltip } from '@angular/material/tooltip';
 })
 export class DashboardComponent implements AfterViewInit, OnInit {
   totalExpedientes = 0;
+  totalPendientes = 0;
+  totalAprobados = 0;
+  totalRechazados = 0;
+  totalAnulados = 0;
   displayedColumnsExpedientes = [
     'codigo', 'asunto', 'proyecto', 'fecha',
     'tipoExpediente', 'estado', 'comentario', 'referencias',
@@ -119,7 +123,10 @@ export class DashboardComponent implements AfterViewInit, OnInit {
   procesarExpedientes(expedientes: any[]): void {
     this.expedientes = expedientes;
     this.totalExpedientes = expedientes.length;
-
+    this.totalPendientes = expedientes.filter(e => e.estado === 'PENDIENTE').length;
+    this.totalAprobados = expedientes.filter(e => e.estado === 'APROBADO').length;
+    this.totalRechazados = expedientes.filter(e => e.estado === 'RECHAZADO').length;
+    this.totalAnulados = expedientes.filter(e => e.estado === 'ANULADO').length;
     const allIds = new Set<string>();
     expedientes.forEach(exp => {
       (exp.usuariosEmisores || '').split('|').forEach((id: string) => allIds.add(id));

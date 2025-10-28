@@ -1,43 +1,57 @@
-/* Scrollbar personalizado */
-.scrollbar::-webkit-scrollbar {
-  width: 8px;
-}
-
-.scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.scrollbar::-webkit-scrollbar-thumb {
-  background-color: #ccc;
-  border-radius: 10px;
-  border: 2px solid transparent;
-  background-clip: content-box;
-}
-
-.scrollbar:hover::-webkit-scrollbar-thumb {
-  background-color: #999;
-}
-
-/* Scrollbar elegante (opcional) */
+/* ==== Scroll personalizado para el panel de expedientes ==== */
 .custom-scroll::-webkit-scrollbar {
-  width: 4px;
-}
-
-.custom-scroll::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 76, 119, 0.5);
-  border-radius: 6px;
-}
-
-.custom-scroll::-webkit-scrollbar:horizontal {
-  height: 4px;
-  /* Altura del scroll horizontal */
-}
-
-.custom-scroll::-webkit-scrollbar-thumb:horizontal {
-  background-color: rgba(0, 76, 119, 0.5);
-  border-radius: 6px;
+  width: 6px;
 }
 
 .custom-scroll::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #004C77;
+  border-radius: 10px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: #F36C21;
+}
+
+/* Suaviza el desplazamiento */
+.custom-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #47565fad #f1f1f1;
+  scroll-behavior: smooth;
+}
+
+/* Icono solo dentro de etiquetas de estado (no afecta otros mat-icons) */
+.estado-icon {
+  font-size: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+  line-height: 12px !important;
+  vertical-align: middle;
+  opacity: 0.8;
+  margin-right: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fade-enter {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-active {
+  opacity: 1;
+}
+
+.fade-leave {
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.fade-leave-active {
+  opacity: 0;
 }

@@ -1,52 +1,202 @@
+/* === CONTENEDOR PRINCIPAL === */
+.bg-gray-100 {
+    padding-bottom: 3rem;
+}
+
+/* === SCROLLBAR ELEGANTE === */
+.flex-1 {
+    scrollbar-color: #47565fad #e5e7eb;
+    /* thumb + track */
+    scrollbar-width: thin;
+}
+
+.bg-gray-100[_ngcontent-ng-c1322623602] {
+    padding-bottom: 1.5rem !important;
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #004C77;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #F36C21;
+}
+
+/* === TABLA === */
 table {
+    width: 100%;
     border-collapse: collapse;
+    font-size: 0.875rem;
+    table-layout: fixed;
 }
 
-/* Opcional: para que las filas se vean un poco más elegantes al pasar el cursor */
-tr.mat-row:hover td {
-    background-color: #f1f5f9;
-}
-
-/* Ajuste sutil en paginador si lo deseas más centrado o más chico */
-mat-paginator {
-    font-size: 13px;
-}
-
-:host ::ng-deep .p-datatable .p-datatable-thead>tr>th {
-    background-color: #F8FAFC;
-    color: #004C77;
+/* Header */
+thead tr th {
+    padding: 10px 14px;
     font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-:host ::ng-deep .p-button-sm {
+thead {
+    background-color: #004C77;
+    color: #ffffff;
     font-size: 0.75rem;
+    letter-spacing: 0.03em;
 }
 
-#altura {
-    max-height: 94vh;
-    min-height: 94vh;
+thead th:first-child {
+    width: 50px;
+    text-align: center;
 }
 
-/* Efecto hover para toda la fila */
-tr.mat-row:hover td {
-    background-color: #f1f5f9;
+thead th:last-child {
+    width: 120px;
+    text-align: center;
 }
 
-/* Efecto hover para botones */
+/* Celdas */
+tbody td {
+    padding: 10px 14px;
+    vertical-align: middle;
+    color: #374151;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+tbody tr {
+    border-bottom: 1px solid #e5e7eb;
+    transition: background-color 0.15s ease-in-out;
+}
+
+tbody tr:hover {
+    background-color: #f8fbfd;
+}
+
+/* === CHECKBOX SIN AUREOLA === */
+::ng-deep .mat-mdc-checkbox .mdc-checkbox__background {
+    box-shadow: none !important;
+}
+
+::ng-deep .mat-mdc-checkbox .mdc-checkbox__ripple {
+    display: none !important;
+}
+
+::ng-deep .mat-mdc-checkbox .mdc-checkbox__native-control:focus~.mdc-checkbox__ripple {
+    display: none !important;
+}
+
+/* === ICONOS Y BOTONES DE ACCIÓN === */
+button {
+    transition: all 0.2s ease;
+}
+
 button:hover {
-    filter: brightness(0.9);
-    transition: filter 0.2s ease;
+    transform: translateY(-1px);
 }
 
+/* === CARD DE ACCIONES === */
+.bg-white.border {
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* === BOTONES GENERALES === */
 .btn-action {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 0.875rem;
+    gap: 6px;
+    padding: 7px 15px;
+    font-size: 0.85rem;
     font-weight: 500;
-    cursor: pointer;
+    border-radius: 6px;
     transition: all 0.2s ease;
-    min-width: 180px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.btn-action:hover {
+    transform: translateY(-1px);
+}
+
+/* === BOTÓN DE ELIMINAR SELECCIONADOS === */
+.btn-delete {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.btn-delete:hover:not(:disabled) {
+    background-color: #fee2e2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+}
+
+.btn-delete:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #f9fafb;
+    color: #9ca3af;
+    border-color: #e5e7eb;
+}
+
+/* === ICONOS === */
+mat-icon {
+    font-size: 18px !important;
+    height: 18px !important;
+    width: 18px !important;
+    vertical-align: middle;
+}
+
+td .mat-icon {
+    font-size: 19px !important;
+}
+
+.action-icon {
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.action-icon:hover {
+    opacity: 0.85;
+}
+
+.btn-action {
+    min-width: 100px;
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    transition: all 0.25s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.95);
+}
+
+
+/* === Paginador === */
+div[class*="rounded-b-md"] {
+    padding: 10px 18px;
+    font-size: 0.83rem;
+}
+
+div[class*="rounded-b-md"] button {
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
 }

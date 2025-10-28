@@ -22,6 +22,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 export class AreasGruposComponent {
   grupos: GrupoArea[] = [];
   usuarios: any[] = [];
+  Math = Math;
 
   grupoActual: GrupoArea = {
     nombre: '',
@@ -46,10 +47,6 @@ export class AreasGruposComponent {
     this.cargarUsuarios();
   }
 
-  get totalPaginas(): number {
-    return Math.ceil(this.grupos.length / this.elementosPorPagina);
-  }
-
   cargarGrupos(): void {
     this.grupoAreaService.listar().subscribe(data => this.grupos = data);
   }
@@ -57,6 +54,10 @@ export class AreasGruposComponent {
   cargarUsuarios(): void {
     this.usuarioService.obtenerUsuarios().subscribe(data => this.usuarios = data);
   }
+  get totalPaginas(): number {
+    return Math.ceil(this.grupos.length / this.elementosPorPagina);
+  }
+
   irPaginaAnterior(): void {
     if (this.paginaActual > 1) {
       this.paginaActual--;
@@ -67,6 +68,9 @@ export class AreasGruposComponent {
     if (this.paginaActual < this.totalPaginas) {
       this.paginaActual++;
     }
+  }
+  cancelarEdicion(): void {
+    this.resetFormulario();
   }
 
   guardar(): void {

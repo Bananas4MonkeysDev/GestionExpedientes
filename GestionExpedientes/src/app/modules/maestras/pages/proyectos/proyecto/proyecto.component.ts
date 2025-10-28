@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import Swal from 'sweetalert2';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 export interface Proyecto {
   id?: number;
@@ -25,6 +26,7 @@ export interface Proyecto {
     CommonModule,
     ReactiveFormsModule,
     MatFormFieldModule,
+    MatTooltipModule,
     MatInputModule,
     MatButtonModule,
     MatTableModule,
@@ -39,7 +41,19 @@ export class ProyectoComponent implements OnInit {
   proyectos = new MatTableDataSource<Proyecto>();
   columnas = ['id', 'nombre', 'descripcion', 'fechaInicio', 'fechaFin', 'acciones'];
   modo: 'crear' | 'editar' = 'crear';
+  Math = Math;
+
   proyectoActualId: number | null = null;
+  page = 1;
+  pageSize = 25;
+  get totalPages(): number {
+    return Math.ceil(this.proyectos.data.length / this.pageSize);
+  }
+  cancelarEdicion(): void {
+    this.form.reset();
+    this.modo = 'crear';
+    this.proyectoActualId = null;
+  }
 
   constructor(private fb: FormBuilder, private service: ProyectoService) {
     this.form = this.fb.group({

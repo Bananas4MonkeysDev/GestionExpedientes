@@ -1,3 +1,96 @@
-::ng-deep .mat-tab-group.mat-primary .mat-ink-bar {
-  background-color: #004C77; /* Azul institucional */
+::ng-deep .custom-tabs .mat-mdc-tab-header {
+  background-color: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+::ng-deep .custom-tabs .mat-mdc-tab-label-container {
+  color: #004C77;
+}
+
+::ng-deep .custom-tabs .mat-mdc-tab-label-active {
+  color: #004C77 !important;
+  font-weight: 600 !important;
+}
+
+::ng-deep .custom-tabs .mat-ink-bar {
+  background-color: #004C77 !important;
+  height: 3px !important;
+  border-radius: 3px;
+}
+
+/* Tablas */
+table {
+  border-collapse: separate;
+  border-spacing: 0 6px;
+  width: 100%;
+}
+
+th {
+  background-color: #004C77;
+  color: white;
+  padding: 10px;
+  font-weight: 600;
+  text-align: left;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+td {
+  background-color: white;
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+tr:hover td {
+  background-color: #f3f9fd;
+}
+
+/* Íconos */
+.cursor-pointer {
+  color: #004C77;
+  transition: color 0.2s ease;
+}
+
+.bg-gray-50:hover {
+  background-color: #f9fafb;
+}
+
+button mat-icon {
+  font-size: 18px;
+  vertical-align: middle;
+}
+
+/* 🎨 Estilos base para íconos del Dashboard */
+mat-icon {
+  font-size: 20px;
+  vertical-align: middle;
+  transition: color 0.2s ease;
+}
+
+/* Ícono genérico (por defecto azul corporativo) */
+.icon-total {
+  color: #004C77;
+}
+
+/* Íconos por estado de expediente */
+.icon-pendiente {
+  color: #EAB308; /* amarillo */
+}
+
+.icon-aprobado {
+  color: #16A34A; /* verde */
+}
+
+.icon-rechazado {
+  color: #DC2626; /* rojo */
+}
+
+.icon-anulado {
+  color: #6B7280; /* gris */
+}
+
+/* Hover corporativo común (opcional) */
+mat-icon:hover {
+  color: #F36C21;
+  cursor: pointer;
 }

@@ -1,22 +1,73 @@
-<div class="min-h-screen bg-gray-100 p-6 space-y-2">
+<div class="bg-gray-100 p-6 space-y-2">
 
   <!-- Breadcrumb -->
-  <div class="text-sm text-gray-600">
+  <div class="text-sm text-gray-600 mb-4">
     <span class="text-[#004C77] font-semibold">Inicio</span> &gt;
     <span class="text-[#F36C21] font-semibold">Dashboard</span>
   </div>
 
   <!-- Título -->
-  <h1 class="text-2xl font-bold text-[#004C77]">Dashboard</h1>
-  <hr class="border-t-2 border-[#004C77] rounded-full mb-4" />
-
-  <!-- KPI -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <div class="bg-white rounded-xl shadow p-4 text-center">
-      <h3 class="text-sm text-gray-600">Total de Expedientes</h3>
-      <p class="text-2xl font-bold text-[#004C77]">{{ totalExpedientes }}</p>
-    </div>
+  <div class="flex justify-between items-center mb-2">
+    <h1 class="text-2xl font-bold text-[#004C77]">Dashboard</h1>
   </div>
+  <hr class="border-t-2 border-[#004C77] rounded-full mb-6" />
+
+  <!-- KPI empresarial final con iconos a la derecha -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+
+    <!-- Total -->
+    <div class="relative bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+      <div class="absolute top-0 left-0 w-full h-1 bg-[#004C77] rounded-t-lg"></div>
+      <p class="text-4xl font-bold text-gray-800 leading-none">{{ totalExpedientes }}</p>
+      <div class="flex items-center justify-between mt-2">
+        <p class="text-sm text-[#004C77] font-medium">Total de Expedientes</p>
+        <mat-icon class="icon-total text-base !text-[20px]">folder_open</mat-icon>
+      </div>
+
+    </div>
+
+    <!-- Pendientes -->
+    <div class="relative bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+      <div class="absolute top-0 left-0 w-full h-1 bg-yellow-500 rounded-t-lg"></div>
+      <p class="text-4xl font-bold text-gray-800 leading-none">{{ totalPendientes }}</p>
+      <div class="flex items-center justify-between mt-2">
+        <p class="text-sm text-gray-700 font-medium">Expedientes Pendientes</p>
+        <mat-icon class="icon-pendiente !text-[20px]">hourglass_empty</mat-icon>
+      </div>
+    </div>
+
+    <!-- Aprobados -->
+    <div class="relative bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+      <div class="absolute top-0 left-0 w-full h-1 bg-green-600 rounded-t-lg"></div>
+      <p class="text-4xl font-bold text-gray-800 leading-none">{{ totalAprobados }}</p>
+      <div class="flex items-center justify-between mt-2">
+        <p class="text-sm text-gray-700 font-medium">Expedientes Aprobados</p>
+        <mat-icon class="icon-aprobado !text-[20px]">check_circle</mat-icon>
+      </div>
+    </div>
+
+    <!-- Rechazados -->
+    <div class="relative bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+      <div class="absolute top-0 left-0 w-full h-1 bg-red-600 rounded-t-lg"></div>
+      <p class="text-4xl font-bold text-gray-800 leading-none">{{ totalRechazados }}</p>
+      <div class="flex items-center justify-between mt-2">
+        <p class="text-sm text-gray-700 font-medium">Expedientes Rechazados</p>
+        <mat-icon class="icon-rechazado !text-[20px]">cancel</mat-icon>
+      </div>
+    </div>
+
+    <!-- Anulados -->
+    <div class="relative bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+      <div class="absolute top-0 left-0 w-full h-1 bg-gray-500 rounded-t-lg"></div>
+      <p class="text-4xl font-bold text-gray-800 leading-none">{{ totalAnulados }}</p>
+      <div class="flex items-center justify-between mt-2">
+        <p class="text-sm text-gray-700 font-medium">Expedientes Anulados</p>
+        <mat-icon class="icon-anulado !text-[20px]">block</mat-icon>
+      </div>
+    </div>
+
+  </div>
+
 
   <!-- Tabs -->
   <mat-tab-group class="!text-[#004C77]">
