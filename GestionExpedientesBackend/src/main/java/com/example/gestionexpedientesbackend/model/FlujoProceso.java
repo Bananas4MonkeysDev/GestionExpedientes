@@ -21,6 +21,7 @@ public class FlujoProceso {
 
     private Integer nivel;
 
+    private String modoConexion;
     @Column(length = 1000)
     private String usuarios; // Ejemplo: "3|4|7"
     @Column(length = 1000)

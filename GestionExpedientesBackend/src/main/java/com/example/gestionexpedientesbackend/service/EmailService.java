@@ -17,5 +17,10 @@ public interface EmailService {
     String generarMensajeEspera(String nombreUsuario, Expediente expediente, int nivel, String nombreRemitente);
     public String generarMensajeAprobacion(Expediente expediente, List<Documento> documentos, String nombreRemitente);
     public String generarMensajePendiente(String nombreUsuario, Expediente expediente);
-
+    public String generarMensajeObservacionDestinatario(String nombreDestinatario, Expediente expediente,
+                                                        List<Documento> documentos, String comentario,
+                                                        String remitente);
+    public String generarMensajeObservacionUsuario(String nombreUsuario, Expediente expediente,
+                                                   List<Documento> documentos, String comentario,
+                                                   String remitente);
 }

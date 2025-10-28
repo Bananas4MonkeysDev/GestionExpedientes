@@ -62,6 +62,7 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
                 .documentosId(request.getDocumentos_id())
                 .fechaLimite(request.getFecha_limite())
                 .estado(request.getEstado())
+                .modoConexion(request.getModoConexion())
                 .build();
         // Paso 1: Obtener expediente y documentos relacionados
         Expediente expediente = expedienteService.obtenerPorId(flujo.getExpedienteId()).orElse(null);
@@ -79,7 +80,23 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy");
         String fechaFormateada = flujo.getFechaLimite().format(formatter);
         List<Usuario> usuarios = usuarioService.obtenerPorIdsSeparados(flujo.getUsuarios());
+
+        List<FlujoProceso> flujosPrevios = flujoProcesoRepository.findByExpedienteId(flujo.getExpedienteId())
+                .stream()
+                .filter(f -> f.getNivel() < flujo.getNivel())
+                .collect(Collectors.toList());
+
+        Set<String> usuariosPreviosIds = flujosPrevios.stream()
+                .flatMap(f -> Arrays.stream(f.getUsuarios().split("\\|")))
+                .collect(Collectors.toSet());
+
         for (Usuario usuario : usuarios) {
+            // 🚫 Si el usuario ya participó en niveles anteriores, no le enviamos nada
+            if (usuariosPreviosIds.contains(usuario.getId().toString())) {
+                System.out.println("[INFO] Usuario " + usuario.getNombre() + " ya participó antes. No se enviará correo.");
+                continue;
+            }
+
             String mensaje = "";
             String asunto = "Expediente " + expediente.getCodigo();
 
@@ -93,15 +110,17 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
                         nombreRemitente
                 );
                 asunto = "Firma requerida – " + asunto;
-            }/* else {
-              mensaje = emailService.generarMensajeEspera(
-                        usuario.getNombre(),
-                        expediente,
-                        flujo.getNivel(),
-                        nombreRemitente
-                );
-                asunto = "Notificación de flujo – " + asunto;
-            }*/
+            } else {
+                // Si tienes otro tipo de notificación para niveles > 1, la agregas aquí.
+                // Si no hay mensaje, simplemente no enviamos correo.
+                continue;
+            }
+
+            // 🚫 Evitar correos vacíos
+            if (mensaje == null || mensaje.trim().isEmpty()) {
+                System.out.println("[WARN] Mensaje vacío para " + usuario.getCorreo() + ", se omite el envío.");
+                continue;
+            }
 
             emailService.enviarCorreoConAdjunto(
                     List.of(usuario.getCorreo()),
@@ -109,6 +128,7 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
                     mensaje
             );
         }
+
 
         return flujoProcesoRepository.save(flujo);
     }
@@ -127,17 +147,33 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
         Usuario usuario = usuarioService.obtenerPorId(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+        // --- Firma física en PDF ---
         int posicion = calcularPosicionFirma(flujo.getUsuariosFirmantes());
         File archivoOriginal = new File(documento.getRutaArchivo());
         File firmado = firmarPDF(archivoOriginal, usuario.getNombre(), posicion);
         Files.copy(firmado.toPath(), archivoOriginal.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
+        // --- Actualizar firmantes ---
         Set<String> firmantes = flujo.getUsuariosFirmantes() == null || flujo.getUsuariosFirmantes().isEmpty()
                 ? new HashSet<>() : new HashSet<>(Arrays.asList(flujo.getUsuariosFirmantes().split("\\|")));
 
         firmantes.add(usuarioId.toString());
-        flujo.setUsuariosFirmantes(String.join("|", firmantes));
 
+        // --- Lógica nueva: modo "O" vs "Y" ---
+        boolean flujoFirmado = false;
+
+        if ("O".equalsIgnoreCase(flujo.getModoConexion())) {
+            flujoFirmado = true;
+            flujo.setUsuariosFirmantes(usuarioId.toString());
+            flujo.setUsuarios(usuarioId.toString());
+        } else {
+            flujo.setUsuariosFirmantes(String.join("|", firmantes));
+            int totalUsuarios = flujo.getUsuarios().split("\\|").length;
+            int firmadosUsuarios = flujo.getUsuariosFirmantes() == null ? 0 : flujo.getUsuariosFirmantes().split("\\|").length;
+            flujoFirmado = firmadosUsuarios >= totalUsuarios;
+        }
+
+        // --- Documentos firmados (modo General) ---
         if ("General".equalsIgnoreCase(flujo.getTipoNivel())) {
             Set<String> docsFirmados = flujo.getDocumentosFirmados() == null || flujo.getDocumentosFirmados().isEmpty()
                     ? new HashSet<>() : new HashSet<>(Arrays.asList(flujo.getDocumentosFirmados().split("\\|")));
@@ -146,24 +182,22 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
             flujo.setDocumentosFirmados(String.join("|", docsFirmados));
         }
 
-        int totalUsuarios = flujo.getUsuarios().split("\\|").length;
-        int firmadosUsuarios = flujo.getUsuariosFirmantes() == null ? 0 : flujo.getUsuariosFirmantes().split("\\|").length;
-
-        boolean todosUsuariosFirmaron = firmadosUsuarios >= totalUsuarios;
+        // --- Verificación de documentos firmados ---
         boolean todosDocumentosFirmados = true;
-
         if ("General".equalsIgnoreCase(flujo.getTipoNivel())) {
             int totalDocs = flujo.getDocumentosId().split("\\|").length;
             int firmadosDocs = flujo.getDocumentosFirmados() == null ? 0 : flujo.getDocumentosFirmados().split("\\|").length;
             todosDocumentosFirmados = firmadosDocs >= totalDocs;
         }
 
-        if (todosUsuariosFirmaron && todosDocumentosFirmados) {
+        // --- Estado del flujo ---
+        if (flujoFirmado && todosDocumentosFirmados) {
             flujo.setEstado("FIRMADO");
         }
 
         flujoProcesoRepository.save(flujo);
 
+        // --- Evaluar expediente ---
         Long expedienteId = flujo.getExpedienteId();
         List<FlujoProceso> flujos = flujoProcesoRepository.findByExpedienteId(expedienteId);
 
@@ -171,6 +205,7 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
         Expediente expediente = expedienteRepository.findById(expedienteId)
                 .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
 
+        // --- Si todo el expediente fue firmado ---
         if (todosFirmados) {
             expediente.setEstado("APROBADO");
             expedienteRepository.save(expediente);
@@ -187,6 +222,7 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
             }
         }
 
+        // --- Si el flujo actual se completó ---
         if ("FIRMADO".equals(flujo.getEstado())) {
             int siguienteNivel = flujo.getNivel() + 1;
             List<FlujoProceso> siguientes = flujoProcesoRepository.findByExpedienteIdAndNivel(expedienteId, siguienteNivel);
@@ -211,48 +247,36 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
         }
     }
 
-    private File firmarPDF(File archivoOriginal, String nombreUsuario, int posicionFirma) throws IOException, java.io.IOException {
+
+    private File firmarPDF(File archivoOriginal, String nombreUsuario, int posicionFirma)
+            throws IOException, java.io.IOException {
+
         PDDocument document = PDDocument.load(archivoOriginal);
-        PDPage page = document.getPage(0);
-        PDRectangle mediaBox = page.getMediaBox();
-        float pageWidth = mediaBox.getWidth();
-        float pageHeight = mediaBox.getHeight();
-        int rotation = page.getRotation();
-
-        float margen = 30f;
-        float qrSize = 60f;
-
         String nombreArchivo = archivoOriginal.getName().replace(".pdf", "");
         String url = "https://tuservidor.com/expedientes/ver/" + nombreArchivo;
 
-        // ⚠️ Coordenadas BASE para firmas abajo a la derecha, evitando solapamiento
-        float firmaBaseX = pageWidth - 200f; // margen derecho
-        float firmaBaseY = margen + 70f + (posicionFirma * 50f); // crecer verticalmente por cada firmante
+        float margen = 40f;
+        float qrSize = 60f;
+        float espacioFirma = 55f;
 
-        PDPageContentStream contentStream = new PDPageContentStream(document, page,
-                PDPageContentStream.AppendMode.APPEND, true, true);
+        // 🖨️ Recorremos todas las páginas para agregar el pie (QR + link)
+        for (int i = 0; i < document.getNumberOfPages(); i++) {
+            PDPage page = document.getPage(i);
+            PDRectangle mediaBox = page.getMediaBox();
+            float pageWidth = mediaBox.getWidth();
 
-        if (rotation != 0) {
-            contentStream.transform(new Matrix(0, 1, -1, 0, pageHeight, 0));
-        }
+            PDPageContentStream contentStream = new PDPageContentStream(document, page,
+                    PDPageContentStream.AppendMode.APPEND, true, true);
 
-        // ✍️ Firma personalizada
-        String textoFirma = "Firmado por: " + nombreUsuario + "\nMotivo: Firma Digital\nFecha: " + obtenerFechaActual();
-        contentStream.beginText();
-        contentStream.setFont(PDType1Font.HELVETICA_BOLD, 9);
-        contentStream.newLineAtOffset(firmaBaseX, firmaBaseY);
-        for (String linea : textoFirma.split("\n")) {
-            contentStream.showText(linea);
-            contentStream.newLineAtOffset(0, -10);
-        }
-        contentStream.endText();
+            // 🔲 Generar QR en esquina inferior izquierda
+            BufferedImage qrImage = generarQRCode(url, (int) qrSize, (int) qrSize);
+            PDImageXObject qrCode = LosslessFactory.createFromImage(document, qrImage);
+            contentStream.drawImage(qrCode, margen, margen, qrSize, qrSize);
 
-        // ✅ Solo en la primera firma (posicionFirma == 0)
-        if (posicionFirma == 0) {
-            // 🌐 URL centrada
+            // 🌐 Imprimir URL centrada abajo
             float textWidth = url.length() * 4.8f;
             float urlX = (pageWidth - textWidth) / 2;
-            float urlY = margen + 5f;
+            float urlY = margen + 20f;
 
             contentStream.beginText();
             contentStream.setFont(PDType1Font.HELVETICA_OBLIQUE, 9);
@@ -260,23 +284,40 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
             contentStream.showText(url);
             contentStream.endText();
 
-            // 🔲 QR
-            float qrX = margen;
-            float qrY = margen;
-
-            BufferedImage qrImage = generarQRCode(url, (int) qrSize, (int) qrSize);
-            PDImageXObject qrCode = LosslessFactory.createFromImage(document, qrImage);
-            contentStream.drawImage(qrCode, qrX, qrY, qrSize, qrSize);
+            contentStream.close();
         }
+
+        // 🖋️ Agregar las firmas solo en la última página
+        PDPage lastPage = document.getPage(document.getNumberOfPages() - 1);
+        PDRectangle mediaBox = lastPage.getMediaBox();
+        float pageWidth = mediaBox.getWidth();
+        float firmaX = pageWidth - 250f;
+        float firmaY = margen + 90f + (posicionFirma * espacioFirma);
+
+        PDPageContentStream contentStream = new PDPageContentStream(document, lastPage,
+                PDPageContentStream.AppendMode.APPEND, true, true);
+
+        String textoFirma = "Firmado por: " + nombreUsuario +
+                "\nMotivo: Firma Digital" +
+                "\nFecha: " + obtenerFechaActual();
+
+        contentStream.beginText();
+        contentStream.setFont(PDType1Font.HELVETICA, 9);
+        contentStream.newLineAtOffset(firmaX, firmaY);
+        for (String linea : textoFirma.split("\n")) {
+            contentStream.showText(linea);
+            contentStream.newLineAtOffset(0, -10);
+        }
+        contentStream.endText();
 
         contentStream.close();
 
         File tempFile = File.createTempFile("firmado_", ".pdf");
         document.save(tempFile);
         document.close();
-
         return tempFile;
     }
+
 
     private BufferedImage generarQRCode(String texto, int width, int height) {
         try {
@@ -288,14 +329,16 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
         }
     }
 
-    private int calcularPosicionFirma(String usuariosFirmantes) {
-        if (usuariosFirmantes == null || usuariosFirmantes.isEmpty()) return 0;
-        return usuariosFirmantes.split("\\|").length;
-    }
     private String obtenerFechaActual() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a");
         return LocalDateTime.now().format(formatter);
     }
+
+    private int calcularPosicionFirma(String usuariosFirmantes) {
+        if (usuariosFirmantes == null || usuariosFirmantes.isEmpty()) return 0;
+        return usuariosFirmantes.split("\\|").length;
+    }
+
 
     @Override
     public void eliminarFlujo(Long id) {
@@ -357,7 +400,7 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
         Long expedienteId = flujo.getExpedienteId();
         String documentosId = flujo.getDocumentosId();
 
-        // 1. Registrar observación
+        // 1️⃣ Registrar observación
         ObservacionEmisor observacion = new ObservacionEmisor();
         observacion.setFlujoId(flujoId);
         observacion.setExpedienteId(expedienteId);
@@ -366,7 +409,7 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
         observacion.setFecha(LocalDateTime.now());
         observacionEmisorRepository.save(observacion);
 
-        // 2. Buscar flujos relacionados
+        // 2️⃣ Buscar flujos relacionados
         List<FlujoProceso> relacionados = flujoProcesoRepository.findByExpedienteId(expedienteId)
                 .stream()
                 .filter(f -> {
@@ -381,18 +424,53 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
                 })
                 .collect(Collectors.toList());
 
-        // 3. Eliminar los flujos relacionados
+        // Guardar lista de usuarios antes de eliminar (para correo)
+        Set<String> usuariosAfectadosIds = relacionados.stream()
+                .flatMap(f -> Arrays.stream(f.getUsuarios().split("\\|")))
+                .collect(Collectors.toSet());
+
+        // 3️⃣ Eliminar flujos relacionados
         flujoProcesoRepository.deleteAll(relacionados);
 
-        // 4. Volver a verificar el estado del expediente
+        // 4️⃣ Actualizar estado del expediente
         List<FlujoProceso> flujosRestantes = flujoProcesoRepository.findByExpedienteId(expedienteId);
         boolean todosFirmados = flujosRestantes.stream()
                 .allMatch(f -> "FIRMADO".equalsIgnoreCase(f.getEstado()));
 
-        expedienteRepository.findById(expedienteId).ifPresent(exp -> {
-            exp.setEstado(todosFirmados ? "APROBADO" : "PENDIENTE");
-            expedienteRepository.save(exp);
-        });
+        Expediente expediente = expedienteRepository.findById(expedienteId)
+                .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
+        expediente.setEstado(todosFirmados ? "APROBADO" : "PENDIENTE");
+        expedienteRepository.save(expediente);
+
+        // 5️⃣ Enviar correos de notificación
+        List<Usuario> usuariosAfectados = usuarioService.obtenerPorIdsSeparados(String.join("|", usuariosAfectadosIds));
+        List<Usuario> destinatarios = usuarioService.obtenerPorIdsSeparados(expediente.getUsuariosDestinatarios());
+        List<Documento> documentos = documentoService.obtenerPorIdsSeparados(documentosId);
+        String nombreRemitente = expediente.getCreadoPor() != null
+                ? usuarioService.obtenerPorId(expediente.getCreadoPor()).map(Usuario::getNombre).orElse("Sistema")
+                : "Sistema";
+
+        for (Usuario usuario : usuariosAfectados) {
+            String mensaje = emailService.generarMensajeObservacionUsuario(
+                    usuario.getNombre(), expediente, documentos, comentario, nombreRemitente
+            );
+            emailService.enviarCorreoConAdjunto(
+                    List.of(usuario.getCorreo()),
+                    "Expediente observado – " + expediente.getCodigo(),
+                    mensaje
+            );
+        }
+
+        for (Usuario dest : destinatarios) {
+            String mensaje = emailService.generarMensajeObservacionDestinatario(
+                    dest.getNombre(), expediente, documentos, comentario, nombreRemitente
+            );
+            emailService.enviarCorreoConAdjunto(
+                    List.of(dest.getCorreo()),
+                    "Expediente observado – " + expediente.getCodigo(),
+                    mensaje
+            );
+        }
     }
 
 

@@ -13,4 +13,5 @@ public class FlujoProcesoRequest {
     private String documentos_id; // en formato "12|15" o "12"
     private LocalDate fecha_limite;
     private String estado;
+    private String modoConexion;
 }

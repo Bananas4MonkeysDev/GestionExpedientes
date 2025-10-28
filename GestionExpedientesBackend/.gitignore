@@ -4,6 +4,10 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+# Ignorar archivos específicos
+src/main/resources/application.properties
+src/main/java/**/service/impl/DocumentServiceImpl.java
+src/main/java/**/service/impl/CargoServiceImpl.java
 
 ### STS ###
 .apt_generated

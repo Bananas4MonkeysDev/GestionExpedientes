@@ -45,6 +45,46 @@ public class EmailServiceImpl implements EmailService {
             throw new RuntimeException("Error al enviar el correo: " + e.getMessage());
         }
     }
+    public String generarMensajeObservacionUsuario(String nombreUsuario, Expediente expediente,
+                                                   List<Documento> documentos, String comentario,
+                                                   String remitente) {
+        return """
+        <p>Estimado(a) <b>%s</b>,</p>
+        <p>Se ha <b>observado</b> el nivel de firma en el expediente <b>%s</b>.</p>
+        <p><b>Motivo de la observación:</b> %s</p>
+        <p>Los documentos asociados fueron:</p>
+        <ul>%s</ul>
+        <p>Remitente: %s</p>
+        <p>Por favor, revise el expediente y realice las correcciones necesarias.</p>
+        """.formatted(
+                nombreUsuario,
+                expediente.getCodigo(),
+                comentario,
+                documentos.stream().map(d -> "<li>" + d.getNombreArchivo() + "</li>").collect(Collectors.joining()),
+                remitente
+        );
+    }
+
+    public String generarMensajeObservacionDestinatario(String nombreDestinatario, Expediente expediente,
+                                                        List<Documento> documentos, String comentario,
+                                                        String remitente) {
+        return """
+        <p>Estimado(a) <b>%s</b>,</p>
+        <p>El expediente <b>%s</b> ha sido <b>observado</b> y regresado a estado <b>PENDIENTE</b>.</p>
+        <p><b>Motivo:</b> %s</p>
+        <p>Documentos observados:</p>
+        <ul>%s</ul>
+        <p>Remitente: %s</p>
+        <p>Gracias por su atención.</p>
+        """.formatted(
+                nombreDestinatario,
+                expediente.getCodigo(),
+                comentario,
+                documentos.stream().map(d -> "<li>" + d.getNombreArchivo() + "</li>").collect(Collectors.joining()),
+                remitente
+        );
+    }
+
     @Override
     public String generarMensajePendiente(String nombreUsuario, Expediente expediente) {
         String nombreGrupoArea = "[Área o institución]";
