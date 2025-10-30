@@ -1,49 +1,70 @@
-::ng-deep .custom-tabs .mat-mdc-tab-header {
-  background-color: #f9fafb;
-  border-bottom: 2px solid #e5e7eb;
+/* Altura completa y scroll elegante */
+.flex-1 {
+  scrollbar-color: #47565fad #e5e7eb;
+  /* thumb + track */
+  scrollbar-width: thin;
 }
 
-::ng-deep .custom-tabs .mat-mdc-tab-label-container {
-  color: #004C77;
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-::ng-deep .custom-tabs .mat-mdc-tab-label-active {
-  color: #004C77 !important;
-  font-weight: 600 !important;
+::-webkit-scrollbar-thumb {
+  background: #004C77;
+  border-radius: 4px;
 }
 
-::ng-deep .custom-tabs .mat-ink-bar {
-  background-color: #004C77 !important;
-  height: 3px !important;
-  border-radius: 3px;
+::-webkit-scrollbar-thumb:hover {
+  background: #F36C21;
 }
 
-/* Tablas */
-table {
-  border-collapse: separate;
-  border-spacing: 0 6px;
-  width: 100%;
+/* Mantiene el header fijo visualmente */
+table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #004c77;
+  z-index: 10;
 }
 
-th {
-  background-color: #004C77;
-  color: white;
-  padding: 10px;
-  font-weight: 600;
-  text-align: left;
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
+/* Hover sutil */
+tbody tr:hover {
+  background: linear-gradient(to right, #f9fbfd, #f2f8ff);
 }
 
-td {
-  background-color: white;
-  padding: 10px;
-  border-bottom: 1px solid #e5e7eb;
+/* Transición suave cuando aparece el mensaje vacío */
+td[colspan] {
+  transition: all 0.3s ease-in-out;
 }
 
-tr:hover td {
-  background-color: #f3f9fd;
+/* Focus corporativo en inputs/selects */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: #004C77 !important;
+  box-shadow: 0 0 0 0.5px #004C77 !important;
+  transition: all 0.15s ease-in-out;
 }
+
+
+/* Inputs y select */
+select,
+input {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+select:focus,
+input:focus {
+  box-shadow: 0 0 0 1.5px #004C77;
+  border-color: #004C77;
+}
+
+select:hover,
+input:hover {
+  border-color: #004C77;
+}
+
 
 /* Íconos */
 .cursor-pointer {
@@ -74,23 +95,75 @@ mat-icon {
 
 /* Íconos por estado de expediente */
 .icon-pendiente {
-  color: #EAB308; /* amarillo */
+  color: #EAB308;
+  /* amarillo */
 }
 
 .icon-aprobado {
-  color: #16A34A; /* verde */
+  color: #16A34A;
+  /* verde */
 }
 
 .icon-rechazado {
-  color: #DC2626; /* rojo */
+  color: #DC2626;
+  /* rojo */
 }
 
 .icon-anulado {
-  color: #6B7280; /* gris */
+  color: #6B7280;
+  /* gris */
 }
 
 /* Hover corporativo común (opcional) */
 mat-icon:hover {
   color: #F36C21;
   cursor: pointer;
+}
+
+/* ==== ESTILOS DE CARD ACTIVA ==== */
+
+/* Base elegante (usada para todos los cards activos) */
+.card-activa-total,
+.card-activa-pendiente,
+.card-activa-aprobado,
+.card-activa-rechazado,
+.card-activa-anulado {
+  transform: translateY(-3px);
+  transition: all 0.25s ease-in-out;
+  border-color: transparent !important;
+}
+
+.card-activa-pendiente {
+  box-shadow: 0 6px 18px rgba(234, 179, 8, 0.3);
+  background: linear-gradient(to bottom right, #fffdf5, #fef9e7);
+}
+
+/* Total (azul elegante con sombra difusa) */
+.card-activa-total {
+  box-shadow: 0 6px 18px rgba(0, 76, 119, 0.25);
+  background: linear-gradient(to bottom right, #f9fbfd, #eef7fc);
+}
+
+/* Aprobado (verde con brillo suave) */
+.card-activa-aprobado {
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.25);
+  background: linear-gradient(to bottom right, #f9fcfa, #f0fff4);
+}
+
+/* Rechazado (rojo difuso) */
+.card-activa-rechazado {
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.25);
+  background: linear-gradient(to bottom right, #fdf8f8, #fff5f5);
+}
+
+/* Anulado (gris elegante) */
+.card-activa-anulado {
+  box-shadow: 0 6px 18px rgba(107, 114, 128, 0.3);
+  background: linear-gradient(to bottom right, #fafafa, #f2f2f2);
+}
+
+/* Sombra al pasar el mouse (solo estética general) */
+.cursor-pointer:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }

@@ -785,12 +785,10 @@
                                                     <button type="button"
                                                         (click)="modoEdicionFlujos ? nivel.modoConexion = 'Y' : null"
                                                         [disabled]="!modoEdicionFlujos" [ngClass]="{
-        'bg-[#004C77] text-white shadow': nivel.modoConexion === 'Y' && modoEdicionFlujos,
-        'bg-gray-100 text-gray-600': !modoEdicionFlujos || nivel.modoConexion !== 'Y',
+        'bg-[#004C77] text-white shadow': nivel.modoConexion === 'Y',
         'hover:bg-gray-200': modoEdicionFlujos && nivel.modoConexion !== 'Y',
         'cursor-pointer': modoEdicionFlujos,
-        'cursor-default': !modoEdicionFlujos,
-        'opacity-60': !modoEdicionFlujos
+        'cursor-default': !modoEdicionFlujos
       }" class="px-3 py-1.5 text-sm rounded transition-all duration-150">
                                                         Todos deben firmar (Y)
                                                     </button>
@@ -798,12 +796,10 @@
                                                     <button type="button"
                                                         (click)="modoEdicionFlujos ? nivel.modoConexion = 'O' : null"
                                                         [disabled]="!modoEdicionFlujos" [ngClass]="{
-        'bg-[#F36C21] text-white shadow': nivel.modoConexion === 'O' && modoEdicionFlujos,
-        'bg-gray-100 text-gray-600': !modoEdicionFlujos || nivel.modoConexion !== 'O',
+        'bg-[#F36C21] text-white shadow': nivel.modoConexion === 'O',        
         'hover:bg-gray-200': modoEdicionFlujos && nivel.modoConexion !== 'O',
         'cursor-pointer': modoEdicionFlujos,
-        'cursor-default': !modoEdicionFlujos,
-        'opacity-60': !modoEdicionFlujos
+        'cursor-default': !modoEdicionFlujos
       }" class="px-3 py-1.5 text-sm rounded transition-all duration-150">
                                                         Cualquiera puede firmar (O)
                                                     </button>
@@ -1020,12 +1016,10 @@
                                                     <button type="button"
                                                         (click)="modoEdicionFlujos ? nivel.modoConexion = 'Y' : null"
                                                         [disabled]="!modoEdicionFlujos" [ngClass]="{
-        'bg-[#004C77] text-white shadow': nivel.modoConexion === 'Y' && modoEdicionFlujos,
-        'bg-gray-100 text-gray-600': !modoEdicionFlujos || nivel.modoConexion !== 'Y',
-        'hover:bg-gray-200': modoEdicionFlujos && nivel.modoConexion !== 'Y',
+        'bg-[#004C77] text-white shadow': nivel.modoConexion === 'Y',
+                'hover:bg-gray-200': modoEdicionFlujos && nivel.modoConexion !== 'Y',
         'cursor-pointer': modoEdicionFlujos,
-        'cursor-default': !modoEdicionFlujos,
-        'opacity-60': !modoEdicionFlujos
+        'cursor-default': !modoEdicionFlujos
       }" class="px-3 py-1.5 text-sm rounded transition-all duration-150">
                                                         Todos deben firmar (Y)
                                                     </button>
@@ -1033,12 +1027,10 @@
                                                     <button type="button"
                                                         (click)="modoEdicionFlujos ? nivel.modoConexion = 'O' : null"
                                                         [disabled]="!modoEdicionFlujos" [ngClass]="{
-        'bg-[#F36C21] text-white shadow': nivel.modoConexion === 'O' && modoEdicionFlujos,
-        'bg-gray-100 text-gray-600': !modoEdicionFlujos || nivel.modoConexion !== 'O',
+        'bg-[#F36C21] text-white shadow': nivel.modoConexion === 'O',
         'hover:bg-gray-200': modoEdicionFlujos && nivel.modoConexion !== 'O',
         'cursor-pointer': modoEdicionFlujos,
-        'cursor-default': !modoEdicionFlujos,
-        'opacity-60': !modoEdicionFlujos
+        'cursor-default': !modoEdicionFlujos
       }" class="px-3 py-1.5 text-sm rounded transition-all duration-150">
                                                         Cualquiera puede firmar (O)
                                                     </button>
@@ -1149,12 +1141,10 @@
                                             <button type="button"
                                                 (click)="modoEdicionFlujos ? nivel.modoConexion = 'Y' : null"
                                                 [disabled]="!modoEdicionFlujos" [ngClass]="{
-        'bg-[#004C77] text-white shadow': nivel.modoConexion === 'Y' && modoEdicionFlujos,
-        'bg-gray-100 text-gray-600': !modoEdicionFlujos || nivel.modoConexion !== 'Y',
+        'bg-[#004C77] text-white shadow': nivel.modoConexion === 'Y',
         'hover:bg-gray-200': modoEdicionFlujos && nivel.modoConexion !== 'Y',
         'cursor-pointer': modoEdicionFlujos,
-        'cursor-default': !modoEdicionFlujos,
-        'opacity-60': !modoEdicionFlujos
+        'cursor-default': !modoEdicionFlujos
       }" class="px-3 py-1.5 text-sm rounded transition-all duration-150">
                                                 Todos deben firmar (Y)
                                             </button>
@@ -1162,16 +1152,14 @@
                                             <button type="button"
                                                 (click)="modoEdicionFlujos ? nivel.modoConexion = 'O' : null"
                                                 [disabled]="!modoEdicionFlujos" [ngClass]="{
-        'bg-[#F36C21] text-white shadow': nivel.modoConexion === 'O' && modoEdicionFlujos,
-        'bg-gray-100 text-gray-600': !modoEdicionFlujos || nivel.modoConexion !== 'O',
+        'bg-[#F36C21] text-white shadow': nivel.modoConexion === 'O',
         'hover:bg-gray-200': modoEdicionFlujos && nivel.modoConexion !== 'O',
         'cursor-pointer': modoEdicionFlujos,
-        'cursor-default': !modoEdicionFlujos,
-        'opacity-60': !modoEdicionFlujos
+        'cursor-default': !modoEdicionFlujos
       }" class="px-3 py-1.5 text-sm rounded transition-all duration-150">
                                                 Cualquiera puede firmar (O)
                                             </button>
-                                        </div>
+                                       </div>
                                     </div>
 
                                     <!-- Chips de usuarios seleccionados -->
@@ -1235,7 +1223,7 @@
                                 class="cursor-pointer text-sm text-[#004C77] hover:underline mt-2">
                                 + Agregar nivel general
                             </button>
-                        </div>
+                         </div>
                         <div *ngIf="modoEdicionFlujos" class="flex justify-end gap-4 mt-6">
 
                             <button (click)="cancelarEdicionFlujos()"

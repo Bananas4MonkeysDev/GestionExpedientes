@@ -16,18 +16,21 @@
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
 
     <!-- Total -->
-    <div class="relative bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+    <div [ngClass]="{ 'card-activa-total': estadoSeleccionado === 'TOTAL' }" (click)="filtrarPorEstado('TOTAL')"
+      class="relative bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col justify-between shadow-sm cursor-pointer hover:shadow-md transition">
       <div class="absolute top-0 left-0 w-full h-1 bg-[#004C77] rounded-t-lg"></div>
       <p class="text-4xl font-bold text-gray-800 leading-none">{{ totalExpedientes }}</p>
       <div class="flex items-center justify-between mt-2">
         <p class="text-sm text-[#004C77] font-medium">Total de Expedientes</p>
         <mat-icon class="icon-total text-base !text-[20px]">folder_open</mat-icon>
       </div>
-
     </div>
 
     <!-- Pendientes -->
-    <div class="relative bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+    <div [ngClass]="{
+    'card-activa-pendiente': estadoSeleccionado === 'PENDIENTE'
+  }" (click)="filtrarPorEstado('PENDIENTE')"
+      class="relative bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col justify-between shadow-sm cursor-pointer hover:shadow-md transition">
       <div class="absolute top-0 left-0 w-full h-1 bg-yellow-500 rounded-t-lg"></div>
       <p class="text-4xl font-bold text-gray-800 leading-none">{{ totalPendientes }}</p>
       <div class="flex items-center justify-between mt-2">
@@ -37,7 +40,10 @@
     </div>
 
     <!-- Aprobados -->
-    <div class="relative bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+    <div [ngClass]="{
+    'card-activa-aprobado': estadoSeleccionado === 'APROBADO'
+  }" (click)="filtrarPorEstado('APROBADO')"
+      class="relative bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col justify-between shadow-sm cursor-pointer hover:shadow-md transition">
       <div class="absolute top-0 left-0 w-full h-1 bg-green-600 rounded-t-lg"></div>
       <p class="text-4xl font-bold text-gray-800 leading-none">{{ totalAprobados }}</p>
       <div class="flex items-center justify-between mt-2">
@@ -47,7 +53,9 @@
     </div>
 
     <!-- Rechazados -->
-    <div class="relative bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+    <div [ngClass]="{ 'card-activa-rechazado': estadoSeleccionado === 'RECHAZADO' }"
+      (click)="filtrarPorEstado('RECHAZADO')"
+      class="relative bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col justify-between shadow-sm cursor-pointer hover:shadow-md transition">
       <div class="absolute top-0 left-0 w-full h-1 bg-red-600 rounded-t-lg"></div>
       <p class="text-4xl font-bold text-gray-800 leading-none">{{ totalRechazados }}</p>
       <div class="flex items-center justify-between mt-2">
@@ -57,7 +65,8 @@
     </div>
 
     <!-- Anulados -->
-    <div class="relative bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+    <div [ngClass]="{ 'card-activa-anulado': estadoSeleccionado === 'ANULADO' }" (click)="filtrarPorEstado('ANULADO')"
+      class="relative bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col justify-between shadow-sm cursor-pointer hover:shadow-md transition">
       <div class="absolute top-0 left-0 w-full h-1 bg-gray-500 rounded-t-lg"></div>
       <p class="text-4xl font-bold text-gray-800 leading-none">{{ totalAnulados }}</p>
       <div class="flex items-center justify-between mt-2">
@@ -65,6 +74,7 @@
         <mat-icon class="icon-anulado !text-[20px]">block</mat-icon>
       </div>
     </div>
+
 
   </div>
 
@@ -131,84 +141,104 @@
 
         </div>
 
-        <table mat-table [dataSource]="dataSourceExpedientes" class="w-full text-sm">
+        <!-- CONTENEDOR TABLA -->
+        <div
+          class="flex flex-col bg-white border border-gray-200 rounded-md shadow-md overflow-hidden h-[45vh] min-h-[285px]">
+          <!-- ENCABEZADO FIJO + SCROLL -->
+          <div class="flex-1 overflow-y-auto">
+            <table class="w-full text-sm border-collapse relative">
+              <thead class="sticky top-0 z-10 bg-[#004C77] text-white uppercase text-xs tracking-wider shadow-sm">
+                <tr>
+                  <th class="px-4 py-3 text-left border-b-2 border-[#003a5a]">Código</th>
+                  <th class="px-4 py-3 text-left border-b-2 border-[#003a5a]">Asunto</th>
+                  <th class="px-4 py-3 text-left border-b-2 border-[#003a5a]">Proyecto</th>
+                  <th class="px-4 py-3 text-left border-b-2 border-[#003a5a]">Fecha</th>
+                  <th class="px-4 py-3 text-left border-b-2 border-[#003a5a]">Tipo</th>
+                  <th class="px-4 py-3 text-left border-b-2 border-[#003a5a]">Estado</th>
+                  <th class="px-4 py-3 text-left border-b-2 border-[#003a5a]">Comentario</th>
+                  <th class="px-4 py-3 text-left border-b-2 border-[#003a5a]">Referencias</th>
+                  <th class="px-4 py-3 text-left border-b-2 border-[#003a5a]">Reservado</th>
+                  <th class="px-4 py-3 text-left border-b-2 border-[#003a5a]">Emisores</th>
+                  <th class="px-4 py-3 text-left border-b-2 border-[#003a5a]">Destinatarios</th>
+                  <th class="px-4 py-3 text-center border-b-2 border-[#003a5a]">Acciones</th>
+                </tr>
+              </thead>
 
-          <ng-container matColumnDef="codigo">
-            <th mat-header-cell *matHeaderCellDef>Código</th>
-            <td mat-cell *matCellDef="let exp">{{ exp.codigo }}</td>
-          </ng-container>
+              <tbody *ngIf="dataSourceExpedientes.data.length > 0; else sinExpedientes">
+                <tr
+                  *ngFor="let exp of dataSourceExpedientes.data | slice:(page-1)*pageSize:(page-1)*pageSize+pageSize; let i = index"
+                  class="border-b border-gray-200 hover:bg-[#F8FBFD] transition-all duration-150">
+                  <td class="px-4 py-3 text-gray-700">{{ exp.codigo }}</td>
+                  <td class="px-4 py-3 font-medium text-gray-800">{{ exp.asunto }}</td>
+                  <td class="px-4 py-3 text-gray-600">{{ exp.proyecto || '-' }}</td>
+                  <td class="px-4 py-3 text-gray-600">{{ exp.fecha || '-' }}</td>
+                  <td class="px-4 py-3 text-gray-600">{{ exp.tipoExpediente }}</td>
+                  <td class="px-4 py-3">
+                    <span class="px-2 py-1 rounded-full text-xs font-semibold" [ngClass]="{
+                'bg-gray-200 text-gray-700': !exp.estado,
+                'bg-yellow-100 text-yellow-800': exp.estado === 'PENDIENTE',
+                'bg-green-100 text-green-800': exp.estado === 'APROBADO',
+                'bg-red-100 text-red-800': exp.estado === 'RECHAZADO',
+                'bg-gray-500 text-white': exp.estado === 'ANULADO'
+              }">
+                      {{ exp.estado || 'SIN ESTADO' }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-gray-600">{{ exp.comentario || '-' }}</td>
+                  <td class="px-4 py-3 text-gray-600">{{ exp.referencias || '-' }}</td>
+                  <td class="px-4 py-3 text-gray-600">{{ exp.reservado ? 'Sí' : 'No' }}</td>
+                  <td class="px-4 py-3 text-gray-600">{{ exp.emisoresNombres }}</td>
+                  <td class="px-4 py-3 text-gray-600">{{ exp.destinatariosNombres }}</td>
+                  <td class="px-4 py-3 text-center">
+                    <div class="flex justify-center gap-3">
+                      <button (click)="abrirDetalle(exp)" matTooltip="Ver detalle"
+                        class="text-[#004C77] hover:text-[#003655] transition cursor-pointer">
+                        <mat-icon class="text-[19px]">visibility</mat-icon>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
 
-          <ng-container matColumnDef="asunto">
-            <th mat-header-cell *matHeaderCellDef>Asunto</th>
-            <td mat-cell *matCellDef="let exp">{{ exp.asunto }}</td>
-          </ng-container>
+              <!-- PLANTILLA VACÍA -->
+              <ng-template #sinExpedientes>
+                <tbody>
+                  <tr>
+                    <td colspan="12" class="text-center text-gray-500 italic py-10 bg-[#F9FAFB]">
+                      No hay expedientes registrados
+                    </td>
+                  </tr>
+                </tbody>
+              </ng-template>
+            </table>
+          </div>
 
-          <ng-container matColumnDef="proyecto">
-            <th mat-header-cell *matHeaderCellDef>Proyecto</th>
-            <td mat-cell *matCellDef="let exp">{{ exp.proyecto }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="fecha">
-            <th mat-header-cell *matHeaderCellDef>Fecha</th>
-            <td mat-cell *matCellDef="let exp">{{ exp.fecha }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="tipoExpediente">
-            <th mat-header-cell *matHeaderCellDef>Tipo</th>
-            <td mat-cell *matCellDef="let exp">{{ exp.tipoExpediente }}</td>
-          </ng-container>
-          <ng-container matColumnDef="estado">
-            <th mat-header-cell *matHeaderCellDef>Estado</th>
-            <td mat-cell *matCellDef="let exp">
-              <span class="px-2 py-1 rounded-full text-xs font-semibold" [ngClass]="{
-        'bg-gray-200 text-gray-700': !exp.estado,
-        'bg-yellow-100 text-yellow-800': exp.estado === 'PENDIENTE',
-        'bg-green-100 text-green-800': exp.estado === 'APROBADO',
-        'bg-red-100 text-red-800': exp.estado === 'RECHAZADO',
-        'bg-gray-500 text-white': exp.estado === 'ANULADO'
-      }">
-                {{ exp.estado || 'SIN ESTADO' }}
-              </span>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="comentario">
-            <th mat-header-cell *matHeaderCellDef>Comentario</th>
-            <td mat-cell *matCellDef="let exp">{{ exp.comentario || '-' }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="referencias">
-            <th mat-header-cell *matHeaderCellDef>Referencias</th>
-            <td mat-cell *matCellDef="let exp">{{ exp.referencias || '-' }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="reservado">
-            <th mat-header-cell *matHeaderCellDef>Reservado</th>
-            <td mat-cell *matCellDef="let exp">{{ exp.reservado ? 'Sí' : 'No' }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="emisoresNombres">
-            <th mat-header-cell *matHeaderCellDef>Emisores</th>
-            <td mat-cell *matCellDef="let exp">{{ exp.emisoresNombres }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="destinatariosNombres">
-            <th mat-header-cell *matHeaderCellDef>Destinatarios</th>
-            <td mat-cell *matCellDef="let exp">{{ exp.destinatariosNombres }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="acciones">
-            <th mat-header-cell *matHeaderCellDef>Acciones</th>
-            <td mat-cell *matCellDef="let exp">
-              <mat-icon matTooltip="Ver Detalle" class="cursor-pointer"
-                (click)="abrirDetalle(exp)">visibility</mat-icon>
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumnsExpedientes"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumnsExpedientes;"></tr>
-        </table>
-        <mat-paginator #paginatorExpedientes [pageSize]="5"></mat-paginator>
+          <!-- PAGINADOR -->
+          <div
+            class="flex justify-between items-center px-6 py-3 text-sm text-gray-700 bg-[#F6F8FA] border-t border-gray-300 rounded-b-md">
+            <div>
+              Mostrando
+              <b>{{ (page - 1) * pageSize + 1 }}</b> -
+              <b>{{
+                Math.min(page * pageSize, dataSourceExpedientes.data.length)
+                }}</b>
+              de <b>{{ dataSourceExpedientes.data.length }}</b> registros
+            </div>
+            <div class="flex items-center gap-2">
+              <button (click)="page = page > 1 ? page - 1 : 1" [disabled]="page === 1"
+                class="px-3 py-1 text-[#004C77] border border-gray-300 rounded-md hover:bg-[#E5EDF3] disabled:opacity-50 transition-all cursor-pointer"
+                matTooltip="Página anterior">
+                ◀
+              </button>
+              <span class="text-gray-600 font-medium">Página {{ page }} / {{ totalPages }}</span>
+              <button (click)="page = page < totalPages ? page + 1 : totalPages" [disabled]="page === totalPages"
+                class="px-3 py-1 text-[#004C77] border border-gray-300 rounded-md hover:bg-[#E5EDF3] disabled:opacity-50 transition-all cursor-pointer"
+                matTooltip="Página siguiente">
+                ▶
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </mat-tab>
 

@@ -24,6 +24,9 @@ export class DashboardComponent implements AfterViewInit, OnInit {
   totalPendientes = 0;
   totalAprobados = 0;
   totalRechazados = 0;
+  page: number = 1;
+  Math = Math;
+  pageSize: number = 10;
   totalAnulados = 0;
   displayedColumnsExpedientes = [
     'codigo', 'asunto', 'proyecto', 'fecha',
@@ -42,6 +45,7 @@ export class DashboardComponent implements AfterViewInit, OnInit {
   barChartLabels: string[] = ['Expedientes Emisor', 'Receptor'];
   barChartData = [{ data: [0, 0], label: 'Cantidad' }];
   barChartType: ChartType = 'bar';
+  estadoSeleccionado: string | null = null;
 
   expedientes: any[] = [];
   cargos: any[] = [];
@@ -56,6 +60,20 @@ export class DashboardComponent implements AfterViewInit, OnInit {
   filtroReservado: string = '';
 
   expedientesFiltrados: any[] = [];
+  filtrarPorEstado(estado: string): void {
+    this.estadoSeleccionado = estado;
+    if (estado === 'TOTAL') {
+      // Limpia filtros y muestra todo
+      this.dataSourceExpedientes.data = this.expedientes;
+      this.page = 1;
+      return;
+    }
+
+    // Filtrar expedientes por estado
+    const filtrados = this.expedientes.filter(e => e.estado === estado);
+    this.dataSourceExpedientes.data = filtrados;
+    this.page = 1;
+  }
 
   aplicarFiltros(): void {
     this.expedientesFiltrados = this.expedientes.filter(exp => {
@@ -120,6 +138,10 @@ export class DashboardComponent implements AfterViewInit, OnInit {
     }
   }
 
+
+  get totalPages(): number {
+    return Math.ceil(this.dataSourceExpedientes.data.length / this.pageSize);
+  }
   procesarExpedientes(expedientes: any[]): void {
     this.expedientes = expedientes;
     this.totalExpedientes = expedientes.length;

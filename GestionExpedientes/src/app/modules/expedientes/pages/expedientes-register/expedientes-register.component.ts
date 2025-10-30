@@ -703,9 +703,7 @@ export class ExpedientesRegisterComponent implements OnInit {
       Swal.fire('Error', 'Debe ingresar una ruta o URL.', 'warning');
       return;
     }
-
     this.loadingService.show();
-
     this.expedienteService.obtenerPdfsDesdeRuta(this.rutaOUrl).subscribe({
       next: (pdfs) => {
         this.loadingService.hide();
@@ -718,7 +716,12 @@ export class ExpedientesRegisterComponent implements OnInit {
         pdfs.forEach((pdf: any) => {
           const blob = this.base64ToBlob(pdf.base64, 'application/pdf');
           const file = new File([blob], pdf.nombre, { type: 'application/pdf' });
-          this.cargarArchivosDocumentosNuevos([file]);
+
+          if (this.tipoExpediente === 'Emisor') {
+            this.cargarArchivosDocumentosNuevos([file]);
+          } else {
+            this.cargarArchivosDocumentos([file]);
+          }
         });
 
         Swal.fire('Éxito', `${pdfs.length} archivos PDF listos para registrar.`, 'success');
@@ -729,6 +732,38 @@ export class ExpedientesRegisterComponent implements OnInit {
         Swal.fire('Error', 'No se pudieron leer los archivos PDF.', 'error');
       }
     });
+  }
+  cargarArchivosDocumentos(files: File[]) {
+    console.log('[DEBUG] Archivos a procesar (Receptor):', files);
+    for (const archivo of files) {
+      if (archivo.type !== 'application/pdf') {
+        console.warn('[AVISO] Archivo ignorado (no es PDF):', archivo.name);
+        continue;
+      }
+
+      const nuevo: DocumentoExpediente = {
+        nombre: archivo.name,
+        archivo,
+        flujo: [],              // ← campo obligatorio según tu interfaz
+        areas: [],              // ← campo obligatorio según tu interfaz
+        cargado: false,
+        progreso: 0,
+        visibleParaExternos: false,
+        tipoDocumento: '',
+        esExistente: false
+      };
+
+      this.documentos.push(nuevo);
+
+      const interval = setInterval(() => {
+        if (nuevo.progreso! >= 100) {
+          nuevo.cargado = true;
+          clearInterval(interval);
+        } else {
+          nuevo.progreso! += 10;
+        }
+      }, 100);
+    }
   }
 
   base64ToBlob(base64: string, type: string): Blob {
