@@ -50,7 +50,9 @@ interface DocumentoNuevo {
   progreso?: number;
   visibleParaExternos?: boolean;
   tipoDocumento?: string;
+  soloRegistroBd?: boolean;
   esExistente: false;
+  rutaArchivo?: string;
 }
 interface GrupoVisual {
   id: string;
@@ -72,8 +74,10 @@ interface DocumentoExpediente {
   cargado: boolean;
   progreso?: number;
   visibleParaExternos?: boolean;
+  soloRegistroBd?: boolean;
   tipoDocumento?: string;
   esExistente?: boolean;
+  rutaArchivo?: string;
 }
 export interface Usuario {
   id: number; // ← Agregado
@@ -382,7 +386,6 @@ export class ExpedientesRegisterComponent implements OnInit {
       return;
     }
 
-    // ✅ Reutilizamos tu función de carga manual
     this.cargarArchivosDocumentosNuevos(pdfs);
 
     Swal.fire('Éxito', `${pdfs.length} documentos PDF cargados correctamente.`, 'success');
@@ -482,12 +485,56 @@ export class ExpedientesRegisterComponent implements OnInit {
   eliminarNivel(doc: any, index: number) {
     doc.nivelesFirma.splice(index, 1);
   }
+  verDocumento(index: number) {
+    const doc = this.documentos[index];
+    this.abrirDocumento(doc);
+  }
+
   verDocumentoExistente(index: number) {
     const doc = this.documentosExistentes[index];
-    if (doc.rutaArchivo) {
-      window.open(doc.rutaArchivo, '_blank');
+    this.abrirDocumento(doc);
+  }
+
+  verDocumentoNuevo(index: number) {
+    const doc = this.documentosNuevos[index];
+    this.abrirDocumento(doc);
+  }
+
+  /**
+   * 🔹 Método unificado para abrir cualquier tipo de documento.
+   * Detecta si el documento tiene archivo local (Blob), una ruta en BD o un enlace externo.
+   */
+  abrirDocumento(doc: any) {
+    try {
+      // 🧾 Caso 1: archivo recién subido (Blob o File)
+      if (doc.archivo instanceof File || doc.archivo instanceof Blob) {
+        const url = URL.createObjectURL(doc.archivo);
+        window.open(url, '_blank');
+        return;
+      }
+
+      // 🧾 Caso 2: rutaArchivo guardada (local)
+      if (doc.rutaArchivo) {
+        const ruta = doc.rutaArchivo.trim();
+
+        // 🌍 Si es una URL externa (Drive, servidor, etc.)
+        if (ruta.startsWith('http://') || ruta.startsWith('https://')) {
+          window.open(ruta, '_blank');
+          return;
+        }
+
+        const rutaCodificada = encodeURIComponent(ruta);
+        const endpoint = `http://localhost:8080/api/archivos/abrir?ruta=${rutaCodificada}`;
+        window.open(endpoint, '_blank');
+        return;
+      }
+
+      console.warn('Documento sin archivo ni ruta válida:', doc);
+    } catch (error) {
+      console.error('Error al abrir documento:', error);
     }
   }
+
   onMultipleFilesSelectedx(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files) {
@@ -578,10 +625,39 @@ export class ExpedientesRegisterComponent implements OnInit {
   }
 
   subirDocumentosAdicionales(): void {
-    // Aquí puedes usar this.documentosNuevos y llamar a tu backend como en onSubmit()
+    if (!this.expedienteIdRegistrado) {
+      console.error('No hay ID de expediente para subir documentos adicionales');
+      return;
+    }
+
     console.log('Subiendo documentos adicionales...');
-    // Ejemplo: recorrer documentos y subir por separado
+
     for (const doc of this.documentosNuevos) {
+      // Caso 1: documento de carga masiva (solo se registra en BD)
+      if (doc.soloRegistroBd) {
+        const data = {
+          nombreArchivo: doc.nombre,
+          rutaArchivo: doc.archivo,
+          tipoDocumento: doc.tipoDocumento || '',
+          visibleParaExternos: doc.visibleParaExternos ?? false,
+          tamaño: doc.archivo?.size || 0
+        };
+
+        this.expedienteService
+          .registrarDocumentoPorUrl(this.expedienteIdRegistrado, data)
+          .subscribe({
+            next: (res) => {
+              console.log('[✔] Documento adicional (solo BD) registrado:', res);
+            },
+            error: (err) => {
+              console.error('[✖] Error al registrar documento adicional (solo BD):', err);
+            }
+          });
+
+        continue; // 👈 evita que pase al siguiente bloque
+      }
+
+      // 🧩 Caso 2: documento normal (subida física al servidor)
       const formData = new FormData();
       formData.append('file', doc.archivo);
       formData.append('nombreArchivo', doc.nombre);
@@ -589,38 +665,30 @@ export class ExpedientesRegisterComponent implements OnInit {
       formData.append('visibleParaExternos', String(doc.visibleParaExternos ?? false));
       formData.append('tamaño', doc.archivo.size.toString());
 
-      if (!this.expedienteIdRegistrado) {
-        console.error('No hay ID de expediente para subir documentos adicionales');
-        return;
-      }
-
-      this.expedienteService.registrarDocumento(this.expedienteIdRegistrado, formData).subscribe({
-        next: (res) => {
-          console.log('[✔] Documento adicional subido:', res);
-        },
-        error: (err) => {
-          console.error('[✖] Error al subir documento adicional:', err);
-        }
-      });
+      this.expedienteService
+        .registrarDocumento(this.expedienteIdRegistrado, formData)
+        .subscribe({
+          next: (res) => {
+            console.log('[✔] Documento adicional subido:', res);
+          },
+          error: (err) => {
+            console.error('[✖] Error al subir documento adicional:', err);
+          }
+        });
     }
 
     Swal.fire({
       icon: 'success',
-      title: 'Documentos adicionales subidos',
+      title: 'Documentos adicionales registrados',
+      text: 'Los documentos se procesaron correctamente.',
       confirmButtonColor: '#004C77',
       timer: 1500
     });
 
+    // Limpia lista después de subir
     this.documentosNuevos = [];
   }
 
-  verDocumentoNuevo(index: number) {
-    const doc = this.documentosNuevos[index];
-    if (doc.archivo) {
-      const url = URL.createObjectURL(doc.archivo);
-      window.open(url, '_blank');
-    }
-  }
 
   alternarVisibilidadNuevo(index: number) {
     this.documentosNuevos[index].visibleParaExternos = !this.documentosNuevos[index].visibleParaExternos;
@@ -651,7 +719,10 @@ export class ExpedientesRegisterComponent implements OnInit {
         visibleParaExternos: false,
         tipoDocumento: '',
         esExistente: false,
-        nivelesFirma: []
+        soloRegistroBd: (archivo as any).soloRegistroBd || false,
+        nivelesFirma: [],
+        rutaArchivo: (archivo as any).rutaArchivo || ''
+
       };
       this.documentosNuevos.push(nuevo);
 
@@ -703,6 +774,7 @@ export class ExpedientesRegisterComponent implements OnInit {
       Swal.fire('Error', 'Debe ingresar una ruta o URL.', 'warning');
       return;
     }
+
     this.loadingService.show();
     this.expedienteService.obtenerPdfsDesdeRuta(this.rutaOUrl).subscribe({
       next: (pdfs) => {
@@ -717,12 +789,31 @@ export class ExpedientesRegisterComponent implements OnInit {
           const blob = this.base64ToBlob(pdf.base64, 'application/pdf');
           const file = new File([blob], pdf.nombre, { type: 'application/pdf' });
 
-          if (this.tipoExpediente === 'Emisor') {
-            this.cargarArchivosDocumentosNuevos([file]);
-          } else {
-            this.cargarArchivosDocumentos([file]);
-          }
+          // 🔹 Añadimos metadatos para identificar que viene de carga masiva
+          (file as any).soloRegistroBd = true;
+          (file as any).rutaArchivo = this.rutaOUrl.trim();
         });
+
+        // 🔹 Llamamos tus mismos métodos base sin modificarlos
+        if (this.tipoExpediente === 'Emisor') {
+          this.cargarArchivosDocumentosNuevos(pdfs.map((pdf: any) => {
+            const blob = this.base64ToBlob(pdf.base64, 'application/pdf');
+            const file = new File([blob], pdf.nombre, { type: 'application/pdf' });
+            (file as any).soloRegistroBd = true;
+            (file as any).rutaArchivo = `${this.rutaOUrl.trim()}/${pdf.nombre}`;
+            console.log("Veamos:", file);
+            return file;
+          }));
+        } else {
+          this.cargarArchivosDocumentos(pdfs.map((pdf: any) => {
+            const blob = this.base64ToBlob(pdf.base64, 'application/pdf');
+            const file = new File([blob], pdf.nombre, { type: 'application/pdf' });
+            (file as any).soloRegistroBd = true;
+            (file as any).rutaArchivo = `${this.rutaOUrl.trim()}/${pdf.nombre}`;
+            console.log("Veamos:", file);
+            return file;
+          }));
+        }
 
         Swal.fire('Éxito', `${pdfs.length} archivos PDF listos para registrar.`, 'success');
       },
@@ -733,6 +824,7 @@ export class ExpedientesRegisterComponent implements OnInit {
       }
     });
   }
+
   cargarArchivosDocumentos(files: File[]) {
     console.log('[DEBUG] Archivos a procesar (Receptor):', files);
     for (const archivo of files) {
@@ -750,7 +842,9 @@ export class ExpedientesRegisterComponent implements OnInit {
         progreso: 0,
         visibleParaExternos: false,
         tipoDocumento: '',
-        esExistente: false
+        soloRegistroBd: (archivo as any).soloRegistroBd || false,
+        esExistente: false,
+        rutaArchivo: (archivo as any).rutaArchivo || ''
       };
 
       this.documentos.push(nuevo);
@@ -1200,10 +1294,6 @@ export class ExpedientesRegisterComponent implements OnInit {
     this.documentos.splice(index, 1);
   }
 
-  verDocumento(index: number) {
-    const url = URL.createObjectURL(this.documentos[index].archivo);
-    window.open(url, '_blank');
-  }
 
   alternarVisibilidad(index: number) {
     this.documentos[index].visibleParaExternos = !this.documentos[index].visibleParaExternos;
@@ -1376,21 +1466,31 @@ export class ExpedientesRegisterComponent implements OnInit {
         });
         return;
       }
-
+      console.log(this.documentosNuevos);
       this.expedienteService.registrarExpediente(expedienteData).subscribe({
         next: (expediente) => {
           this.expedienteIdRegistrado = expediente.id;
-          // Registrar los documentos nuevos si existen
           const uploadsNuevos = this.documentosNuevos.map(doc => {
+            if (doc.soloRegistroBd) {
+              const data = {
+                nombreArchivo: doc.nombre,
+                rutaArchivo: doc.rutaArchivo,
+                tipoDocumento: doc.tipoDocumento || '',
+                visibleParaExternos: doc.visibleParaExternos ?? false,
+                tamaño: doc.archivo?.size || 0
+              };
+              return this.expedienteService.registrarDocumentoPorUrl(this.expedienteIdRegistrado!, data);
+            }
+
             const formData = new FormData();
             formData.append('file', doc.archivo);
             formData.append('nombreArchivo', doc.nombre);
             formData.append('tipoDocumento', doc.tipoDocumento || '');
             formData.append('visibleParaExternos', String(doc.visibleParaExternos ?? false));
             formData.append('tamaño', doc.archivo.size.toString());
-
-            return this.expedienteService.registrarDocumento(expediente.id, formData);
+            return this.expedienteService.registrarDocumento(this.expedienteIdRegistrado!, formData);
           });
+
           this.loadingService.show();
 
           // Ejecutar y esperar todos los documentos nuevos antes de registrar los flujos
@@ -1399,7 +1499,6 @@ export class ExpedientesRegisterComponent implements OnInit {
             documentosNuevosRegistrados.forEach((docRegistrado, i) => {
               this.documentosNuevos[i].id = docRegistrado.id;
             });
-
             this.registrarFlujosEmisor();
           });
 
@@ -1450,15 +1549,28 @@ export class ExpedientesRegisterComponent implements OnInit {
         const expedienteId = expediente.id;
         this.expedienteIdRegistrado = expediente.id;
         console.log(this.expedienteIdRegistrado);
+        console.log("Por aqui estoy pasando");
         const uploads = this.documentos.map(doc => {
+          if (doc.soloRegistroBd) {
+            console.log("Por aqui estoy pasando v2");
+            console.log("Data:", doc.rutaArchivo);
+            const data = {
+              nombreArchivo: doc.nombre,
+              rutaArchivo: doc.rutaArchivo,
+              tipoDocumento: doc.tipoDocumento || '',
+              visibleParaExternos: doc.visibleParaExternos ?? false,
+              tamaño: doc.archivo?.size || 0
+            };
+            return this.expedienteService.registrarDocumentoPorUrl(this.expedienteIdRegistrado!, data);
+          }
+
           const formData = new FormData();
           formData.append('file', doc.archivo);
           formData.append('nombreArchivo', doc.nombre);
           formData.append('tipoDocumento', doc.tipoDocumento || '');
           formData.append('visibleParaExternos', String(doc.visibleParaExternos ?? false));
           formData.append('tamaño', doc.archivo.size.toString());
-
-          return this.expedienteService.registrarDocumento(expedienteId, formData); // ← clave
+          return this.expedienteService.registrarDocumento(this.expedienteIdRegistrado!, formData);
         });
 
         this.loadingService.show();

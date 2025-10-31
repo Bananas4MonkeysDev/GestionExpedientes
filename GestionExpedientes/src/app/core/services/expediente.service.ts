@@ -73,6 +73,9 @@ export class ExpedienteService {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     return this.http.delete(`http://localhost:8080/api/flujo-proceso/eliminar/${id}`, { headers });
   }
+  registrarDocumentoPorUrl(expedienteId: number, data: any) {
+    return this.http.post<any>(`${this.baseUrl}/${expedienteId}/documento-por-ruta`, data);
+  }
 
   eliminarDocumento(documentoId: number): Observable<any> {
     console.log('[DEBUG] JWT token:', localStorage.getItem('jwt'));
