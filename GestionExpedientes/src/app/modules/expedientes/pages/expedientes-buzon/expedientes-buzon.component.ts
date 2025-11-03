@@ -49,53 +49,9 @@ export class ExpedientesBuzonComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    const usuario = this.authService.getUserFromToken();
-    this.esAdmin = usuario?.tipoUsuario === 'ADMIN';
-    if (this.esAdmin) {
-      this.expedienteService.obtenerTodosExpedientes().subscribe(data => {
-        this.procesarExpedientes(data);
-      });
-    } else if (usuario?.tipoUsuario === 'INTERNO') {
-      console.log("Uusario actual:", usuario);
-      const id = usuario.id;
-      // Paso 1: Obtener expedientes tipo Receptor (como antes)
-      this.expedienteService.obtenerExpedientesPorUsuario(id).subscribe(expedientesReceptor => {
-        const soloReceptores = expedientesReceptor.filter(e => e.tipoExpediente === 'Receptor');
-        const receptoresFiltrados = soloReceptores.filter(exp => {
-          const destinatariosStr = exp.usuariosDestinatarios;
-
-          if (!destinatariosStr || typeof destinatariosStr !== 'string') return false;
-
-          const destinatarioIds = destinatariosStr.split('|').map(id => String(id).trim());
-
-          return destinatarioIds.includes(String(id)); // id es el del usuario actual
-        });
-
-        console.log("Expedientes Receptores:", receptoresFiltrados);
-        // Paso 2: Obtener expedientes tipo Emisor donde debe firmar
-        this.expedienteService.obtenerExpedientesPorFirma(id).subscribe(expedientesEmisor => {
-          // Unificamos y eliminamos duplicados por id
-          console.log("Expedientes Emisores:", expedientesEmisor);
-
-          const combinados = [...receptoresFiltrados, ...expedientesEmisor];
-          const unicos = Array.from(new Map(combinados.map(e => [e.id, e])).values());
-          this.procesarExpedientes(unicos);
-        });
-      });
-    }
-    this.usuarioService.obtenerUsuarios().subscribe({
-      next: usuarios => {
-        this.usuarios = usuarios.map(user => ({
-          ...user,
-          tipoUsuario: user.tipoUsuario?.toUpperCase() || '',
-          tipoIdentidad: user.tipoIdentidad?.toUpperCase() || '',
-        }));
-        console.log('Usuarios cargados (buzón):', this.usuarios);
-      },
-      error: err => console.error('[ERROR] Cargando usuarios:', err)
-    });
-
+    this.cargarDatos();
   }
+
   expedientes: any[] = [];
   expedientesFiltrados = [...this.expedientes];
 
@@ -160,8 +116,8 @@ export class ExpedientesBuzonComponent implements OnInit {
           text: 'Tu firma ha sido añadida correctamente.'
         });
         this.verDetalle(this.expedienteSeleccionado);
+        this.cargarDatos();
         this.loadingService.hide();
-
       },
       error: (err) => {
         console.error('[ERROR FIRMA]:', err);
@@ -170,9 +126,8 @@ export class ExpedientesBuzonComponent implements OnInit {
           title: 'Error al firmar',
           text: 'No se pudo firmar el documento. Intenta de nuevo.'
         });
-
+        this.cargarDatos();
         this.loadingService.hide();
-
       }
     });
   }
@@ -192,6 +147,68 @@ export class ExpedientesBuzonComponent implements OnInit {
   abrirEnNuevaVentana(url: string) {
     window.open(url, '_blank');
   }
+  cargarDatos(): void {
+    const usuario = this.authService.getUserFromToken();
+    this.esAdmin = usuario?.tipoUsuario === 'ADMIN';
+
+    this.loadingService.show();
+
+    if (this.esAdmin) {
+      this.expedienteService.obtenerTodosExpedientes().subscribe({
+        next: data => {
+          this.procesarExpedientes(data);
+          this.loadingService.hide();
+        },
+        error: err => {
+          console.error('[ERROR] Al cargar expedientes ADMIN:', err);
+          this.loadingService.hide();
+        }
+      });
+    } else if (usuario?.tipoUsuario === 'INTERNO') {
+      const id = usuario.id;
+
+      this.expedienteService.obtenerExpedientesPorUsuario(id).subscribe({
+        next: expedientesReceptor => {
+          const soloReceptores = expedientesReceptor.filter(e => e.tipoExpediente === 'Receptor');
+          const receptoresFiltrados = soloReceptores.filter(exp => {
+            const destinatariosStr = exp.usuariosDestinatarios;
+            if (!destinatariosStr || typeof destinatariosStr !== 'string') return false;
+            const destinatarioIds = destinatariosStr.split('|').map(i => String(i).trim());
+            return destinatarioIds.includes(String(id));
+          });
+
+          this.expedienteService.obtenerExpedientesPorFirma(id).subscribe({
+            next: expedientesEmisor => {
+              const combinados = [...receptoresFiltrados, ...expedientesEmisor];
+              const unicos = Array.from(new Map(combinados.map(e => [e.id, e])).values());
+              this.procesarExpedientes(unicos);
+              this.loadingService.hide();
+            },
+            error: err => {
+              console.error('[ERROR] Expedientes por firma:', err);
+              this.loadingService.hide();
+            }
+          });
+        },
+        error: err => {
+          console.error('[ERROR] Expedientes receptor:', err);
+          this.loadingService.hide();
+        }
+      });
+    }
+    // Cargar usuarios
+    this.usuarioService.obtenerUsuarios().subscribe({
+      next: usuarios => {
+        this.usuarios = usuarios.map(user => ({
+          ...user,
+          tipoUsuario: user.tipoUsuario?.toUpperCase() || '',
+          tipoIdentidad: user.tipoIdentidad?.toUpperCase() || ''
+        }));
+      },
+      error: err => console.error('[ERROR] Cargando usuarios:', err)
+    });
+  }
+
   resetearSecciones() {
     this.tabActivo = 'firmas';
     this.nuevoComentario = '';
@@ -320,7 +337,7 @@ export class ExpedientesBuzonComponent implements OnInit {
                             nivel: flujo.nivel,
                             estado: flujo.estado,
                             tipoNivel: flujo.tipoNivel,
-                            usuarios: usuariosIds, 
+                            usuarios: usuariosIds,
                             usuariosFirmantes: usuariosFirmantesIds, // 🔹 también IDs
                           };
 
@@ -429,6 +446,7 @@ export class ExpedientesBuzonComponent implements OnInit {
               text: 'Se eliminaron los niveles relacionados.'
             });
             this.verDetalle(this.expedienteSeleccionado);
+            this.cargarDatos();
             this.loadingService.hide();
           },
           error: () => {
@@ -437,6 +455,7 @@ export class ExpedientesBuzonComponent implements OnInit {
               title: 'Error',
               text: 'No se pudo observar el flujo'
             });
+            this.cargarDatos();
             this.loadingService.hide();
           }
         });
@@ -484,11 +503,11 @@ export class ExpedientesBuzonComponent implements OnInit {
     this.expedienteService.marcarComoLeido(exp.id).subscribe(() => {
       exp.leido = true;
     });
+    this.cargarDatos();
   }
 
   archivar(event: Event, exp: any) {
     event.stopPropagation();
-
     Swal.fire({
       ...getSwalOptions('question'),
       title: '¿Deseas archivar este expediente?',
@@ -507,6 +526,8 @@ export class ExpedientesBuzonComponent implements OnInit {
             title: 'Archivado',
             text: 'El expediente fue archivado correctamente.'
           });
+          this.cargarDatos();
+
         });
       }
     });
@@ -534,6 +555,8 @@ export class ExpedientesBuzonComponent implements OnInit {
             title: 'Eliminado',
             text: 'El expediente fue eliminado correctamente.'
           });
+          this.cargarDatos();
+
         });
       }
     });
@@ -563,7 +586,6 @@ export class ExpedientesBuzonComponent implements OnInit {
     }).then((result) => {
       if (result.isConfirmed) {
         const fechaLimite = estado === 'APROBADO' ? expediente.fechaSeleccionada : null;
-
         this.expedienteService
           .cambiarEstadoExpedienteConFecha(expediente.id, estado, fechaLimite)
           .subscribe({
@@ -575,6 +597,7 @@ export class ExpedientesBuzonComponent implements OnInit {
                 title: 'Éxito',
                 text: 'Expediente actualizado'
               });
+              this.cargarDatos();
             },
             error: (err) => {
               Swal.fire({
@@ -583,6 +606,7 @@ export class ExpedientesBuzonComponent implements OnInit {
                 text: 'No se pudo actualizar'
               });
               console.error('Error al actualizar estado:', err);
+              this.cargarDatos();
             }
           });
       }
@@ -660,12 +684,30 @@ export class ExpedientesBuzonComponent implements OnInit {
       }
     });
   }
+
   actualizarFechaLimite() {
-    const nuevaFecha = this.expedienteSeleccionado.fechaSeleccionada;
+    const nuevaFecha = this.expedienteSeleccionado.fechaLimiteRespuesta;
+    console.log("Fecha limite nuevo: ", this.expedienteSeleccionado.fechaLimiteRespuesta);
     this.actualizarEstadoExpediente(this.expedienteSeleccionado.estado, nuevaFecha);
   }
 
   abrirDetalle(expediente: any) {
     this.router.navigate(['/detalle-expediente', expediente.id]);
   }
+
+  refrescarBuzon(): void {
+    this.loadingService.show();
+    this.expedienteSeleccionado = null;
+    this.cargarDatos();
+    setTimeout(() => {
+      this.loadingService.hide();
+      Swal.fire({
+        ...getSwalOptions('success'),
+        title: 'Actualizado',
+        text: 'La lista de expedientes ha sido refrescada.'
+      });
+    }, 600);
+  }
+
+
 }

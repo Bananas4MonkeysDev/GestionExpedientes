@@ -14,6 +14,7 @@
             {{ proyectos.data.length }} proyectos registrados
         </div>
     </div>
+
     <hr class="border-t-2 border-[#004C77] rounded-full mb-6" />
 
     <!-- FORMULARIO -->
@@ -27,6 +28,7 @@
                     Nombre <span class="text-red-500">*</span>
                 </label>
                 <input formControlName="nombre" type="text" placeholder="Ej. Plataforma ERP"
+                    matTooltip="Ingrese el nombre del proyecto"
                     class="w-full border border-gray-300 px-3 py-2 text-sm focus:border-[#004C77] focus:ring-1 focus:ring-[#004C77] placeholder-gray-400/80 rounded-md" />
             </div>
 
@@ -34,6 +36,7 @@
             <div class="flex-1 min-w-[220px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
                 <input formControlName="descripcion" type="text" placeholder="Descripción breve del proyecto"
+                    matTooltip="Ingrese una breve descripción del proyecto"
                     class="w-full border border-gray-300 px-3 py-2 text-sm focus:border-[#004C77] focus:ring-1 focus:ring-[#004C77] placeholder-gray-400/80 rounded-md" />
             </div>
 
@@ -42,41 +45,38 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">
                     Inicio <span class="text-red-500">*</span>
                 </label>
-                <input formControlName="fechaInicio" type="date"
+                <input formControlName="fechaInicio" type="date" matTooltip="Seleccione la fecha de inicio"
                     class="w-full border border-gray-300 px-3 py-2 text-sm focus:border-[#004C77] focus:ring-1 focus:ring-[#004C77] text-gray-700 rounded-md" />
             </div>
 
             <div class="w-[160px]">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Fin</label>
                 <input formControlName="fechaFin" type="date"
+                    matTooltip="Seleccione la fecha de finalización (opcional)"
                     class="w-full border border-gray-300 px-3 py-2 text-sm focus:border-[#004C77] focus:ring-1 focus:ring-[#004C77] text-gray-700 rounded-md" />
             </div>
 
             <!-- BOTONES -->
             <div class="flex gap-2 ml-auto">
                 <button *ngIf="modo === 'editar'" type="button" (click)="cancelarEdicion()"
-                    class="flex items-center justify-center gap-2 bg-[#F36C21]/90 hover:bg-[#F36C21] text-white text-sm font-semibold px-4 py-2 rounded-md shadow-sm transition-all cursor-pointer"
-                    matTooltip="Salir del modo edición">
+                    matTooltip="Cancelar edición y volver al modo registro"
+                    class="flex items-center justify-center gap-2 bg-[#F36C21]/90 hover:bg-[#F36C21] text-white text-sm font-semibold px-4 py-2 rounded-md shadow-sm transition-all cursor-pointer">
                     <mat-icon class="text-base">logout</mat-icon>
                 </button>
 
                 <button type="submit" [disabled]="form.invalid"
-                    class="flex items-center justify-center gap-2 bg-[#004C77] text-white text-sm font-semibold px-5 py-2 rounded-md hover:bg-[#003f63] transition-all disabled:opacity-50 cursor-pointer"
-                    matTooltip="{{ modo === 'crear' ? 'Registrar nuevo proyecto' : 'Actualizar proyecto existente' }}">
+                    matTooltip="{{ modo === 'crear' ? 'Registrar nuevo proyecto' : 'Actualizar proyecto existente' }}"
+                    class="flex items-center justify-center gap-2 bg-[#004C77] text-white text-sm font-semibold px-5 py-2 rounded-md hover:bg-[#003f63] transition-all disabled:opacity-50 cursor-pointer">
                     <mat-icon class="text-base">{{ modo === 'crear' ? 'add_circle' : 'update' }}</mat-icon>
                     {{ modo === 'crear' ? 'Registrar' : 'Actualizar' }}
                 </button>
             </div>
         </div>
-
     </form>
 
     <!-- TABLA -->
-    <!-- CONTENEDOR TABLA -->
     <div
         class="flex flex-col bg-white border border-gray-200 rounded-md shadow-md overflow-hidden h-[60vh] min-h-[585px]">
-
-        <!-- ENCABEZADO FIJO + SCROLL -->
         <div class="flex-1 overflow-y-auto">
             <table class="w-full text-sm border-collapse relative">
                 <thead class="sticky top-0 z-10 bg-[#004C77] text-white uppercase text-xs tracking-wider shadow-sm">
@@ -113,7 +113,6 @@
                     </tr>
                 </tbody>
 
-                <!-- PLANTILLA PARA CUANDO NO HAY DATOS -->
                 <ng-template #sinProyectos>
                     <tbody>
                         <tr>
@@ -135,21 +134,17 @@
                 de <b>{{ proyectos.data.length }}</b> registros
             </div>
             <div class="flex items-center gap-2">
-                <button (click)="page = page > 1 ? page - 1 : 1" [disabled]="page === 1"
-                    class="px-3 py-1 text-[#004C77] border border-gray-300 rounded-md hover:bg-[#E5EDF3] disabled:opacity-50 transition-all cursor-pointer"
-                    matTooltip="Página anterior">
+                <button (click)="page = page > 1 ? page - 1 : 1" [disabled]="page === 1" matTooltip="Página anterior"
+                    class="px-3 py-1 text-[#004C77] border border-gray-300 rounded-md hover:bg-[#E5EDF3] disabled:opacity-50 transition-all cursor-pointer">
                     ◀
                 </button>
                 <span class="text-gray-600 font-medium">Página {{ page }} / {{ totalPages }}</span>
                 <button (click)="page = page < totalPages ? page + 1 : totalPages" [disabled]="page === totalPages"
-                    class="px-3 py-1 text-[#004C77] border border-gray-300 rounded-md hover:bg-[#E5EDF3] disabled:opacity-50 transition-all cursor-pointer"
-                    matTooltip="Página siguiente">
+                    matTooltip="Página siguiente"
+                    class="px-3 py-1 text-[#004C77] border border-gray-300 rounded-md hover:bg-[#E5EDF3] disabled:opacity-50 transition-all cursor-pointer">
                     ▶
                 </button>
             </div>
         </div>
     </div>
-
-
-
 </div>

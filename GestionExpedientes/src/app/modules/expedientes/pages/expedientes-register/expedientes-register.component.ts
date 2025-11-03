@@ -1254,11 +1254,20 @@ export class ExpedientesRegisterComponent implements OnInit {
     this.arrastrando = false;
   }
 
-  onFileDrop(e: DragEvent) {
-    e.preventDefault();
-    this.arrastrando = false;
-    if (e.dataTransfer?.files) this.cargarArchivos(Array.from(e.dataTransfer.files));
+ onFileDrop(e: DragEvent) {
+  e.preventDefault();
+  this.arrastrando = false;
+
+  const files = e.dataTransfer?.files;
+  if (!files || files.length === 0) return;
+
+  if (this.tipoExpediente === 'Emisor') {
+    this.cargarArchivosDocumentosNuevos(Array.from(files));
+  } else {
+    this.cargarArchivos(Array.from(files));
   }
+}
+
 
   onMultipleFilesSelected(event: Event) {
     const files = (event.target as HTMLInputElement).files;
