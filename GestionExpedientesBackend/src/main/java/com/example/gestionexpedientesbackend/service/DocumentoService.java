@@ -12,7 +12,7 @@ public interface DocumentoService {
     List<Documento> obtenerPorExpedienteId(Long expedienteId);
     Optional<Documento> obtenerPorId(Long id);
     Documento actualizarDocumento(Documento documento);
-
+    Documento guardarDocumentoPorRuta(String nombreArchivo, String rutaArchivo, String tipoDocumento, boolean visible, Long tamaño, Long expedienteId);
     void eliminarPorId(Long id);
     List<Documento> obtenerPorIdsSeparados(String idsSeparadosPorPipe);
 

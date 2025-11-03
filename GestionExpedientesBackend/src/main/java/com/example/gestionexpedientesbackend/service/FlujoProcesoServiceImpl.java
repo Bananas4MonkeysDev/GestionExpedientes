@@ -255,11 +255,12 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
         String nombreArchivo = archivoOriginal.getName().replace(".pdf", "");
         String url = "https://tuservidor.com/expedientes/ver/" + nombreArchivo;
 
-        float margen = 40f;
+        float margenInferior = 40f;
         float qrSize = 60f;
-        float espacioFirma = 55f;
+        float espacioEntreFirmas = 65f; // más alto para evitar superposición
+        float margenDerecho = 220f;     // columna derecha
 
-        // 🖨️ Recorremos todas las páginas para agregar el pie (QR + link)
+        // 🖨️ Agregar QR y link en TODAS las páginas
         for (int i = 0; i < document.getNumberOfPages(); i++) {
             PDPage page = document.getPage(i);
             PDRectangle mediaBox = page.getMediaBox();
@@ -268,15 +269,16 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
             PDPageContentStream contentStream = new PDPageContentStream(document, page,
                     PDPageContentStream.AppendMode.APPEND, true, true);
 
-            // 🔲 Generar QR en esquina inferior izquierda
+            // 🔲 1️⃣ QR alineado abajo a la izquierda
             BufferedImage qrImage = generarQRCode(url, (int) qrSize, (int) qrSize);
             PDImageXObject qrCode = LosslessFactory.createFromImage(document, qrImage);
-            contentStream.drawImage(qrCode, margen, margen, qrSize, qrSize);
+            float qrY = margenInferior;
+            contentStream.drawImage(qrCode, margenInferior, qrY, qrSize, qrSize);
 
-            // 🌐 Imprimir URL centrada abajo
+            // 🌐 2️⃣ URL centrada en la misma línea que el QR
             float textWidth = url.length() * 4.8f;
             float urlX = (pageWidth - textWidth) / 2;
-            float urlY = margen + 20f;
+            float urlY = qrY + (qrSize / 2) - 4f; // centrado vertical con el QR
 
             contentStream.beginText();
             contentStream.setFont(PDType1Font.HELVETICA_OBLIQUE, 9);
@@ -287,31 +289,38 @@ public class FlujoProcesoServiceImpl implements FlujoProcesoService {
             contentStream.close();
         }
 
-        // 🖋️ Agregar las firmas solo en la última página
+        // 🖋️ 3️⃣ Agregar firmas SOLO en la última página
         PDPage lastPage = document.getPage(document.getNumberOfPages() - 1);
         PDRectangle mediaBox = lastPage.getMediaBox();
         float pageWidth = mediaBox.getWidth();
-        float firmaX = pageWidth - 250f;
-        float firmaY = margen + 90f + (posicionFirma * espacioFirma);
 
-        PDPageContentStream contentStream = new PDPageContentStream(document, lastPage,
+        // Posiciones base
+        float baseY = margenInferior + 15f;  // misma altura base que QR y link
+        float firmaX = pageWidth - margenDerecho; // columna derecha
+
+        PDPageContentStream cs = new PDPageContentStream(document, lastPage,
                 PDPageContentStream.AppendMode.APPEND, true, true);
 
+        // ✍️ Texto de firma
         String textoFirma = "Firmado por: " + nombreUsuario +
                 "\nMotivo: Firma Digital" +
                 "\nFecha: " + obtenerFechaActual();
 
-        contentStream.beginText();
-        contentStream.setFont(PDType1Font.HELVETICA, 9);
-        contentStream.newLineAtOffset(firmaX, firmaY);
+        // Cada firma se apila hacia arriba sin superponerse
+        float firmaY = baseY + (posicionFirma * espacioEntreFirmas);
+
+        cs.beginText();
+        cs.setFont(PDType1Font.HELVETICA, 9);
+        cs.newLineAtOffset(firmaX, firmaY);
         for (String linea : textoFirma.split("\n")) {
-            contentStream.showText(linea);
-            contentStream.newLineAtOffset(0, -10);
+            cs.showText(linea);
+            cs.newLineAtOffset(0, -10);
         }
-        contentStream.endText();
+        cs.endText();
 
-        contentStream.close();
+        cs.close();
 
+        // 💾 Guardar PDF final
         File tempFile = File.createTempFile("firmado_", ".pdf");
         document.save(tempFile);
         document.close();

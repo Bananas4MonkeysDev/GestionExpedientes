@@ -39,6 +39,7 @@ public class SecurityConfig {
                                 "/expedientes/**",
                                 "/api/public/cargo/**",
                                 "/api/usuarios/recuperar-clave",
+                                "/api/archivos/abrir",
                                 "/api/usuarios/restablecer-clave/**").permitAll()
                         .anyRequest().authenticated()
                 )

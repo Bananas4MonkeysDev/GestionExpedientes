@@ -26,6 +26,36 @@ public class DocumentoServiceImpl implements DocumentoService {
 
     @Autowired
     private DocumentoRepository documentoRepository;
+    @Override
+    @Transactional
+    public Documento guardarDocumentoPorRuta(String nombreArchivo, String rutaArchivo, String tipoDocumento, boolean visible, Long tamaño, Long expedienteId) {
+        System.out.println("→ Registrando documento por RUTA o URL");
+        System.out.println("→ Expediente ID: " + expedienteId);
+        System.out.println("→ Nombre archivo: " + nombreArchivo);
+        System.out.println("→ Ruta archivo: " + rutaArchivo);
+        System.out.println("→ Tipo documento: " + tipoDocumento);
+        System.out.println("→ Tamaño: " + tamaño);
+
+        Expediente expediente = expedienteRepository.findById(expedienteId)
+                .orElseThrow(() -> new RuntimeException("Expediente no encontrado"));
+
+        Documento doc = new Documento();
+        doc.setNombreArchivo(nombreArchivo);
+        doc.setRutaArchivo(rutaArchivo); // ← Aquí no se guarda en disco
+        doc.setTipoDocumento(tipoDocumento);
+        doc.setVisibleParaExternos(visible);
+        doc.setTamaño(tamaño != null ? tamaño : 0L);
+        doc.setExpediente(expediente);
+        doc.setEstado("ACTIVO");
+
+        Documento guardado = documentoRepository.save(doc);
+
+        // Generar código tipo DOC-000123
+        String codigoGenerado = String.format("DOC-%06d", guardado.getId());
+        guardado.setCodigo(codigoGenerado);
+
+        return documentoRepository.save(guardado);
+    }
 
     @Override
     @Transactional

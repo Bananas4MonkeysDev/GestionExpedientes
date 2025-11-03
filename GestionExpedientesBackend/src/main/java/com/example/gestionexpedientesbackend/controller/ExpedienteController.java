@@ -227,5 +227,31 @@ public class ExpedienteController {
         }
         return ResponseEntity.ok(detalle);
     }
+    @PostMapping("/{id}/documento-por-ruta")
+    public ResponseEntity<?> registrarDocumentoPorRuta(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body
+    ) {
+        try {
+            String nombreArchivo = (String) body.get("nombreArchivo");
+            String rutaArchivo = (String) body.get("rutaArchivo");
+            String tipoDocumento = (String) body.getOrDefault("tipoDocumento", "PDF");
+            boolean visible = (boolean) body.getOrDefault("visibleParaExternos", false);
+            Long tamaño = body.get("tamaño") != null
+                    ? ((Number) body.get("tamaño")).longValue()
+                    : 0L;
+
+            Documento guardado = documentoService.guardarDocumentoPorRuta(
+                    nombreArchivo, rutaArchivo, tipoDocumento, visible, tamaño, id
+            );
+
+            return ResponseEntity.ok(guardado);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al registrar documento por ruta: " + e.getMessage());
+        }
+    }
+
 }
 
